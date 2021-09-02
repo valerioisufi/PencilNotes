@@ -134,10 +134,10 @@ class DrawActivity : AppCompatActivity() {
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seek: SeekBar, progress: Int, fromUser: Boolean) {
                 when(pennelloAttivo){
-                    "Matita" -> paintMatita.strokeWidth = progress.toFloat()
-                    "Penna" -> paintPenna.strokeWidth = progress.toFloat()
-                    "Evidenziatore" -> paintEvidenziatore.strokeWidth = progress.toFloat()
-                    "Gomma" -> paintGomma.strokeWidth = progress.toFloat()
+                    Pennello.MATITA -> paintMatita.strokeWidth = progress.toFloat()
+                    Pennello.PENNA -> paintPenna.strokeWidth = progress.toFloat()
+                    Pennello.EVIDENZIATORE -> paintEvidenziatore.strokeWidth = progress.toFloat()
+                    Pennello.GOMMA -> paintGomma.strokeWidth = progress.toFloat()
                 }
                 dimensioneTrattoTextView.text = seekBar.progress.toString()
             }
@@ -153,10 +153,10 @@ class DrawActivity : AppCompatActivity() {
         colorPicker.setOnColorChangedListener(object : ColorPickerView.OnColorChangedListener{
             override fun onColorChanged(newColor: Int) {
                 when(pennelloAttivo){
-                    "Matita" -> paintMatita.color = newColor
-                    "Penna" -> paintPenna.color = newColor
-                    "Evidenziatore" -> paintEvidenziatore.color = newColor
-                    "Gomma" -> paintGomma.color = newColor
+                    Pennello.MATITA -> paintMatita.color = newColor
+                    Pennello.PENNA -> paintPenna.color = newColor
+                    Pennello.EVIDENZIATORE -> paintEvidenziatore.color = newColor
+                    Pennello.GOMMA -> paintGomma.color = newColor
                 }
             }
         })
@@ -213,17 +213,17 @@ class DrawActivity : AppCompatActivity() {
 
         if(tilt > 0.8f && orientation > -0.3f && orientation < 0.5f){
             paint = Paint(paintEvidenziatore)
-            pennello = "Evidenziatore"
+            pennello = Pennello.EVIDENZIATORE
         } else if(tilt > 0.2f && (orientation > 2.5f || orientation < -2.3f)){
             paint = Paint(paintAreaSelezione)
-            pennello = "AreaSelezione"
+            pennello = Pennello.AREA_SELEZIONE
         } else{
             pennello = pennelloAttivo
             when(pennelloAttivo){
-                "Matita" -> paint = Paint(paintMatita)
-                "Penna" -> paint = Paint(paintPenna)
-                "Evidenziatore" -> paint = Paint(paintEvidenziatore)
-                "Gomma" -> paint = Paint(paintGomma)
+                Pennello.MATITA -> paint = Paint(paintMatita)
+                Pennello.PENNA -> paint = Paint(paintPenna)
+                Pennello.EVIDENZIATORE -> paint = Paint(paintEvidenziatore)
+                Pennello.GOMMA -> paint = Paint(paintGomma)
             }
         }
     }
@@ -248,7 +248,7 @@ class DrawActivity : AppCompatActivity() {
         //var orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
 
 
-        if(pennello == "AreaSelezione"){
+        if(pennello == Pennello.AREA_SELEZIONE){
             paint.color = ResourcesCompat.getColor(resources, R.color.colorAreaDefinitiva, null)
             paint.style = Paint.Style.FILL
 
@@ -295,13 +295,22 @@ class DrawActivity : AppCompatActivity() {
 
     // Paint Object
     private lateinit var paint : Paint
-    private var pennello : String = "Matita"
-    private var pennelloAttivo : String = "Matita"
+    private var pennello = Pennello.MATITA
+    private var pennelloAttivo = Pennello.MATITA
     private lateinit var paintMatita : Paint
     private lateinit var paintPenna: Paint
     private lateinit var paintEvidenziatore : Paint
     private lateinit var paintGomma : Paint
     private lateinit var paintAreaSelezione : Paint
+
+    enum class Pennello {
+        MATITA,
+        PENNA,
+        EVIDENZIATORE,
+        GOMMA,
+
+        AREA_SELEZIONE
+    }
 
 
     /**
@@ -355,22 +364,27 @@ class DrawActivity : AppCompatActivity() {
 
         }
         var id = resources.getResourceEntryName(view.id)
-        pennelloAttivo = id
+        when(id){
+            "Matita" -> pennelloAttivo = Pennello.MATITA
+            "Penna" -> pennelloAttivo = Pennello.PENNA
+            "Evidenziatore" -> pennelloAttivo = Pennello.EVIDENZIATORE
+            "Gomma" -> pennelloAttivo = Pennello.GOMMA
+        }
 
         when(pennelloAttivo){
-            "Matita" -> {
+            Pennello.MATITA -> {
                 seekBar.progress = paintMatita.strokeWidth.toInt()
                 colorPicker.color = paintMatita.color
             }
-            "Penna" -> {
+            Pennello.PENNA -> {
                 seekBar.progress = paintPenna.strokeWidth.toInt()
                 colorPicker.color = paintPenna.color
             }
-            "Evidenziatore" -> {
+            Pennello.EVIDENZIATORE -> {
                 seekBar.progress = paintEvidenziatore.strokeWidth.toInt()
                 colorPicker.color = paintEvidenziatore.color
             }
-            "Gomma" -> {
+            Pennello.GOMMA -> {
                 seekBar.progress = paintGomma.strokeWidth.toInt()
                 colorPicker.color = paintGomma.color
             }
