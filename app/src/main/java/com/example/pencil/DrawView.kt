@@ -2,6 +2,7 @@ package com.example.pencil
 
 import android.content.Context
 import android.graphics.*
+import android.text.TextUtils.split
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -28,12 +29,22 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         strokeWidth = 3f // default: Hairline-width (really thin)
     }
 
+    var pathMatrix = Matrix()
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        if (redraw){
-            drawPage()
+        if (true){
+            drawPage(canvas)
+
+            for(i in pathList.indices){
+                var path = readPath(pathList[i].path)
+                pathMatrix.setRectToRect(pathList[i].rect, pageRect, Matrix.ScaleToFit.CENTER)
+
+                path.transform(pathMatrix)
+                canvas.drawPath(path, pathList[i].paint)
+            }
+
             redraw = false
         }else{
 
@@ -44,13 +55,58 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         /*for (i in pathList) {
             drawPath(i)
         }*/
-        canvas.drawBitmap(pageBitmap, moveMatrix, null)
-        canvas.drawPath(path, paint)
+        //canvas.drawBitmap(pageBitmap, moveMatrix, null)
+        if(drawLastPath) {
+            canvas.drawPath(readPath(lastPath.path), lastPath.paint)
+        }
     }
 
 
-    data class InfPath(var path: Path, var paint: Paint, var rect : RectF, var save : Boolean)
+    data class InfPath(var path: String, var paint: Paint, var rect : RectF)//, var save : Boolean)
     private var pathList = mutableListOf<InfPath>()
+    private var lastPath : InfPath = InfPath("", paint, RectF())
+
+    fun newPath(path: String, paint: Paint){
+        lastPath = InfPath(path, paint, pageRect)
+        drawLastPath = true
+    }
+    fun rewritePath(path: String){
+        lastPath.path = path
+
+        invalidate()
+    }
+    fun savePath(path: String, paint: Paint){
+        lastPath.path = path
+        lastPath.paint = paint
+
+        pathList.add(lastPath)
+
+        drawLastPath = false
+        redraw = true
+        invalidate()
+    }
+
+    private fun readPath(path: String):Path{
+        var realPath = Path()
+        var stringPath = split(path, " ")
+
+        var i = 0
+        while(i < stringPath.size){
+            when(stringPath[i]){
+                "M" -> {
+                    realPath.moveTo(stringPath[i+1].toFloat(),stringPath[i+2].toFloat())
+                    i += 2
+                }
+                "Q" -> {
+                    realPath.quadTo(stringPath[i+1].toFloat(),stringPath[i+2].toFloat(),stringPath[i+3].toFloat(),stringPath[i+4].toFloat())
+                    i += 4
+                }
+            }
+
+            i++
+        }
+        return realPath
+    }
 
     /*fun getPaint(): Paint {
         return paint
@@ -114,10 +170,10 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         pathMatrix.setRectToRect(infPath.rect, pageRect, Matrix.ScaleToFit.CENTER)
         //_path.transform(pathMatrix)
 
-        pageCanvas.drawPath(infPath.path, infPath.paint)
+        //pageCanvas.drawPath(infPath.path, infPath.paint)
     }
 
-    private fun drawPage(){
+    private fun drawPage(canvas: Canvas){
         val paintPage = Paint().apply {
             color = ResourcesCompat.getColor(resources, R.color.black, null)
             // Smooths out edges of what is drawn without affecting shape.
@@ -131,15 +187,15 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
 
 
-        pageCanvas.drawColor(ResourcesCompat.getColor(resources, R.color.dark_elevation_00dp, null))
+        canvas.drawColor(ResourcesCompat.getColor(resources, R.color.dark_elevation_00dp, null))
         // bordo pagina
-        pageCanvas.drawRect(pageRect, paintPage)
+        canvas.drawRect(pageRect, paintPage)
 
         paintPage.color = ResourcesCompat.getColor(resources, R.color.white, null)
         paintPage.style = Paint.Style.FILL
 
         // sfondo pagina
-        pageCanvas.drawRect(pageRect, paintPage)
+        canvas.drawRect(pageRect, paintPage)
         //pageCanvas.clipRect(pageRect)
     }
 
@@ -194,6 +250,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }*/
 
     private var redraw = true
+    private var drawLastPath = false
 
     /**
      * Funzione che si occupa dello scale e dello spostamento
@@ -265,7 +322,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 }*/
 
                 createPage()
-                //redraw = true
+                redraw = true
                 invalidate()
             }
             MotionEvent.ACTION_POINTER_UP -> {
@@ -273,6 +330,13 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 lastScaleFactor = scaleFactor
 
                 startMatrix = Matrix(moveMatrix)
+
+                /*for(infPath in pathList){
+                    var path = readPath(infPath.path)
+                    path.transform(moveMatrix)
+                    pageCanvas.drawPath(path, infPath.paint)
+                }
+                invalidate()*/
             }
         }
 

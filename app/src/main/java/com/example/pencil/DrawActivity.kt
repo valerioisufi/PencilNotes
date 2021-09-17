@@ -194,7 +194,7 @@ class DrawActivity : AppCompatActivity() {
     }
 
 
-    private var path = Path()
+    private var path : String = ""
 
     //private var motionTouchEventX = 0f
     //private var motionTouchEventY = 0f
@@ -203,8 +203,10 @@ class DrawActivity : AppCompatActivity() {
     private var currentY = 0f
 
     private fun touchStart(event: MotionEvent) {
-        path.reset()
-        path.moveTo(event.x, event.y)
+        //path.reset()
+        path = ""
+        path = path + "M " + event.x + " " + event.y + " " //.moveTo(event.x, event.y)
+
         currentX = event.x
         currentY = event.y
 
@@ -226,6 +228,8 @@ class DrawActivity : AppCompatActivity() {
                 Pennello.GOMMA -> paint = Paint(paintGomma)
             }
         }
+
+        drawView.newPath(path, paint)
     }
 
     private fun touchMove(event: MotionEvent) {
@@ -235,12 +239,16 @@ class DrawActivity : AppCompatActivity() {
             event.x.toString() + '\n' + event.y.toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_DISTANCE)
                 .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_TILT)
                 .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_ORIENTATION).toString()
-        path.quadTo(currentX, currentY, (event.x + currentX) / 2, (event.y + currentY) / 2)
+        path = path + "Q " + currentX + " " + currentY + " " + (event.x + currentX) / 2 + " " + (event.y + currentY) / 2 + " " //.quadTo(currentX, currentY, (event.x + currentX) / 2, (event.y + currentY) / 2)
+
+
+
         currentX = event.x
         currentY = event.y
 
         // Draw the path in the extra bitmap to cache it.
-        drawView.setPathPaint(path, paint)
+        drawView.rewritePath(path)
+        //drawView.setPathPaint(path, paint)
     }
 
     private fun touchUp(event: MotionEvent) {
@@ -252,12 +260,12 @@ class DrawActivity : AppCompatActivity() {
             paint.color = ResourcesCompat.getColor(resources, R.color.colorAreaDefinitiva, null)
             paint.style = Paint.Style.FILL
 
-            drawView.savePathPaint(path,paint)
+            drawView.savePath(path,paint)
         }else{
-            drawView.savePathPaint(path, paint)
+            drawView.savePath(path, paint)
         }
         // Reset the path so it doesn't get drawn again.
-        path.reset()
+        path = ""
     }
 
     private fun hoverMove(event: MotionEvent) {
