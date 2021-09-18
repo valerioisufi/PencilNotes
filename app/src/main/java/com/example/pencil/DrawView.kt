@@ -4,8 +4,10 @@ import android.content.Context
 import android.graphics.*
 import android.text.TextUtils.split
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import androidx.compose.ui.geometry.Rect
 import androidx.core.content.res.ResourcesCompat
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -16,6 +18,7 @@ import kotlin.math.sqrt
 class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private lateinit var pageRect : RectF
+    private lateinit var windowRect : RectF
     private var path = Path()
     private var paint = Paint().apply {
         color = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
@@ -29,21 +32,27 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         strokeWidth = 3f // default: Hairline-width (really thin)
     }
 
+
     var pathMatrix = Matrix()
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        if (true){
-            drawPage(canvas)
+        if (redraw){
+            //pageCanvas.clipRect(windowRect)
+            drawPage(pageCanvas)
 
             for(i in pathList.indices){
                 var path = readPath(pathList[i].path)
                 pathMatrix.setRectToRect(pathList[i].rect, pageRect, Matrix.ScaleToFit.CENTER)
-
                 path.transform(pathMatrix)
-                canvas.drawPath(path, pathList[i].paint)
+
+                var paint = Paint(pathList[i].paint)
+                paint.strokeWidth = pathList[i].paint.strokeWidth * scaleFactorPaint
+
+                pageCanvas.drawPath(path, paint)
             }
+            //pageCanvas.clipRect(pageRect)
 
             redraw = false
         }else{
@@ -55,9 +64,18 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         /*for (i in pathList) {
             drawPath(i)
         }*/
-        //canvas.drawBitmap(pageBitmap, moveMatrix, null)
+
+        /*if(scaleCache){
+            scaleCache = false
+        }*/
+
+        canvas.drawBitmap(pageBitmap, 0f, 0f, null)
+
         if(drawLastPath) {
-            canvas.drawPath(readPath(lastPath.path), lastPath.paint)
+            var paint = Paint(lastPath.paint)
+            paint.strokeWidth = lastPath.paint.strokeWidth * scaleFactorPaint
+
+            canvas.drawPath(readPath(lastPath.path), paint)
         }
     }
 
@@ -196,7 +214,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
         // sfondo pagina
         canvas.drawRect(pageRect, paintPage)
-        //pageCanvas.clipRect(pageRect)
+        //canvas.clipRect(pageRect)
     }
 
     private fun createPage(){
@@ -206,9 +224,14 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         val heightPage = widthPage * sqrt(2.0)
 
         val left = padding.toFloat()
-        val top = padding.toFloat()
+        var top = padding.toFloat()
         val right = (padding + widthPage).toFloat()
-        val bottom = (padding + heightPage).toFloat()
+        var bottom = (padding + heightPage).toFloat()
+
+        if(heightPage + padding * 2 < heightView){
+            top = ((heightView - heightPage) / 2).toFloat()
+            bottom = (top + heightPage).toFloat()
+        }
 
         pageRect = RectF(left, top, right, bottom)
         moveMatrix.mapRect(pageRect)
@@ -234,6 +257,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         pageCanvas = Canvas(pageBitmap)
         // pageCanvas.drawColor(backgroundColor)
 
+        windowRect = RectF(0f, 0f, width.toFloat(), height.toFloat())
         createPage()
     }
 
@@ -250,7 +274,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }*/
 
     private var redraw = true
+    //private var scaleCache = false
     private var drawLastPath = false
+    private var scaleFactorPaint = 1f
 
     /**
      * Funzione che si occupa dello scale e dello spostamento
@@ -305,6 +331,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 moveMatrix.postScale(scaleFactor, scaleFactor, moveFocusPos.x, moveFocusPos.y)
                 moveMatrix.preConcat(startMatrix)
 
+
+                val f = FloatArray(9)
+                moveMatrix.getValues(f)
+                scaleFactorPaint = f[Matrix.MSCALE_X]
+                //Log.d("Scale factor: ", scaleFactorPaint.toString())
                 /*val f = FloatArray(9)
                 matrix.getValues(f)
 
@@ -322,6 +353,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 }*/
 
                 createPage()
+                //scaleCache = true
                 redraw = true
                 invalidate()
             }
@@ -330,6 +362,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 lastScaleFactor = scaleFactor
 
                 startMatrix = Matrix(moveMatrix)
+
+                /*redraw = true
+                invalidate()*/
 
                 /*for(infPath in pathList){
                     var path = readPath(infPath.path)

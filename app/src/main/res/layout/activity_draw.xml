@@ -127,7 +127,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:background="@drawable/shape_pencil_settings"
-        android:visibility="visible"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/commandView">
