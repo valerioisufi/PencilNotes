@@ -22,7 +22,9 @@ import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicBlur
+import android.widget.CompoundButton
 import androidx.annotation.WorkerThread
+import com.google.android.material.chip.Chip
 
 
 class DrawActivity : AppCompatActivity() {
@@ -35,9 +37,12 @@ class DrawActivity : AppCompatActivity() {
         textView = findViewById(R.id.textView)
         commandView = findViewById(R.id.commandView)
         seekBar = findViewById(R.id.seekBar)
+        modePennaView = findViewById(R.id.modePennaView)
         colorPicker = findViewById(R.id.colorPicker)
+        colorShowView = findViewById(R.id.colorShowView)
         dimensioneTrattoTextView = findViewById(R.id.dimensioneTrattoTextView)
         blurEffect = findViewById(R.id.blurEffect)
+
 
         hideSystemUI()
 
@@ -101,6 +106,7 @@ class DrawActivity : AppCompatActivity() {
         //density = resources.displayMetrics.density
         //drawViewTop = 80 * density
 
+        colorShowView.color = paintMatita.color
         textView.text = drawViewTop.toString()
 
         drawView.setOnHoverListener { v, event ->
@@ -111,6 +117,7 @@ class DrawActivity : AppCompatActivity() {
             }
             true
         }
+
 
         drawView.setOnTouchListener { v, event ->
 
@@ -124,8 +131,25 @@ class DrawActivity : AppCompatActivity() {
                 }
             }
 
+            if (!modePenna && event.pointerCount == 1 && event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER){
+                if(!continueScaleTranslate) {
+                    when (event.action) {
+                        MotionEvent.ACTION_DOWN -> touchStart(event)
+                        MotionEvent.ACTION_MOVE -> touchMove(event)
+                        MotionEvent.ACTION_UP -> touchUp(event)
+                    }
+                } else {
+                    when (event.action) {
+                        MotionEvent.ACTION_UP -> continueScaleTranslate = false
+                    }
+
+                }
+            }
+
             if (event.pointerCount == 2){
                 drawView.scaleTranslate(event)
+                drawView.rewritePath("")
+                continueScaleTranslate = true
             }
 
             true
@@ -149,14 +173,29 @@ class DrawActivity : AppCompatActivity() {
                 //paint.strokeWidth = seek.progress.toFloat()
             }
         })
+        modePennaView.setOnCheckedChangeListener { buttonView, isChecked ->
+            run {
+                modePenna = isChecked
+            }
+        }
 
         colorPicker.setOnColorChangedListener(object : ColorPickerView.OnColorChangedListener{
             override fun onColorChanged(newColor: Int) {
+                colorShowView.color = newColor
+
                 when(pennelloAttivo){
-                    Pennello.MATITA -> paintMatita.color = newColor
-                    Pennello.PENNA -> paintPenna.color = newColor
-                    Pennello.EVIDENZIATORE -> paintEvidenziatore.color = newColor
-                    Pennello.GOMMA -> paintGomma.color = newColor
+                    Pennello.MATITA -> {
+                        paintMatita.color = newColor
+                    }
+                    Pennello.PENNA -> {
+                        paintPenna.color = newColor
+                    }
+                    Pennello.EVIDENZIATORE -> {
+                        paintEvidenziatore.color = newColor
+                    }
+                    Pennello.GOMMA -> {
+                        paintGomma.color = newColor
+                    }
                 }
             }
         })
@@ -168,9 +207,14 @@ class DrawActivity : AppCompatActivity() {
     private lateinit var textView: TextView
     private lateinit var commandView: View
     private lateinit var seekBar: SeekBar
+    private lateinit var modePennaView: Chip
     private lateinit var colorPicker: ColorPickerView
+    private lateinit var colorShowView: ColorShowView
     private lateinit var dimensioneTrattoTextView: TextView
     private lateinit var blurEffect: View
+
+    private var modePenna = true
+    private var continueScaleTranslate = false
 
     private fun hideSystemUI() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -355,7 +399,7 @@ class DrawActivity : AppCompatActivity() {
     }
 
     // Tasti
-    fun showPanel(view: View){
+    fun showColorPickerView(view: View){
         var pencilLayout = findViewById<ConstraintLayout>(R.id.pencilLayout)
         if(pencilLayout.visibility == View.VISIBLE){
             pencilLayout.visibility = View.INVISIBLE
@@ -369,15 +413,9 @@ class DrawActivity : AppCompatActivity() {
             val d: Drawable = BitmapDrawable(resources, bitmap)
             blurEffect.background = d
             blurEffect.visibility = View.VISIBLE
+        }
 
-        }
-        var id = resources.getResourceEntryName(view.id)
-        when(id){
-            "Matita" -> pennelloAttivo = Pennello.MATITA
-            "Penna" -> pennelloAttivo = Pennello.PENNA
-            "Evidenziatore" -> pennelloAttivo = Pennello.EVIDENZIATORE
-            "Gomma" -> pennelloAttivo = Pennello.GOMMA
-        }
+        //var colorShowView = findViewById<ColorShowView>(R.id.colorShowView)
 
         when(pennelloAttivo){
             Pennello.MATITA -> {
@@ -399,5 +437,61 @@ class DrawActivity : AppCompatActivity() {
         }
 
         dimensioneTrattoTextView.text = seekBar.progress.toString()
+    }
+
+    fun choosePennello(view: View){
+        var id = resources.getResourceEntryName(view.id)
+        when(id){
+            "Matita" -> {
+                pennelloAttivo = Pennello.MATITA
+                colorShowView.color = paintMatita.color
+            }
+            "Penna" -> {
+                pennelloAttivo = Pennello.PENNA
+                colorShowView.color = paintPenna.color
+            }
+            "Evidenziatore" -> {
+                pennelloAttivo = Pennello.EVIDENZIATORE
+                colorShowView.color = paintEvidenziatore.color
+            }
+            "Gomma" -> {
+                pennelloAttivo = Pennello.GOMMA
+                colorShowView.color = paintGomma.color
+            }
+        }
+
+    }
+
+    fun showImpostazioniView(view: View){
+        var impostazioniLayout = findViewById<ConstraintLayout>(R.id.impostazioniLayout)
+        if(impostazioniLayout.visibility == View.VISIBLE){
+            impostazioniLayout.visibility = View.INVISIBLE
+            blurEffect.visibility = View.INVISIBLE
+        } else{
+            impostazioniLayout.visibility = View.VISIBLE
+
+            var bitmap = drawView.drawToBitmap(Bitmap.Config.ARGB_8888)
+            drawView.drawToBitmap(Bitmap.Config.ARGB_8888)
+            bitmap = blurBitmap(bitmap, this)
+            val d: Drawable = BitmapDrawable(resources, bitmap)
+            blurEffect.background = d
+            blurEffect.visibility = View.VISIBLE
+        }
+
+        dimensioneTrattoTextView.text = seekBar.progress.toString()
+    }
+
+    fun closeViewLayout(view: View){
+        var impostazioniLayout = findViewById<ConstraintLayout>(R.id.impostazioniLayout)
+        if(impostazioniLayout.visibility == View.VISIBLE){
+            impostazioniLayout.visibility = View.INVISIBLE
+        }
+
+        var pencilLayout = findViewById<ConstraintLayout>(R.id.pencilLayout)
+        if(pencilLayout.visibility == View.VISIBLE){
+            pencilLayout.visibility = View.INVISIBLE
+        }
+
+        blurEffect.visibility = View.INVISIBLE
     }
 }

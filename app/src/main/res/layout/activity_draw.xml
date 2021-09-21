@@ -19,6 +19,8 @@
         android:id="@+id/blurEffect"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:onClick="closeViewLayout"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -38,18 +40,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <com.example.pencil.ColorShowView
+        android:id="@+id/colorShowView"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:onClick="showColorPickerView"
+        android:padding="4dp"
+        app:layout_constraintBottom_toBottomOf="@+id/commandView"
+        app:layout_constraintEnd_toStartOf="@+id/Matita"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@+id/commandView"
+        app:layout_constraintTop_toTopOf="@+id/commandView" />
+
     <ImageButton
         android:id="@+id/Evidenziatore"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:backgroundTint="#00FFFFFF"
-        android:onClick="showPanel"
+        android:onClick="choosePennello"
         android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@+id/commandView"
+        app:layout_constraintBottom_toBottomOf="@+id/Penna"
         app:layout_constraintEnd_toStartOf="@+id/Gomma"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/Penna"
-        app:layout_constraintTop_toTopOf="@+id/commandView"
+        app:layout_constraintTop_toTopOf="@+id/Penna"
         app:srcCompat="@drawable/marker" />
 
     <ImageButton
@@ -57,13 +71,13 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:backgroundTint="#00FFFFFF"
-        android:onClick="showPanel"
+        android:onClick="choosePennello"
         android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@+id/commandView"
+        app:layout_constraintBottom_toBottomOf="@+id/colorShowView"
         app:layout_constraintEnd_toStartOf="@+id/Penna"
-        app:layout_constraintStart_toEndOf="@+id/drawView"
-        app:layout_constraintStart_toStartOf="@+id/commandView"
-        app:layout_constraintTop_toTopOf="@+id/commandView"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/colorShowView"
+        app:layout_constraintTop_toTopOf="@+id/colorShowView"
         app:srcCompat="@drawable/pencil" />
 
     <ImageButton
@@ -71,13 +85,13 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:backgroundTint="#00FFFFFF"
-        android:onClick="showPanel"
+        android:onClick="choosePennello"
         android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@+id/commandView"
+        app:layout_constraintBottom_toBottomOf="@+id/Matita"
         app:layout_constraintEnd_toStartOf="@+id/Evidenziatore"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/Matita"
-        app:layout_constraintTop_toTopOf="@+id/commandView"
+        app:layout_constraintTop_toTopOf="@+id/Matita"
         app:srcCompat="@drawable/pen" />
 
     <ImageButton
@@ -85,13 +99,13 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:backgroundTint="#00FFFFFF"
-        android:onClick="showPanel"
+        android:onClick="choosePennello"
         android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@+id/commandView"
+        app:layout_constraintBottom_toBottomOf="@+id/Evidenziatore"
         app:layout_constraintEnd_toStartOf="@+id/imageButton11"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/Evidenziatore"
-        app:layout_constraintTop_toTopOf="@+id/commandView"
+        app:layout_constraintTop_toTopOf="@+id/Evidenziatore"
         app:srcCompat="@drawable/eraser" />
 
     <ImageButton
@@ -101,11 +115,13 @@
         android:backgroundTint="#00FFFFFF"
         android:minWidth="48dp"
         android:minHeight="48dp"
+        android:onClick="showImpostazioniView"
         android:scaleType="fitCenter"
-        app:layout_constraintBottom_toBottomOf="@+id/commandView"
+        app:layout_constraintBottom_toBottomOf="@+id/Gomma"
         app:layout_constraintEnd_toEndOf="@+id/commandView"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/Gomma"
-        app:layout_constraintTop_toTopOf="@+id/commandView"
+        app:layout_constraintTop_toTopOf="@+id/Gomma"
         app:srcCompat="@drawable/ic_settings" />
 
     <TextView
@@ -120,6 +136,43 @@
         app:layout_constraintEnd_toEndOf="@+id/drawView"
         app:layout_constraintStart_toStartOf="@+id/drawView"
         app:layout_constraintTop_toBottomOf="@+id/commandView" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/impostazioniLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:background="@color/dark_elevation_04dp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/commandView">
+
+        <TextView
+            android:id="@+id/textView6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Attivare modalità Penna"
+            android:textColor="@color/colorAreaDefinitiva"
+            app:layout_constraintEnd_toStartOf="@+id/modePennaView"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/modePennaView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            android:checked="true"
+            app:layout_constraintBottom_toBottomOf="@+id/textView6"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/textView6"
+            app:layout_constraintTop_toTopOf="@+id/textView6" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/pencilLayout"
