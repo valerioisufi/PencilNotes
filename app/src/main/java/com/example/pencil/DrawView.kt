@@ -323,9 +323,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private var startFocusPos = PointF()
     private var moveFocusPos = PointF()
 
-    private var stopTranslate = PointF()
-    private var firstStopTranslate = true
-
 
     fun scaleTranslate(event: MotionEvent){
         when (event.actionMasked) {
@@ -349,71 +346,25 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
 
                 moveMatrix.setTranslate(translate.x, translate.y)
-                //moveMatrix.postScale(scaleFactor, scaleFactor, moveFocusPos.x, moveFocusPos.y)
                 moveMatrix.preConcat(startMatrix)
-
 
                 val f = FloatArray(9)
                 moveMatrix.getValues(f)
                 scaleFactorPaint = f[Matrix.MSCALE_X]
 
                 if(scaleFactorPaint * scaleFactor < 0.5f){
-                    //scaleFactorPaint = 0.5f
-                    if(firstStopTranslate) {
-                        //stopTranslate = PointF(f[Matrix.MTRANS_X], f[Matrix.MTRANS_Y])
-                        //startFocusPos = moveFocusPos
-                        firstStopTranslate = false
-                    }
-
-                    scaleFactor = (0.5/scaleFactorPaint).toFloat()
-
-                    f[Matrix.MSCALE_X] = 0.5f
-                    f[Matrix.MSCALE_Y] = 0.5f
-
-                    //f[Matrix.MTRANS_X] = moveFocusPos.x - stopTranslate.x
-                    //f[Matrix.MTRANS_Y] = moveFocusPos.y - stopTranslate.y
-                    //moveMatrix.setValues(f)
+                    scaleFactor = 0.5f/scaleFactorPaint
                 }
                 if(scaleFactorPaint * scaleFactor > 3f){
-                    //scaleFactorPaint = 3f
-                    if(firstStopTranslate) {
-                        //stopTranslate = PointF(f[Matrix.MTRANS_X], f[Matrix.MTRANS_Y])
-                        //startFocusPos = moveFocusPos
-                        firstStopTranslate = false
-                    }
-                    scaleFactor = (3/scaleFactorPaint).toFloat()
-
-                    f[Matrix.MSCALE_X] = 3f
-                    f[Matrix.MSCALE_Y] = 3f
-
-                    //f[Matrix.MTRANS_X] = moveFocusPos.x - stopTranslate.x
-                    //f[Matrix.MTRANS_Y] = moveFocusPos.y - stopTranslate.y
-                    //moveMatrix.setValues(f)
+                    scaleFactor = 3f/scaleFactorPaint
                 }
-                if(scaleFactorPaint * scaleFactor > 0.5f && scaleFactorPaint * scaleFactor < 3f){
-                    //moveMatrix.postScale(scaleFactor, scaleFactor, moveFocusPos.x, moveFocusPos.y)
-                    firstStopTranslate = true
-                }
-
                 moveMatrix.postScale(scaleFactor, scaleFactor, moveFocusPos.x, moveFocusPos.y)
+
+                moveMatrix.getValues(f)
+                scaleFactorPaint = f[Matrix.MSCALE_X]
 
 
                 Log.d("Scale factor: ", f[Matrix.MTRANS_X].toString())
-                /*val f = FloatArray(9)
-                matrix.getValues(f)
-
-                val scaleX = f[Matrix.MSCALE_X]
-                val scaleY = f[Matrix.MSCALE_Y]
-
-                if(scaleX * scaleFactor <= 1f){
-                    scaleFactor = 1f / scaleX
-
-                }*/
-                //finalScaleFactor = lastScaleFactor * (moveDistance/startDistance)
-                /*if(lastScaleFactor * scaleFactor <= 1f){
-                    scaleFactor = 1f / lastScaleFactor
-
-                }*/
 
                 createPage()
                 //scaleCache = true

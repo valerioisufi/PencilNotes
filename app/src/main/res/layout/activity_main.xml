@@ -12,67 +12,43 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:backgroundTint="#FFFFFF"
+        android:backgroundTint="@color/dark_elevation_01dp"
         android:contentDescription="info"
         android:minWidth="48dp"
         android:minHeight="48dp"
-        app:layout_constraintEnd_toStartOf="@+id/imageButton3"
+        app:layout_constraintEnd_toStartOf="@+id/newFileNotes"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_info" />
+        app:srcCompat="@drawable/ic_info"
+        app:tint="#FFFFFF" />
 
     <ImageButton
-        android:id="@+id/imageButton3"
+        android:id="@+id/newFileNotes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:backgroundTint="#FFFFFF"
+        android:backgroundTint="@color/dark_elevation_01dp"
         android:contentDescription="nuovo quaderno"
         android:minHeight="48dp"
-        android:onClick="newActivity"
+        android:onClick="newFileNotes"
+        app:tint="#FFFFFF"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/imageButton2"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_file_add" />
 
-    <HorizontalScrollView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageButton2"
-        app:layout_constraintVertical_bias="1.0">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/textView4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="TextView"
-                android:textSize="120sp" />
-
-            <TextView
-                android:id="@+id/textView5"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="TextView"
-                android:textSize="120sp" />
-        </LinearLayout>
-    </HorizontalScrollView>
+        app:layout_constraintTop_toBottomOf="@+id/imageButton2" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -7,7 +7,8 @@ class FileNotes {
     private var context : Context
     private lateinit var file : File
     private var nomeFile = ""
-    private var testoFile = ""
+
+    private var textFile = ""
 
     constructor(context: Context, nomeFile: String){
         this.nomeFile = nomeFile
@@ -16,5 +17,23 @@ class FileNotes {
     }
     fun openFile(){
         file = File(context.filesDir, this.nomeFile)
+        if(!file.exists()){
+            file.createNewFile()
+        }
+    }
+
+    fun readFile(){
+        textFile = file.readText()
+    }
+
+    fun writeFile(){
+        file.writeText(textFile)
+    }
+
+    fun getTextFile() : String{
+        return textFile
+    }
+    fun setTextFile(textFile : String){
+        this.textFile = textFile
     }
 }
