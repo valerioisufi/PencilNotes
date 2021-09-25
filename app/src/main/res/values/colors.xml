@@ -29,4 +29,6 @@
     <color name="dark_elevation_12dp">#333333</color>
     <color name="dark_elevation_16dp">#353535</color>
     <color name="dark_elevation_24dp">#383838</color>
+
+    <color name="color_text_secondary">#919191</color>
 </resources>

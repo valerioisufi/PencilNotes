@@ -7,13 +7,14 @@ import android.text.TextUtils.split
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ListView
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_home)
+        setContentView(R.layout.activity_home2)
 
         //setSupportActionBar(findViewById(R.id.appTollbar))
         /*var filesNames: Array<String> = this.fileList()
@@ -22,17 +23,7 @@ class MainActivity : AppCompatActivity() {
             fileNotesList.add(FileNotes(this, i))
         }*/
 
-        fileNotesList = FileNotes(this, "fileNotesList.txt")
-        fileNotesList.openFile()
-        fileNotesList.readFile()
-
-
-        arrayString = split(fileNotesList.getTextFile(), "\n").toMutableList()
-
-        recyclerView = findViewById(R.id.recyclerView)
-        recyclerView.adapter = FileNotesAdapter(this, arrayString)
-        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-
+        createRecyclerView()
 
         /*
         listView = findViewById(R.id.listView)
@@ -44,8 +35,23 @@ class MainActivity : AppCompatActivity() {
     lateinit var fileNotesList : FileNotes
     lateinit var arrayString: MutableList<String>
 
-    //lateinit var arrayString : Array<String>
-    //var fileNotesList = mutableListOf<FileNotes>()
+    fun createRecyclerView(){
+        fileNotesList = FileNotes(this, "fileNotesList.txt")
+        fileNotesList.openFile()
+        fileNotesList.readFile()
+
+
+        arrayString = split(fileNotesList.getTextFile(), "\n").toMutableList()
+
+        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView.adapter = FileNotesAdapter(this, arrayString)
+
+        var layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        recyclerView.layoutManager = layoutManager
+
+        var dividerItemDecoration = DividerItemDecoration(recyclerView.context, layoutManager.orientation);
+        recyclerView.addItemDecoration(dividerItemDecoration);
+    }
 
     fun newFileNotes(view : View){
         var text = fileNotesList.getTextFile()

@@ -14,12 +14,11 @@
         android:background="@drawable/shape_toolbar"
         android:fitsSystemWindows="true">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <androidx.constraintlayout.motion.widget.MotionLayout
             android:id="@+id/constraintLayout"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@drawable/shape_toolbar"
-            app:layout_scrollFlags="scroll|enterAlways">
+            android:layout_height="104dp"
+            app:layoutDescription="@xml/activity_home_xml_constraintlayout_scene">
 
             <ImageButton
                 android:id="@+id/searchButton"
@@ -29,7 +28,7 @@
                 android:background="@android:color/transparent"
                 android:padding="14dp"
                 android:scaleType="fitCenter"
-                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/guidelineToolbar"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_search" />
@@ -42,7 +41,7 @@
                 android:background="@android:color/transparent"
                 android:padding="14dp"
                 android:scaleType="fitCenter"
-                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/guidelineToolbar"
                 app:layout_constraintEnd_toStartOf="@+id/searchButton"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_folder" />
@@ -57,7 +56,7 @@
                 android:textColor="#FFFFFF"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/guidelineToolbar"
                 app:layout_constraintStart_toEndOf="@+id/logoImage"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.65" />
@@ -69,16 +68,23 @@
                 android:layout_marginStart="16dp"
                 android:onClick="newActivity"
                 android:scaleType="fitCenter"
-                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/guidelineToolbar"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/logo" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="48dp">
+            <ImageButton
+                android:id="@+id/filterButton"
+                style="@style/Widget.AppCompat.ImageButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:padding="14dp"
+                android:scaleType="fitCenter"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/filterText"
+                app:layout_constraintTop_toTopOf="@+id/guidelineToolbar"
+                app:srcCompat="@drawable/ic_filter" />
 
             <TextView
                 android:id="@+id/filterText"
@@ -92,22 +98,17 @@
                 android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="@+id/guidelineToolbar" />
 
-            <ImageButton
-                android:id="@+id/filterButton"
-                style="@style/Widget.AppCompat.ImageButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@android:color/transparent"
-                android:padding="14dp"
-                android:scaleType="fitCenter"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/filterText"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.0"
-                app:srcCompat="@drawable/ic_filter" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guidelineToolbar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_begin="56dp" />
+
+
+        </androidx.constraintlayout.motion.widget.MotionLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
