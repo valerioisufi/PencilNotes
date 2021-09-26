@@ -1,29 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.motion.widget.MotionLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="@drawable/home_folder_background_shape"
     app:layoutDescription="@xml/switch_home_folder_layout_scene">
 
     <View
-        android:id="@+id/disactive_background"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/home_folder_background_disactive_shape"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/switch_guideline"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <View
         android:id="@+id/active_background"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginEnd="-16dp"
         android:background="@drawable/home_folder_background_active_shape"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/switch_guideline"
+        app:layout_constraintEnd_toEndOf="@+id/homeText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -85,11 +75,15 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.6" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/switch_guideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.5" />
+    <View
+        android:id="@+id/disactive_background"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="-16dp"
+        android:background="@drawable/home_folder_background_disactive_shape"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/folderText"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.motion.widget.MotionLayout>
