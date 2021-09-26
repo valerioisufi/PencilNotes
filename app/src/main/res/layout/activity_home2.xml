@@ -14,11 +14,11 @@
         android:background="@drawable/shape_toolbar"
         android:fitsSystemWindows="true">
 
-        <androidx.constraintlayout.motion.widget.MotionLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraintLayout"
             android:layout_width="match_parent"
             android:layout_height="104dp"
-            app:layoutDescription="@xml/activity_home_xml_constraintlayout_scene">
+            app:layout_scrollFlags="scroll|enterAlways">
 
             <ImageButton
                 android:id="@+id/searchButton"
@@ -28,23 +28,10 @@
                 android:background="@android:color/transparent"
                 android:padding="14dp"
                 android:scaleType="fitCenter"
-                app:layout_constraintBottom_toTopOf="@+id/guidelineToolbar"
+                app:layout_constraintBottom_toTopOf="@+id/guideline3"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_search" />
-
-            <ImageButton
-                android:id="@+id/folferButton"
-                style="@style/Widget.AppCompat.ImageButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@android:color/transparent"
-                android:padding="14dp"
-                android:scaleType="fitCenter"
-                app:layout_constraintBottom_toTopOf="@+id/guidelineToolbar"
-                app:layout_constraintEnd_toStartOf="@+id/searchButton"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_folder" />
 
             <TextView
                 android:id="@+id/titleText"
@@ -56,10 +43,10 @@
                 android:textColor="#FFFFFF"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                app:layout_constraintBottom_toTopOf="@+id/guidelineToolbar"
+                app:layout_constraintBottom_toTopOf="@+id/guideline3"
                 app:layout_constraintStart_toEndOf="@+id/logoImage"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.65" />
+                app:layout_constraintVertical_bias="0.6" />
 
             <ImageView
                 android:id="@+id/logoImage"
@@ -68,10 +55,26 @@
                 android:layout_marginStart="16dp"
                 android:onClick="newActivity"
                 android:scaleType="fitCenter"
-                app:layout_constraintBottom_toTopOf="@+id/guidelineToolbar"
+                app:layout_constraintBottom_toTopOf="@+id/guideline3"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/logo" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_begin="56dp" />
+
+            <include
+                layout="@layout/switch_home_folder_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/guideline3" />
 
             <ImageButton
                 android:id="@+id/filterButton"
@@ -83,13 +86,13 @@
                 android:scaleType="fitCenter"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/filterText"
-                app:layout_constraintTop_toTopOf="@+id/guidelineToolbar"
+                app:layout_constraintTop_toTopOf="@+id/guideline3"
                 app:srcCompat="@drawable/ic_filter" />
 
             <TextView
                 android:id="@+id/filterText"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="24dp"
                 android:layout_marginEnd="16dp"
                 android:fontFamily="@font/noto_sans"
                 android:text="Filtra"
@@ -98,17 +101,9 @@
                 android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/guidelineToolbar" />
+                app:layout_constraintTop_toTopOf="@+id/guideline3" />
 
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guidelineToolbar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintGuide_begin="56dp" />
-
-
-        </androidx.constraintlayout.motion.widget.MotionLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 

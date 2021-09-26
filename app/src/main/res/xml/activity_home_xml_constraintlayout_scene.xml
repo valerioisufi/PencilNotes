@@ -17,7 +17,7 @@
 
     <ConstraintSet android:id="@+id/collapsed">
         <Constraint
-            android:id="@+id/folferButton"
+            android:id="@+id/folderButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
             motion:layout_constraintStart_toStartOf="parent"
@@ -28,7 +28,7 @@
             android:id="@+id/searchButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            motion:layout_constraintStart_toEndOf="@+id/folferButton"
+            motion:layout_constraintStart_toEndOf="@+id/folderButton"
             motion:layout_constraintBottom_toBottomOf="parent"
             motion:layout_constraintTop_toBottomOf="@id/guidelineToolbar" />
         <Constraint
