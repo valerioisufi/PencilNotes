@@ -7,28 +7,30 @@ import android.text.TextUtils.split
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ListView
+import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.appbar.AppBarLayout
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home2)
 
-        //setSupportActionBar(findViewById(R.id.appTollbar))
-        /*var filesNames: Array<String> = this.fileList()
-
-        for(i in filesNames){
-            fileNotesList.add(FileNotes(this, i))
-        }*/
-
         createRecyclerView()
 
-        /*
-        listView = findViewById(R.id.listView)
-        adapter = FileNotesAdapter(this, fileNotesList.getTextFile())
-        listView.adapter = adapter*/
+        // When the AppBarLayout progress changes, snap MotionLayout to the current progress
+        val listener = AppBarLayout.OnOffsetChangedListener { appBar, verticalOffset ->
+            // convert offset into % scrolled
+            val seekPosition = -verticalOffset/appBar.totalScrollRange.toFloat()
+
+            // inform MotionLayout of the animation progress
+            val toolbarMotionLayout = findViewById<MotionLayout>(R.id.toolbarMotionLayout)
+            toolbarMotionLayout.progress = seekPosition
+        }
+        val appBarLayout = findViewById<AppBarLayout>(R.id.appBarLayout)
+        appBarLayout.addOnOffsetChangedListener(listener)
     }
 
     lateinit var recyclerView: RecyclerView
