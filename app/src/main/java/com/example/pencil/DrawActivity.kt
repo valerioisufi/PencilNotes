@@ -30,6 +30,7 @@ import com.google.android.material.chip.Chip
 class DrawActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.Theme_Pencil)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_draw)
 

@@ -45,13 +45,21 @@
     </androidx.core.widget.NestedScrollView>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/floatingActionButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:background="@drawable/shape_toolbar"
-        android:onClick="newFileNotes"
+        android:onClick="addFileBottomSheet"
         android:src="@drawable/plus_small"
         app:backgroundTint="@color/dark_elevation_06dp"
         app:maxImageSize="32dp" />
+
+    <include
+        layout="@layout/new_file_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom"
+        android:elevation="8dp" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
