@@ -44,17 +44,12 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <include
         android:id="@+id/floatingActionButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:background="@drawable/shape_toolbar"
-        android:onClick="addFileBottomSheet"
-        android:src="@drawable/plus_small"
-        app:backgroundTint="@color/dark_elevation_06dp"
-        app:maxImageSize="32dp" />
+        layout="@layout/floating_action_button_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom|end" />
 
     <include
         layout="@layout/new_file_layout"

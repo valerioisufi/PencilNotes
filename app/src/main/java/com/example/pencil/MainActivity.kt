@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var arrayString: MutableList<String>
 
     fun addFileBottomSheet(view: View){
-        val floatingActionButton = findViewById<FloatingActionButton>(R.id.floatingActionButton)
+        val floatingActionButton = findViewById<MotionLayout>(R.id.floatingActionButton)
         val newFileMotionLayout = findViewById<MotionLayout>(R.id.newFileMotionLayout)
         when(newFileMotionLayout.currentState){
             R.id.close -> {
@@ -90,7 +90,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun filterBottomSheet(view: View){
-        val floatingActionButton = findViewById<FloatingActionButton>(R.id.floatingActionButton)
+        val floatingActionButton = findViewById<MotionLayout>(R.id.floatingActionButton)
         val newFileMotionLayout = findViewById<MotionLayout>(R.id.newFileMotionLayout)
         when(newFileMotionLayout.currentState){
             R.id.close -> {
