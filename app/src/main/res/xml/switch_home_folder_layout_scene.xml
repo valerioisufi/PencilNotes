@@ -42,6 +42,5 @@
         motion:duration="250"
         motion:motionInterpolator="easeOut">
         <OnClick motion:targetId="@+id/disactive_background" />
-        <OnClick motion:targetId="@+id/disactive_background" />
     </Transition>
 </MotionScene>

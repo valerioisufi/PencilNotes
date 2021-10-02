@@ -39,54 +39,15 @@ class MainActivity : AppCompatActivity() {
     lateinit var arrayString: MutableList<String>
 
     fun addFileBottomSheet(view: View){
-        val floatingActionButton = findViewById<MotionLayout>(R.id.floatingActionButton)
         val newFileMotionLayout = findViewById<MotionLayout>(R.id.newFileMotionLayout)
         when(newFileMotionLayout.currentState){
             R.id.close -> {
-                floatingActionButton.visibility = View.INVISIBLE
-                newFileMotionLayout.visibility = View.VISIBLE
                 newFileMotionLayout.transitionToState(R.id.open)
             }
             R.id.open -> {
-                floatingActionButton.visibility = View.VISIBLE
                 newFileMotionLayout.transitionToState(R.id.close)
             }
         }
-
-        newFileMotionLayout.setTransitionListener(object : MotionLayout.TransitionListener {
-            override fun onTransitionStarted(
-                motionLayout: MotionLayout?,
-                startId: Int,
-                endId: Int
-            ) {
-            }
-
-            override fun onTransitionChange(
-                motionLayout: MotionLayout?,
-                startId: Int,
-                endId: Int,
-                progress: Float
-            ) {
-            }
-
-            override fun onTransitionCompleted(
-                motionLayout: MotionLayout?,
-                currentId: Int
-            ) {
-                if(newFileMotionLayout.currentState == R.id.close){
-                    newFileMotionLayout.visibility = View.INVISIBLE
-                }
-            }
-
-            override fun onTransitionTrigger(
-                motionLayout: MotionLayout?,
-                triggerId: Int,
-                positive: Boolean,
-                progress: Float
-            ) {
-            }
-        })
-
     }
 
     fun filterBottomSheet(view: View){

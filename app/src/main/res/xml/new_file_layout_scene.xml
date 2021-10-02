@@ -19,7 +19,7 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             motion:layout_constraintBottom_toBottomOf="parent"
-            motion:layout_constraintTop_toTopOf="parent"
+            motion:layout_constraintTop_toTopOf="@+id/constraintLayout2"
             motion:layout_constraintStart_toStartOf="parent"
             android:alpha="0" />
         <Constraint
@@ -33,4 +33,10 @@
 
     <ConstraintSet android:id="@+id/open">
     </ConstraintSet>
+    <Transition
+        motion:constraintSetStart="@+id/open"
+        motion:constraintSetEnd="@+id/close"
+        motion:duration="200">
+        <OnClick motion:targetId="@+id/view2" />
+    </Transition>
 </MotionScene>
