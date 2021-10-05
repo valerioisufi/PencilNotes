@@ -26,22 +26,32 @@
         android:fillViewport="true"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <androidx.constraintlayout.motion.widget.MotionLayout
+            android:id="@+id/viewMotionLayout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            app:layoutDescription="@xml/activity_home_recycler_scene">
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerView"
+                android:id="@+id/recyclerHomeLayout"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:scrollbars="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerFolderLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:scrollbars="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.motion.widget.MotionLayout>
     </androidx.core.widget.NestedScrollView>
 
     <include

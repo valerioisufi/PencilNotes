@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.AppBarLayout
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,7 +18,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home2)
 
-        createRecyclerView()
+        createRecyclerHomeLayout()
+        createRecyclerFolderLayout()
 
         // When the AppBarLayout progress changes, snap MotionLayout to the current progress
         val listener = AppBarLayout.OnOffsetChangedListener { appBar, verticalOffset ->
@@ -34,7 +34,12 @@ class MainActivity : AppCompatActivity() {
         appBarLayout.addOnOffsetChangedListener(listener)
     }
 
-    lateinit var recyclerView: RecyclerView
+    private lateinit var recyclerHome: RecyclerView
+    private lateinit var recyclerFolder: RecyclerView
+
+    private lateinit var switchMotionLayout: MotionLayout
+    private lateinit var viewMotionLayout: MotionLayout
+
     lateinit var fileNotesList : FileNotes
     lateinit var arrayString: MutableList<String>
 
@@ -100,7 +105,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    fun createRecyclerView(){
+    fun createRecyclerHomeLayout(){
         fileNotesList = FileNotes(this, "fileNotesList.txt")
         fileNotesList.openFile()
         fileNotesList.readFile()
@@ -108,14 +113,68 @@ class MainActivity : AppCompatActivity() {
 
         arrayString = split(fileNotesList.getTextFile(), "\n").toMutableList()
 
-        recyclerView = findViewById(R.id.recyclerView)
-        recyclerView.adapter = FileNotesAdapter(this, arrayString)
+        recyclerHome = findViewById(R.id.recyclerHomeLayout)
+        recyclerHome.adapter = FileNotesAdapter(this, arrayString)
 
         var layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-        recyclerView.layoutManager = layoutManager
+        recyclerHome.layoutManager = layoutManager
 
-        var dividerItemDecoration = DividerItemDecoration(recyclerView.context, layoutManager.orientation);
-        recyclerView.addItemDecoration(dividerItemDecoration);
+        var dividerItemDecoration = DividerItemDecoration(recyclerHome.context, layoutManager.orientation);
+        recyclerHome.addItemDecoration(dividerItemDecoration);
+    }
+
+    fun createRecyclerFolderLayout(){
+        recyclerFolder = findViewById(R.id.recyclerFolderLayout)
+        recyclerFolder.adapter = FileNotesAdapter(this, arrayString)
+
+        var layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        recyclerFolder.layoutManager = layoutManager
+
+        var dividerItemDecoration = DividerItemDecoration(recyclerFolder.context, layoutManager.orientation);
+        recyclerFolder.addItemDecoration(dividerItemDecoration);
+
+        switchMotionLayout = findViewById(R.id.switchMotionLayout)
+        viewMotionLayout = findViewById(R.id.viewMotionLayout)
+        switchMotionLayout.setTransitionListener(object : MotionLayout.TransitionListener {
+            override fun onTransitionStarted(
+                motionLayout: MotionLayout?,
+                startId: Int,
+                endId: Int
+            ) {
+            }
+
+            override fun onTransitionChange(
+                motionLayout: MotionLayout?,
+                startId: Int,
+                endId: Int,
+                progress: Float
+            ) {
+            }
+
+            override fun onTransitionCompleted(
+                motionLayout: MotionLayout?,
+                currentId: Int
+            ) {
+                when(switchMotionLayout.currentState){
+                    R.id.home_active -> {
+                        viewMotionLayout.transitionToState(R.id.viewHome)
+
+                    }
+                    R.id.folder_active -> {
+                        viewMotionLayout.transitionToState(R.id.viewFolder)
+
+                    }
+                }
+            }
+
+            override fun onTransitionTrigger(
+                motionLayout: MotionLayout?,
+                triggerId: Int,
+                positive: Boolean,
+                progress: Float
+            ) {
+            }
+        })
     }
 
     fun newFileNotes(view : View){
@@ -135,9 +194,9 @@ class MainActivity : AppCompatActivity() {
 
         arrayString.add(textTemporaneo)
         arrayString.size
-        recyclerView.adapter!!.notifyItemChanged(arrayString.size - 1)
+        recyclerHome.adapter!!.notifyItemChanged(arrayString.size - 1)
 
-        //recyclerView.adapter!!.notifyDataSetChanged()
+        //recyclerHome.adapter!!.notifyDataSetChanged()
 
         //adapter.notifyDataSetChanged()
     }

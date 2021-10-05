@@ -5,7 +5,6 @@
     android:id="@+id/toolbarMotionLayout"
     android:layout_width="match_parent"
     android:layout_height="104dp"
-    android:background="@drawable/shape_toolbar"
     android:minHeight="56dp"
     app:layoutDescription="@xml/toolbar_layout_scene"
     app:layout_scrollFlags="scroll|enterAlways|exitUntilCollapsed">
@@ -58,7 +57,6 @@
         app:layout_constraintGuide_begin="56dp" />
 
     <include
-        android:id="@+id/include"
         layout="@layout/switch_home_folder_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
