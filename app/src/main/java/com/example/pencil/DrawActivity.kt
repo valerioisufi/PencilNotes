@@ -22,6 +22,8 @@ import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicBlur
+import android.text.TextUtils.replace
+import android.text.TextUtils.split
 import android.widget.CompoundButton
 import androidx.annotation.WorkerThread
 import com.google.android.material.chip.Chip
@@ -34,6 +36,7 @@ class DrawActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_draw)
 
+
         drawView = findViewById(R.id.drawView)
         textView = findViewById(R.id.textView)
         commandView = findViewById(R.id.commandView)
@@ -45,7 +48,16 @@ class DrawActivity : AppCompatActivity() {
         blurEffect = findViewById(R.id.blurEffect)
 
 
-        hideSystemUI()
+        var intent = intent
+        val titoloFile = intent.getStringExtra("titoloFile")
+        var nomeFile = replace(titoloFile, arrayOf(" "), arrayOf("_")).toString()
+        nomeFile += ".txt"
+
+        drawView.readFile(nomeFile)
+
+
+        //hideSystemUI()
+
         /*// Hide the status bar.
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         // Remember that you should never show the action bar if the

@@ -7,7 +7,6 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import androidx.compose.ui.geometry.Rect
 import androidx.core.content.res.ResourcesCompat
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -17,8 +16,8 @@ import kotlin.math.sqrt
  */
 class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
-    private lateinit var pageRect : RectF
-    private lateinit var windowRect : RectF
+    private lateinit var pageRect: RectF
+    private lateinit var windowRect: RectF
     private var path = Path()
     private var paint = Paint().apply {
         color = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
@@ -38,11 +37,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        if (redraw){
+        if (redraw) {
             //pageCanvas.clipRect(windowRect)
             drawPage(pageCanvas)
 
-            for(i in pathList.indices){
+            for (i in pathList.indices) {
                 var path = readPath(pathList[i].path)
                 pathMatrix.setRectToRect(pathList[i].rect, pageRect, Matrix.ScaleToFit.CENTER)
                 path.transform(pathMatrix)
@@ -55,7 +54,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             //pageCanvas.clipRect(pageRect)
 
             redraw = false
-        }else{
+        } else {
 
         }
         //drawPage()
@@ -73,7 +72,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         canvas.drawBitmap(pageBitmap, 0f, 0f, null)
         drawPageBackground(canvas)
 
-        if(drawLastPath) {
+        if (drawLastPath) {
             var paint = Paint(lastPath.paint)
             paint.strokeWidth = lastPath.paint.strokeWidth * scaleFactorPaint
 
@@ -82,43 +81,120 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
 
-    data class InfPath(var path: String, var paint: Paint, var rect : RectF)//, var save : Boolean)
-    private var pathList = mutableListOf<InfPath>()
-    private var lastPath : InfPath = InfPath("", paint, RectF())
+    data class InfPath(var path: String, var paint: Paint, var rect: RectF)//, var save : Boolean)
 
-    fun newPath(path: String, paint: Paint){
+    private var pathList = mutableListOf<InfPath>()
+    private var lastPath: InfPath = InfPath("", paint, RectF())
+    lateinit var drawFile: FileNotes
+
+    fun readFile(nomeFile: String) {
+        drawFile = FileNotes(context, nomeFile)
+        drawFile.openFile()
+        drawFile.readFile()
+
+        val textFile = drawFile.getTextFile()
+        val listLine = split(textFile, "\n").toList()
+        for(line in listLine){
+            var listTemp = split(line, ";").toList()
+
+            var pathS = listTemp[0]
+            var paintS = listTemp[1]
+            var rectS = listTemp[2]
+
+            var paintList = split(paintS, "#").toList()
+            var rectList = split(rectS, "#").toList()
+
+            var paintTemp = Paint().apply {
+                color = paintList[0].toInt()
+                // Smooths out edges of what is drawn without affecting shape.
+                isAntiAlias = true
+                // Dithering affects how colors with higher-precision than the device are down-sampled.
+                isDither = true
+                style = when (paintList[1]) {
+                    "STROKE" -> Paint.Style.STROKE
+                    "FILL" -> Paint.Style.FILL
+                    else -> Paint.Style.FILL_AND_STROKE
+                }
+                strokeJoin = Paint.Join.ROUND // default: MITER
+                strokeCap = Paint.Cap.ROUND // default: BUTT
+                strokeWidth = paintList[2].toFloat()
+            }
+            var rectTemp = RectF().apply {
+                left = rectList[0].toFloat()
+                top = rectList[1].toFloat()
+                right = rectList[2].toFloat()
+                bottom = rectList[3].toFloat()
+            }
+
+            var infPath = InfPath(pathS, paintTemp, rectTemp)
+            pathList.add(infPath)
+
+            invalidate()
+        }
+    }
+
+    fun writeFile(path: String, paint: Paint, rect: RectF) {
+        var textFile = drawFile.getTextFile()
+        if (textFile != "") {
+            textFile += "\n"
+        }
+        var pathS = path
+        var paintS =
+                paint.color.toString() + "#" +
+                when (paint.style) {
+                    Paint.Style.STROKE -> "STROKE"
+                    Paint.Style.FILL -> "FILL"
+                    Paint.Style.FILL_AND_STROKE -> "FILL_AND_STROKE"
+                } + "#" +
+                paint.strokeWidth.toString()
+        var rectS = rect.left.toString() + "#" + rect.top.toString() + "#" + rect.right.toString() + "#" + rect.bottom.toString()
+        textFile += "$pathS;$paintS;$rectS"
+
+        drawFile.setTextFile(textFile)
+        drawFile.writeFile()
+    }
+
+    fun newPath(path: String, paint: Paint) {
         lastPath = InfPath(path, paint, pageRect)
         drawLastPath = true
     }
-    fun rewritePath(path: String){
+
+    fun rewritePath(path: String) {
         lastPath.path = path
 
         invalidate()
     }
-    fun savePath(path: String, paint: Paint){
+
+    fun savePath(path: String, paint: Paint) {
         lastPath.path = path
         lastPath.paint = paint
 
         pathList.add(lastPath)
+        writeFile(lastPath.path, lastPath.paint, lastPath.rect)
 
         drawLastPath = false
         redraw = true
         invalidate()
     }
 
-    private fun readPath(path: String):Path{
+    private fun readPath(path: String): Path {
         var realPath = Path()
         var stringPath = split(path, " ")
 
         var i = 0
-        while(i < stringPath.size){
-            when(stringPath[i]){
+        while (i < stringPath.size) {
+            when (stringPath[i]) {
                 "M" -> {
-                    realPath.moveTo(stringPath[i+1].toFloat(),stringPath[i+2].toFloat())
+                    realPath.moveTo(stringPath[i + 1].toFloat(), stringPath[i + 2].toFloat())
                     i += 2
                 }
                 "Q" -> {
-                    realPath.quadTo(stringPath[i+1].toFloat(),stringPath[i+2].toFloat(),stringPath[i+3].toFloat(),stringPath[i+4].toFloat())
+                    realPath.quadTo(
+                        stringPath[i + 1].toFloat(),
+                        stringPath[i + 2].toFloat(),
+                        stringPath[i + 3].toFloat(),
+                        stringPath[i + 4].toFloat()
+                    )
                     i += 4
                 }
             }
@@ -172,7 +248,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         invalidate()
     }*/
 
-    fun setPathPaint(_path: Path, _paint: Paint){
+    fun setPathPaint(_path: Path, _paint: Paint) {
         path = _path
         paint = _paint
         invalidate()
@@ -184,8 +260,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
 
-
-    private fun drawPath(infPath : InfPath){
+    private fun drawPath(infPath: InfPath) {
         var pathMatrix = Matrix()
         pathMatrix.setRectToRect(infPath.rect, pageRect, Matrix.ScaleToFit.CENTER)
         //_path.transform(pathMatrix)
@@ -193,7 +268,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         //pageCanvas.drawPath(infPath.path, infPath.paint)
     }
 
-    private fun drawPage(canvas: Canvas){
+    private fun drawPage(canvas: Canvas) {
         val paintPage = Paint().apply {
             color = ResourcesCompat.getColor(resources, R.color.black, null)
             // Smooths out edges of what is drawn without affecting shape.
@@ -218,7 +293,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         canvas.drawRect(pageRect, paintPage)
         //canvas.clipRect(pageRect)
     }
-    private fun drawPageBackground(canvas: Canvas){
+
+    private fun drawPageBackground(canvas: Canvas) {
         var path1 = Path()
         path1.addRect(windowRect, Path.Direction.CW)
         var path2 = Path()
@@ -234,10 +310,10 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         //canvas.drawColor(ResourcesCompat.getColor(resources, R.color.dark_elevation_00dp, null))
     }
 
-    private fun createPage(){
+    private fun createPage() {
         val padding = 20
 
-        val widthPage = widthView - padding*2
+        val widthPage = widthView - padding * 2
         val heightPage = widthPage * sqrt(2.0)
 
         val left = padding.toFloat()
@@ -245,7 +321,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         val right = (padding + widthPage).toFloat()
         var bottom = (padding + heightPage).toFloat()
 
-        if(heightPage + padding * 2 < heightView){
+        if (heightPage + padding * 2 < heightView) {
             top = ((heightView - heightPage) / 2).toFloat()
             bottom = (top + heightPage).toFloat()
         }
@@ -254,8 +330,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         moveMatrix.mapRect(pageRect)
     }
 
-    private var widthView : Int = 0
-    private var heightView : Int = 0
+    private var widthView: Int = 0
+    private var heightView: Int = 0
 
     private lateinit var pageCanvas: Canvas
     private lateinit var pageBitmap: Bitmap
@@ -279,9 +355,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
 
-
-
-
     // private val backgroundColor = ResourcesCompat.getColor(resources, R.color.colorBackground, null)
     // private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
 
@@ -291,6 +364,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }*/
 
     private var redraw = true
+
     //private var scaleCache = false
     private var drawLastPath = false
     private var scaleFactorPaint = 1f
@@ -324,25 +398,31 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private var moveFocusPos = PointF()
 
 
-    fun scaleTranslate(event: MotionEvent){
+    fun scaleTranslate(event: MotionEvent) {
         when (event.actionMasked) {
             MotionEvent.ACTION_POINTER_DOWN -> {
                 fStartPos = PointF(event.getX(FIRST_POINTER_INDEX), event.getY(FIRST_POINTER_INDEX))
-                sStartPos = PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
+                sStartPos =
+                    PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
 
 
-                startDistance = sqrt((sStartPos.x - fStartPos.x).pow(2) + (sStartPos.y - fStartPos.y).pow(2))
-                startFocusPos = PointF((fStartPos.x + sStartPos.x) / 2, (fStartPos.y + sStartPos.y) / 2)
+                startDistance =
+                    sqrt((sStartPos.x - fStartPos.x).pow(2) + (sStartPos.y - fStartPos.y).pow(2))
+                startFocusPos =
+                    PointF((fStartPos.x + sStartPos.x) / 2, (fStartPos.y + sStartPos.y) / 2)
             }
             MotionEvent.ACTION_MOVE -> {
                 fMovePos = PointF(event.getX(FIRST_POINTER_INDEX), event.getY(FIRST_POINTER_INDEX))
-                sMovePos = PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
+                sMovePos =
+                    PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
 
-                moveDistance = sqrt((sMovePos.x - fMovePos.x).pow(2) + (sMovePos.y - fMovePos.y).pow(2))
+                moveDistance =
+                    sqrt((sMovePos.x - fMovePos.x).pow(2) + (sMovePos.y - fMovePos.y).pow(2))
                 moveFocusPos = PointF((fMovePos.x + sMovePos.x) / 2, (fMovePos.y + sMovePos.y) / 2)
 
-                translate = PointF(moveFocusPos.x - startFocusPos.x, moveFocusPos.y - startFocusPos.y)
-                scaleFactor = (moveDistance/startDistance)
+                translate =
+                    PointF(moveFocusPos.x - startFocusPos.x, moveFocusPos.y - startFocusPos.y)
+                scaleFactor = (moveDistance / startDistance)
 
 
                 moveMatrix.setTranslate(translate.x, translate.y)
@@ -352,11 +432,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 moveMatrix.getValues(f)
                 scaleFactorPaint = f[Matrix.MSCALE_X]
 
-                if(scaleFactorPaint * scaleFactor < 0.5f){
-                    scaleFactor = 0.5f/scaleFactorPaint
+                if (scaleFactorPaint * scaleFactor < 0.5f) {
+                    scaleFactor = 0.5f / scaleFactorPaint
                 }
-                if(scaleFactorPaint * scaleFactor > 3f){
-                    scaleFactor = 3f/scaleFactorPaint
+                if (scaleFactorPaint * scaleFactor > 3f) {
+                    scaleFactor = 3f / scaleFactorPaint
                 }
                 moveMatrix.postScale(scaleFactor, scaleFactor, moveFocusPos.x, moveFocusPos.y)
 

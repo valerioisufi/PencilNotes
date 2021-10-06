@@ -32,24 +32,54 @@
             android:layout_height="match_parent"
             app:layoutDescription="@xml/activity_home_recycler_scene">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerHomeLayout"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:scrollbars="vertical"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerFolderLayout"
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guidelineViewEnd"
                 android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:scrollbars="vertical"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="2" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/viewConstraintLayout"
+                android:layout_height="match_parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintEnd_toEndOf="@id/guidelineViewEnd"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintWidth_percent="2"
+                android:layout_width="0dp">
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guidelineViewCenter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_percent="0.5" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerHomeLayout"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:scrollbars="vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineViewCenter"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                </androidx.recyclerview.widget.RecyclerView>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerFolderLayout"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:scrollbars="vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/guidelineViewCenter"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                </androidx.recyclerview.widget.RecyclerView>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
         </androidx.constraintlayout.motion.widget.MotionLayout>
     </androidx.core.widget.NestedScrollView>

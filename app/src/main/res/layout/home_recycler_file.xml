@@ -64,7 +64,7 @@
         android:id="@+id/imageButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/dark_elevation_00dp"
+        android:background="@android:color/transparent"
         android:padding="8dp"
         android:scaleType="centerInside"
         app:layout_constraintBottom_toBottomOf="parent"
