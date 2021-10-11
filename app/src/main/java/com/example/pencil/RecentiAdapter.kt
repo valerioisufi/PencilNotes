@@ -4,12 +4,13 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 
-class FileNotesAdapter(context: Context, private val dataSet: List<Map<String,String>>) :
+class RecentiAdapter(context: Context, private val dataSet: List<Map<String,String>>) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     /**
@@ -27,11 +28,15 @@ class FileNotesAdapter(context: Context, private val dataSet: List<Map<String,St
         val titoloFileNotes: TextView = view.findViewById(R.id.titoloFileNotes)
         val sottotitoloFileNotes: TextView = view.findViewById(R.id.sottotitoloFileNotes)
         val dataCreazioneFileNotes: TextView = view.findViewById(R.id.dataCreazioneFileNotes)
+        val imageButtonFileNotes: ImageButton = view.findViewById(R.id.imageButtonFileNotes)
 
         init {
             if(listener != null) {
                 view.setOnClickListener {
                     listener.onItemClick(adapterPosition)
+                }
+                imageButtonFileNotes.setOnClickListener {
+                    listener.onMoreInfoClick(adapterPosition)
                 }
             }
         }
@@ -118,6 +123,7 @@ class FileNotesAdapter(context: Context, private val dataSet: List<Map<String,St
 
     interface OnItemClickListener{
         fun onItemClick(position : Int)
+        fun onMoreInfoClick(position : Int)
     }
 
     fun setOnItemClickListener(listener : OnItemClickListener) {

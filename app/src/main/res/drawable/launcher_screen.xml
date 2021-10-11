@@ -3,7 +3,7 @@
     android:opacity="opaque">
 
     <item
-        android:drawable="@color/dark_elevation_00dp"/>
+        android:drawable="@color/black"/>
     <item
         android:bottom="144dp"
         android:gravity="center"

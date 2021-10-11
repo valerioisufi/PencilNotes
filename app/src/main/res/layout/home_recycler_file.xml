@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/layoutFileNotes"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@drawable/ripple_on_dark">
 
     <ImageView
         android:id="@+id/imageFileNotes"
@@ -20,7 +21,7 @@
 
     <TextView
         android:id="@+id/titoloFileNotes"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:fontFamily="@font/roboto"
@@ -28,21 +29,24 @@
         android:textColor="@color/white"
         android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/sottotitoloFileNotes"
+        app:layout_constraintEnd_toEndOf="@+id/sottotitoloFileNotes"
         app:layout_constraintStart_toStartOf="@+id/sottotitoloFileNotes"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView
         android:id="@+id/sottotitoloFileNotes"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
+        android:layout_marginEnd="16dp"
         android:layout_marginBottom="8dp"
         android:fontFamily="@font/roboto"
         android:text="TextView"
         android:textColor="@color/color_text_secondary"
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/imageButtonFileNotes"
         app:layout_constraintStart_toEndOf="@+id/imageFileNotes"
         app:layout_constraintTop_toBottomOf="@+id/titoloFileNotes" />
 
@@ -61,12 +65,14 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <ImageButton
-        android:id="@+id/imageButton"
+        android:id="@+id/imageButtonFileNotes"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/ripple_on_dark"
         android:padding="8dp"
-        android:scaleType="centerInside"
+        android:scaleType="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"

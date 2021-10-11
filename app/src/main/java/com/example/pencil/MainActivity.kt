@@ -1,19 +1,22 @@
 package com.example.pencil
 
+import android.app.Dialog
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.TextUtils.split
 import android.util.Log
-import android.view.MotionEvent
+import android.view.Gravity
 import android.view.View
-import android.widget.Adapter
-import android.widget.EditText
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.Button
+import android.widget.TextView
 import androidx.constraintlayout.motion.widget.MotionLayout
-import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.textfield.TextInputEditText
 import java.util.*
 
 private const val TAG = "MainActivity"
@@ -24,11 +27,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home2)
 
-        recentiFile = FileNotes(this, "recentiFile.txt")
-        recentiFile.openFile()
-        recentiFile.readFile()
+        recentiFile = FileManager(this, "recentiFile.txt")
+        Log.d(TAG, "onCreate: " + recentiFile.text)
 
-        recentiRecyclerData(recentiFile.getTextFile())
+        recentiRecyclerData(recentiFile.text)
 
         createRecyclerHomeLayout()
         createRecyclerFolderLayout()
@@ -52,91 +54,34 @@ class MainActivity : AppCompatActivity() {
     private lateinit var switchMotionLayout: MotionLayout
     private lateinit var viewMotionLayout: MotionLayout
 
-    lateinit var recentiFile : FileNotes
+    lateinit var recentiFile : FileManager
     private var recentiData: MutableList<MutableMap<String,String>> = mutableListOf()
 
-    fun addFileBottomSheet(view: View){
-        val newFileMotionLayout = findViewById<MotionLayout>(R.id.newFileMotionLayout)
-        when(newFileMotionLayout.currentState){
-            R.id.close -> {
-                newFileMotionLayout.transitionToState(R.id.open)
-            }
-            R.id.open -> {
-                newFileMotionLayout.transitionToState(R.id.close)
-            }
-        }
-    }
-
-    fun filterBottomSheet(view: View){
-        val floatingActionButton = findViewById<MotionLayout>(R.id.floatingActionButton)
-        val newFileMotionLayout = findViewById<MotionLayout>(R.id.newFileMotionLayout)
-        when(newFileMotionLayout.currentState){
-            R.id.close -> {
-                floatingActionButton.visibility = View.INVISIBLE
-                newFileMotionLayout.visibility = View.VISIBLE
-                newFileMotionLayout.transitionToState(R.id.open)
-            }
-            R.id.open -> {
-                floatingActionButton.visibility = View.VISIBLE
-                newFileMotionLayout.transitionToState(R.id.close)
-            }
-        }
-
-        newFileMotionLayout.setTransitionListener(object : MotionLayout.TransitionListener {
-            override fun onTransitionStarted(
-                motionLayout: MotionLayout?,
-                startId: Int,
-                endId: Int
-            ) {
-            }
-
-            override fun onTransitionChange(
-                motionLayout: MotionLayout?,
-                startId: Int,
-                endId: Int,
-                progress: Float
-            ) {
-            }
-
-            override fun onTransitionCompleted(
-                motionLayout: MotionLayout?,
-                currentId: Int
-            ) {
-                if(newFileMotionLayout.currentState == R.id.close){
-                    newFileMotionLayout.visibility = View.INVISIBLE
-                }
-            }
-
-            override fun onTransitionTrigger(
-                motionLayout: MotionLayout?,
-                triggerId: Int,
-                positive: Boolean,
-                progress: Float
-            ) {
-            }
-        })
-    }
 
     fun createRecyclerHomeLayout(){
         recyclerHome = findViewById(R.id.recyclerHomeLayout)
-        var adapter  = FileNotesAdapter(this, recentiData)
+        var adapter  = RecentiAdapter(this, recentiData)
         recyclerHome.adapter = adapter
 
         var layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         recyclerHome.layoutManager = layoutManager
 
-        adapter.setOnItemClickListener(object : FileNotesAdapter.OnItemClickListener{
+        adapter.setOnItemClickListener(object : RecentiAdapter.OnItemClickListener{
             override fun onItemClick(position: Int) {
                 val intent = Intent(applicationContext, DrawActivity::class.java)
                 intent.putExtra("titoloFile", recentiData[position]["titolo"])
                 startActivity(intent)
+            }
+
+            override fun onMoreInfoClick(position: Int) {
+                dettagliFileDialog(position, recentiData[position])
             }
         })
     }
 
     fun createRecyclerFolderLayout(){
         recyclerFolder = findViewById(R.id.recyclerFolderLayout)
-        recyclerFolder.adapter = FileNotesAdapter(this, recentiData)
+        recyclerFolder.adapter = RecentiAdapter(this, recentiData)
 
         var layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         recyclerFolder.layoutManager = layoutManager
@@ -185,35 +130,6 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    fun newFileNotes(view : View){
-        val editTextTitolo = findViewById<EditText>(R.id.editTextTitolo)
-        val editTextSottotitolo = findViewById<EditText>(R.id.editTextSottotitolo)
-        val editTextData = findViewById<EditText>(R.id.editTextData)
-
-        var nowDate = GregorianCalendar.getInstance(TimeZone.getDefault())
-        var nowDateString = "" + nowDate.get(Calendar.YEAR) + "#" + (nowDate.get(Calendar.MONTH) + 1) + "#" + nowDate.get(Calendar.DAY_OF_MONTH)
-        Log.d("calendar", nowDateString)
-
-        var text = recentiFile.getTextFile()
-        if(text != "") {
-            text = "\n" + text
-        }
-        var textTemporaneo = "" + editTextTitolo.editableText + ";" + editTextSottotitolo.editableText + ";" + nowDateString
-        text = textTemporaneo + text
-
-
-        recentiFile.setTextFile(text)
-        recentiFile.writeFile()
-
-        recentiData.clear()
-        recentiRecyclerData(text)
-        recyclerHome.adapter!!.notifyItemChanged(1)
-
-        //recyclerHome.adapter!!.notifyDataSetChanged()
-
-        //adapter.notifyDataSetChanged()
-    }
-
     fun recentiRecyclerData(text : String){
         if(text != "") {
             var mListItem = split(text, "\n").toMutableList()
@@ -231,6 +147,8 @@ class MainActivity : AppCompatActivity() {
             lastMonth.add(Calendar.MONTH, -1)
             var older = GregorianCalendar.getInstance(TimeZone.getDefault())
 
+            Log.d(TAG, "recentiRecyclerData: "+ lastWeek.get(Calendar.YEAR) + lastWeek.get(Calendar.MONTH) + lastWeek.get(Calendar.DAY_OF_MONTH))
+
             var todayText = true
             var lastWeekText = true
             var lastMonthText = true
@@ -240,7 +158,7 @@ class MainActivity : AppCompatActivity() {
                 val listDate = split(listInf[2], "#").toList()
 
                 val date =
-                    GregorianCalendar(listDate[0].toInt(), listDate[1].toInt(), listDate[2].toInt())
+                    GregorianCalendar(listDate[0].toInt(), listDate[1].toInt() - 1, listDate[2].toInt())
                 if (todayText && date.compareTo(today) >= 0) {
                     val listToAdd = mutableMapOf(Pair("type", "text"), Pair("textToWrite", "Oggi"))
                     recentiData.add(listToAdd)
@@ -283,5 +201,81 @@ class MainActivity : AppCompatActivity() {
     fun newActivity(view : View) {
         val intent = Intent(this, DrawActivity::class.java)
         startActivity(intent)
+    }
+
+    fun dettagliFileDialog(position : Int, data: MutableMap<String, String>) {
+        var dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_dettagli_file)
+
+        var window = dialog.window!!
+        window.setBackgroundDrawableResource(android.R.color.transparent)
+        window.setGravity(Gravity.BOTTOM)
+        window.attributes.windowAnimations = R.style.DialogAnimation
+
+        dialog.setCancelable(true)
+        window.setLayout(resources.displayMetrics.widthPixels, WRAP_CONTENT)
+
+        val titolo = dialog.findViewById<TextView>(R.id.titoloDialogDettagliFile)
+        val sottotitolo = dialog.findViewById<TextView>(R.id.sottotitoloDialogDettagliFile)
+
+        titolo.text = data["titolo"]
+        sottotitolo.text = data["sottotitolo"]
+
+        val eliminaButton = dialog.findViewById<ConstraintLayout>(R.id.eliminaDialogDettagliFile)
+        val rinominaButton = dialog.findViewById<ConstraintLayout>(R.id.rinominaDialogDettagliFile)
+        val spostaButton = dialog.findViewById<ConstraintLayout>(R.id.spostaDialogDettagliFile)
+        val modificaButton = dialog.findViewById<ConstraintLayout>(R.id.modificaDialogDettagliFile)
+
+        eliminaButton.setOnClickListener {
+            recentiData.removeAt(position)
+            recyclerHome.adapter!!.notifyItemRemoved(position)
+
+            recentiFile.removeLine(data["titolo"]!! + ";" + data["sottotitolo"]!! + ";" + data["data"]!!)
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    fun newFileDialog(view: View){
+        var dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_new_file)
+
+        var window = dialog.window!!
+        window.setBackgroundDrawableResource(android.R.color.transparent)
+        window.setGravity(Gravity.CENTER)
+        window.attributes.windowAnimations = R.style.DialogAnimation
+
+        dialog.setCancelable(true)
+        window.setLayout(resources.displayMetrics.widthPixels - dpToPx(32, resources.displayMetrics), WRAP_CONTENT)
+
+        dialog.show()
+
+
+        val buttonConfermaNewFile = dialog.findViewById<Button>(R.id.buttonConfermaNewFile)
+        buttonConfermaNewFile.setOnClickListener {
+            val inputTitoloNewfile = dialog.findViewById<TextInputEditText>(R.id.inputTitoloNewfile)
+            val inputSottotitoloNewFile = dialog.findViewById<TextInputEditText>(R.id.inputSottotitoloNewFile)
+
+            var nowDate = GregorianCalendar.getInstance(TimeZone.getDefault())
+            var nowDateString =
+                "" + nowDate.get(Calendar.YEAR) + "#" + (nowDate.get(Calendar.MONTH) + 1) + "#" + nowDate.get(
+                    Calendar.DAY_OF_MONTH
+                )
+            Log.d("calendar", nowDateString)
+
+
+            val textTemporaneo =
+                "" + inputTitoloNewfile.editableText + ";" + inputSottotitoloNewFile.editableText + ";" + nowDateString
+            recentiFile.addLine(textTemporaneo, 0)
+
+            recentiData.clear()
+            recentiRecyclerData(recentiFile.text)
+
+            recyclerHome.adapter!!.notifyItemChanged(0)
+            recyclerHome.adapter!!.notifyItemInserted(1)
+
+            dialog.dismiss()
+        }
     }
 }

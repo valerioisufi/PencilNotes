@@ -91,10 +91,4 @@
         android:layout_height="match_parent"
         android:layout_gravity="bottom|end" />
 
-    <include
-        layout="@layout/new_file_layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="bottom"
-        android:elevation="8dp" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -56,6 +56,11 @@ class DrawActivity : AppCompatActivity() {
         drawView.readFile(nomeFile)
 
 
+        val sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+        modePenna = sharedPref.getBoolean(getString(R.string.mode_penna), true)
+        modePennaView.isChecked = modePenna
+
+
         //hideSystemUI()
 
         /*// Hide the status bar.
@@ -166,7 +171,9 @@ class DrawActivity : AppCompatActivity() {
 
             if (event.pointerCount == 2){
                 drawView.scaleTranslate(event)
-                drawView.rewritePath("")
+                if(!modePenna) {
+                    drawView.rewritePath("")
+                }
                 continueScaleTranslate = true
             }
 
@@ -175,18 +182,19 @@ class DrawActivity : AppCompatActivity() {
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seek: SeekBar, progress: Int, fromUser: Boolean) {
+                var progressTemp = (progress * 0.1).toFloat()
                 when(pennelloAttivo){
-                    Pennello.MATITA -> paintMatita.strokeWidth = progress.toFloat()
-                    Pennello.PENNA -> paintPenna.strokeWidth = progress.toFloat()
-                    Pennello.EVIDENZIATORE -> paintEvidenziatore.strokeWidth = progress.toFloat()
-                    Pennello.GOMMA -> paintGomma.strokeWidth = progress.toFloat()
+                    Pennello.MATITA -> paintMatita.strokeWidth = progressTemp
+                    Pennello.PENNA -> paintPenna.strokeWidth = progressTemp
+                    Pennello.EVIDENZIATORE -> paintEvidenziatore.strokeWidth = progressTemp
+                    Pennello.GOMMA -> paintGomma.strokeWidth = progressTemp
                 }
-                dimensioneTrattoTextView.text = seekBar.progress.toString()
+                dimensioneTrattoTextView.text = progressTemp.toString()
             }
             override fun onStartTrackingTouch(seek: SeekBar) {}
             override fun onStopTrackingTouch(seek: SeekBar) {
                 Toast.makeText(this@DrawActivity,
-                    "La dimesione è: " + seek.progress,
+                    "La dimesione è: " + (seek.progress * 0.1).toFloat(),
                     Toast.LENGTH_SHORT).show()
                 //paint.strokeWidth = seek.progress.toFloat()
             }
@@ -194,6 +202,10 @@ class DrawActivity : AppCompatActivity() {
         modePennaView.setOnCheckedChangeListener { buttonView, isChecked ->
             run {
                 modePenna = isChecked
+                with (sharedPref.edit()) {
+                    putBoolean(getString(R.string.mode_penna), isChecked)
+                    apply()
+                }
             }
         }
 
@@ -437,24 +449,24 @@ class DrawActivity : AppCompatActivity() {
 
         when(pennelloAttivo){
             Pennello.MATITA -> {
-                seekBar.progress = paintMatita.strokeWidth.toInt()
+                seekBar.progress = (paintMatita.strokeWidth * 10).toInt()
                 colorPicker.color = paintMatita.color
             }
             Pennello.PENNA -> {
-                seekBar.progress = paintPenna.strokeWidth.toInt()
+                seekBar.progress = (paintPenna.strokeWidth * 10).toInt()
                 colorPicker.color = paintPenna.color
             }
             Pennello.EVIDENZIATORE -> {
-                seekBar.progress = paintEvidenziatore.strokeWidth.toInt()
+                seekBar.progress = (paintEvidenziatore.strokeWidth * 10).toInt()
                 colorPicker.color = paintEvidenziatore.color
             }
             Pennello.GOMMA -> {
-                seekBar.progress = paintGomma.strokeWidth.toInt()
+                seekBar.progress = (paintGomma.strokeWidth * 10).toInt()
                 colorPicker.color = paintGomma.color
             }
         }
 
-        dimensioneTrattoTextView.text = seekBar.progress.toString()
+        dimensioneTrattoTextView.text = (seekBar.progress * 0.1).toFloat().toString()
     }
 
     fun choosePennello(view: View){
@@ -496,7 +508,7 @@ class DrawActivity : AppCompatActivity() {
             blurEffect.visibility = View.VISIBLE
         }
 
-        dimensioneTrattoTextView.text = seekBar.progress.toString()
+        dimensioneTrattoTextView.text = (seekBar.progress * 0.1).toFloat().toString()
     }
 
     fun closeViewLayout(view: View){

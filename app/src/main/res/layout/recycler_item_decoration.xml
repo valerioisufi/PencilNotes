@@ -7,10 +7,10 @@
     <View
         android:id="@+id/r_item_decoration"
         android:layout_width="0dp"
-        android:layout_height="1dp"
+        android:layout_height="2dp"
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
-        android:background="@color/color_text_secondary"
+        android:background="#393939"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

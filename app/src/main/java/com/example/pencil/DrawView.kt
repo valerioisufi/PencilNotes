@@ -85,14 +85,12 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private var pathList = mutableListOf<InfPath>()
     private var lastPath: InfPath = InfPath("", paint, RectF())
-    lateinit var drawFile: FileNotes
+    lateinit var drawFile: FileManager
 
     fun readFile(nomeFile: String) {
-        drawFile = FileNotes(context, nomeFile)
-        drawFile.openFile()
-        drawFile.readFile()
+        drawFile = FileManager(context, nomeFile)
 
-        val textFile = drawFile.getTextFile()
+        val textFile = drawFile.text
         val listLine = split(textFile, "\n").toList()
         for(line in listLine){
             var listTemp = split(line, ";").toList()
@@ -134,7 +132,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
     fun writeFile(path: String, paint: Paint, rect: RectF) {
-        var textFile = drawFile.getTextFile()
+        var textFile = drawFile.text
         if (textFile != "") {
             textFile += "\n"
         }
@@ -150,8 +148,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         var rectS = rect.left.toString() + "#" + rect.top.toString() + "#" + rect.right.toString() + "#" + rect.bottom.toString()
         textFile += "$pathS;$paintS;$rectS"
 
-        drawFile.setTextFile(textFile)
-        drawFile.writeFile()
+        drawFile.text = textFile
+        drawFile.writeToFile()
     }
 
     fun newPath(path: String, paint: Paint) {
@@ -435,8 +433,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 if (scaleFactorPaint * scaleFactor < 0.5f) {
                     scaleFactor = 0.5f / scaleFactorPaint
                 }
-                if (scaleFactorPaint * scaleFactor > 3f) {
-                    scaleFactor = 3f / scaleFactorPaint
+                if (scaleFactorPaint * scaleFactor > 5f) {
+                    scaleFactor = 5f / scaleFactorPaint
                 }
                 moveMatrix.postScale(scaleFactor, scaleFactor, moveFocusPos.x, moveFocusPos.y)
 

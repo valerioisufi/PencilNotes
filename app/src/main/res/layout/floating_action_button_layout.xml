@@ -51,7 +51,7 @@
         android:layout_marginBottom="24dp"
         android:background="@drawable/shape_action_button"
         android:backgroundTint="@color/dark_elevation_04dp"
-        android:onClick="addFileBottomSheet"
+        android:onClick="newFileDialog"
         android:padding="16dp"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toTopOf="@+id/imageView"
