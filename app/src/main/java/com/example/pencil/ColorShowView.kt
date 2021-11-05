@@ -1,10 +1,12 @@
 package com.example.pencil
 
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.*
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
+import androidx.core.content.res.ResourcesCompat
 import kotlin.math.ceil
 
 /**
@@ -71,7 +73,7 @@ class ColorShowView(context: Context, attrs: AttributeSet) : View(context, attrs
     }
 
     var paintBorder = Paint().apply {
-        color = -0x919192
+        color = ResourcesCompat.getColor(resources, R.color.gn_border_page, null)
         style = Paint.Style.STROKE
         strokeWidth = BORDER_WIDTH.toFloat()
         isAntiAlias = true

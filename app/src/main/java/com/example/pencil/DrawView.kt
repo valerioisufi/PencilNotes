@@ -8,8 +8,11 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.transform
 import kotlin.math.pow
 import kotlin.math.sqrt
+
+private const val TAG = "DrawView"
 
 /**
  * TODO: document your custom view class.
@@ -41,22 +44,38 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             //pageCanvas.clipRect(windowRect)
             drawPage(pageCanvas)
 
-            for (i in pathList.indices) {
-                var path = readPath(pathList[i].path)
-                pathMatrix.setRectToRect(pathList[i].rect, pageRect, Matrix.ScaleToFit.CENTER)
-                path.transform(pathMatrix)
-
-                var paint = Paint(pathList[i].paint)
-                paint.strokeWidth = pathList[i].paint.strokeWidth * scaleFactorPaint
-
-                pageCanvas.drawPath(path, paint)
-            }
+            drawPagePaths(pageCanvas)
             //pageCanvas.clipRect(pageRect)
+            canvas.drawBitmap(pageBitmap, 0f, 0f, null)
 
             redraw = false
-        } else {
+            drawPageCache()
+        } else if(scaling) {
+            // disegno la pagina
+            drawPage(scalingCanvas)
+
+            // trasformo e disegno la pagina intera memorizzata nella cache
+            scalingCanvas.drawBitmap(cachePageBitmap, null, pageRect, null)
+
+            // trasformo e disegno l'area di disegno già pronta
+            var startRect = RectF(windowRect)
+            var endRect = RectF(windowRect)
+            startRect.transform(startMatrix)
+            endRect.transform(moveMatrix)
+
+            var windowMatrixTransform = Matrix()
+            windowMatrixTransform.setRectToRect(startRect, endRect, Matrix.ScaleToFit.CENTER)
+
+            scalingCanvas.drawBitmap(pageBitmap, windowMatrixTransform, null)
+
+            //drawPage(pageCanvas)
+            canvas.drawBitmap(scalingBitmap, 0f, 0f, null)
+            scaling = false
+        } else{
+            canvas.drawBitmap(pageBitmap, 0f, 0f, null)
 
         }
+
         //drawPage()
         //canvas.drawBitmap(pageBitmap, 0f, 0f, null)
 
@@ -69,15 +88,19 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }*/
 
 
-        canvas.drawBitmap(pageBitmap, 0f, 0f, null)
-        drawPageBackground(canvas)
+        //canvas.drawBitmap(pageBitmap, 0f, 0f, null)
+        //drawPageBackground(canvas)
 
         if (drawLastPath) {
             var paint = Paint(lastPath.paint)
             paint.strokeWidth = lastPath.paint.strokeWidth * scaleFactorPaint
 
             canvas.drawPath(readPath(lastPath.path), paint)
+            //Log.d(TAG, "onDraw: drawLastPath")
         }
+
+        drawPageBackground(canvas)
+        drawPageBorder(canvas)
     }
 
 
@@ -155,6 +178,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     fun newPath(path: String, paint: Paint) {
         lastPath = InfPath(path, paint, pageRect)
         drawLastPath = true
+
+        Log.d(TAG, "newPath: newPath")
     }
 
     fun rewritePath(path: String) {
@@ -171,7 +196,13 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         writeFile(lastPath.path, lastPath.paint, lastPath.rect)
 
         drawLastPath = false
-        redraw = true
+        //redraw = true
+
+        var paint = Paint(lastPath.paint)
+        paint.strokeWidth = lastPath.paint.strokeWidth * scaleFactorPaint
+
+        pageCanvas.drawPath(readPath(lastPath.path), paint)
+
         invalidate()
     }
 
@@ -280,9 +311,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
 
 
-        canvas.drawColor(ResourcesCompat.getColor(resources, R.color.dark_elevation_00dp, null))
-        // bordo pagina
-        canvas.drawRect(pageRect, paintPage)
+        //canvas.drawColor(ResourcesCompat.getColor(resources, R.color.dark_elevation_00dp, null))
 
         paintPage.color = ResourcesCompat.getColor(resources, R.color.white, null)
         paintPage.style = Paint.Style.FILL
@@ -290,6 +319,36 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         // sfondo pagina
         canvas.drawRect(pageRect, paintPage)
         //canvas.clipRect(pageRect)
+    }
+
+    private fun drawPagePaths(canvas: Canvas, rectScaleToFit: RectF = pageRect){
+        for (i in pathList.indices) {
+            var path = readPath(pathList[i].path)
+            pathMatrix.setRectToRect(pathList[i].rect, rectScaleToFit, Matrix.ScaleToFit.CENTER)
+            path.transform(pathMatrix)
+
+            var paint = Paint(pathList[i].paint)
+            paint.strokeWidth = pathList[i].paint.strokeWidth * scaleFactorPaint
+
+            canvas.drawPath(path, paint)
+        }
+    }
+
+    private fun drawPageBorder(canvas: Canvas){
+        val paintPage = Paint().apply {
+            color = ResourcesCompat.getColor(resources, R.color.gn_border_page, null)
+            // Smooths out edges of what is drawn without affecting shape.
+            isAntiAlias = true
+            // Dithering affects how colors with higher-precision than the device are down-sampled.
+            isDither = true
+            style = Paint.Style.STROKE // default: FILL
+            strokeJoin = Paint.Join.ROUND // default: MITER
+            strokeCap = Paint.Cap.ROUND // default: BUTT
+            strokeWidth = 3f // default: Hairline-width (really thin)
+        }
+
+        // bordo pagina
+        canvas.drawRect(pageRect, paintPage)
     }
 
     private fun drawPageBackground(canvas: Canvas) {
@@ -302,10 +361,21 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         finalPath.op(path1, path2, Path.Op.DIFFERENCE)
 
         val paintPageBackground = Paint().apply {
-            color = ResourcesCompat.getColor(resources, R.color.dark_elevation_00dp, null)
+            color = ResourcesCompat.getColor(resources, R.color.gn_background_page, null)
         }
         canvas.drawPath(finalPath, paintPageBackground)
         //canvas.drawColor(ResourcesCompat.getColor(resources, R.color.dark_elevation_00dp, null))
+    }
+
+    private lateinit var cachePageCanvas: Canvas
+    private lateinit var cachePageBitmap: Bitmap
+    private fun drawPageCache(){
+        if (::cachePageBitmap.isInitialized) cachePageBitmap.recycle()
+        cachePageBitmap = Bitmap.createBitmap(pageRect.width().toInt(), pageRect.height().toInt(), Bitmap.Config.ARGB_8888)
+        cachePageCanvas = Canvas(cachePageBitmap)
+
+        var rectScaleToFit = RectF(0f, 0f, pageRect.width(), pageRect.height())
+        drawPagePaths(cachePageCanvas, rectScaleToFit)
     }
 
     private fun createPage() {
@@ -334,6 +404,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private lateinit var pageCanvas: Canvas
     private lateinit var pageBitmap: Bitmap
 
+    private lateinit var scalingCanvas: Canvas
+    private lateinit var scalingBitmap: Bitmap
+
     //private lateinit var pathCanvas: Canvas
     //private lateinit var pathBitmap: Bitmap
 
@@ -346,6 +419,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         if (::pageBitmap.isInitialized) pageBitmap.recycle()
         pageBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         pageCanvas = Canvas(pageBitmap)
+
+        // canvas e bitmap per lo scaling
+        if (::scalingBitmap.isInitialized) scalingBitmap.recycle()
+        scalingBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        scalingCanvas = Canvas(scalingBitmap)
         // pageCanvas.drawColor(backgroundColor)
 
         windowRect = RectF(0f, 0f, width.toFloat(), height.toFloat())
@@ -362,6 +440,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }*/
 
     private var redraw = true
+    private var scaling = false
 
     //private var scaleCache = false
     private var drawLastPath = false
@@ -408,6 +487,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                     sqrt((sStartPos.x - fStartPos.x).pow(2) + (sStartPos.y - fStartPos.y).pow(2))
                 startFocusPos =
                     PointF((fStartPos.x + sStartPos.x) / 2, (fStartPos.y + sStartPos.y) / 2)
+
+                drawLastPath = false
             }
             MotionEvent.ACTION_MOVE -> {
                 fMovePos = PointF(event.getX(FIRST_POINTER_INDEX), event.getY(FIRST_POINTER_INDEX))
@@ -446,7 +527,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
                 createPage()
                 //scaleCache = true
-                redraw = true
+                scaling = true
                 invalidate()
             }
             MotionEvent.ACTION_POINTER_UP -> {
@@ -455,8 +536,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
                 startMatrix = Matrix(moveMatrix)
 
-                /*redraw = true
-                invalidate()*/
+                redraw = true
+                invalidate()
 
                 /*for(infPath in pathList){
                     var path = readPath(infPath.path)

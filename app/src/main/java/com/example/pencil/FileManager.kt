@@ -3,10 +3,19 @@ package com.example.pencil
 import android.content.Context
 import android.text.TextUtils.split
 import java.io.File
+import java.util.regex.Pattern
+import android.util.Xml
+
+import org.xmlpull.v1.XmlSerializer
+import java.io.IOException
+import java.io.StringWriter
+import java.lang.IllegalArgumentException
+import java.lang.IllegalStateException
+
 
 class FileManager(context: Context, nomeFile: String) {
     // creo l'oggetto File(), lo apro e lo leggo
-    private var file: File = File(context.filesDir, nomeFile)
+    var file: File = File(context.filesDir, nomeFile)
 
     // variabili che ospitano il testo contenuto nel file
     var text = ""
@@ -14,6 +23,7 @@ class FileManager(context: Context, nomeFile: String) {
         set(value) {
             field = value
             listLine = split(field, "\n").toMutableList()
+            writeToFile()
         }
     private lateinit var listLine: MutableList<String>
 
@@ -22,7 +32,13 @@ class FileManager(context: Context, nomeFile: String) {
             file.createNewFile()
         }
 
-        readFromFile()
+        if (file.extension != "xml") {
+            readFromFile()
+        }
+
+        if(file.extension == "xml" && text == ""){
+            createXMLFile()
+        }
     }
 
 
@@ -35,6 +51,7 @@ class FileManager(context: Context, nomeFile: String) {
         file.writeText(text)
     }
 
+    // funzioni che utilizzano la lista come metodo di modifica
     private fun transformLinesToText() {
         var tempText = ""
 
@@ -80,6 +97,31 @@ class FileManager(context: Context, nomeFile: String) {
         val index = listLine.indexOf(element)
         listLine[index] = textLine
         transformLinesToText()
+    }
+
+    /*@Throws(
+        IllegalArgumentException::class,
+        IllegalStateException::class,
+        IOException::class
+    )*/
+    fun createXMLFile() {
+
+        val xmlSerializer = Xml.newSerializer()
+        val writer = StringWriter()
+        xmlSerializer.setOutput(writer)
+
+        //Start Document
+        xmlSerializer.startDocument("UTF-8", true)
+        xmlSerializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true)
+        xmlSerializer.startTag("", "data")
+
+        xmlSerializer.text("")
+
+        //End tag <file>
+        xmlSerializer.endTag("", "data")
+        xmlSerializer.endDocument()
+
+        text = writer.toString()
     }
 
 

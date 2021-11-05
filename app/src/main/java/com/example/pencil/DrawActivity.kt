@@ -23,8 +23,6 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicBlur
 import android.text.TextUtils.replace
-import android.text.TextUtils.split
-import android.widget.CompoundButton
 import androidx.annotation.WorkerThread
 import com.google.android.material.chip.Chip
 
@@ -34,11 +32,11 @@ class DrawActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_Pencil)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_draw)
+        setContentView(R.layout.activity_draw2)
 
 
         drawView = findViewById(R.id.drawView)
-        textView = findViewById(R.id.textView)
+        textViewData = findViewById(R.id.textViewData)
         commandView = findViewById(R.id.commandView)
         seekBar = findViewById(R.id.seekBar)
         modePennaView = findViewById(R.id.modePennaView)
@@ -130,7 +128,7 @@ class DrawActivity : AppCompatActivity() {
         //drawViewTop = 80 * density
 
         colorShowView.color = paintMatita.color
-        textView.text = drawViewTop.toString()
+        textViewData.text = drawViewTop.toString()
 
         drawView.setOnHoverListener { v, event ->
             when (event.action) {
@@ -234,8 +232,8 @@ class DrawActivity : AppCompatActivity() {
 
 
     private lateinit var drawView: DrawView
-    private lateinit var textView: TextView
-    private lateinit var commandView: View
+    private lateinit var textViewData: TextView
+    private lateinit var commandView: ConstraintLayout
     private lateinit var seekBar: SeekBar
     private lateinit var modePennaView: Chip
     private lateinit var colorPicker: ColorPickerView
@@ -263,7 +261,7 @@ class DrawActivity : AppCompatActivity() {
     //private var density : Float = 1f
     private var drawViewTop: Int = 0
     fun height(view: View) {
-        textView.text = commandView.height.toString()
+        textViewData.text = commandView.height.toString()
 
     }
 
@@ -309,12 +307,11 @@ class DrawActivity : AppCompatActivity() {
     private fun touchMove(event: MotionEvent) {
         // QuadTo() adds a quadratic bezier from the last point,
         // approaching control point (x1,y1), and ending at (x2,y2).
-        textView.text =
+        textViewData.text =
             event.x.toString() + '\n' + event.y.toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_DISTANCE)
                 .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_TILT)
                 .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_ORIENTATION).toString()
         path = path + "Q " + currentX + " " + currentY + " " + (event.x + currentX) / 2 + " " + (event.y + currentY) / 2 + " " //.quadTo(currentX, currentY, (event.x + currentX) / 2, (event.y + currentY) / 2)
-
 
 
         currentX = event.x
@@ -343,7 +340,7 @@ class DrawActivity : AppCompatActivity() {
     }
 
     private fun hoverMove(event: MotionEvent) {
-        textView.text =
+        textViewData.text =
             event.x.toString() + '\n' + event.y.toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_DISTANCE)
                 .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_TILT)
                 .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_ORIENTATION).toString()

@@ -31,4 +31,9 @@
     <color name="dark_elevation_24dp">#383838</color>
 
     <color name="color_text_secondary">#919191</color>
+
+    <color name="gn_background_page">#f7f7f7</color>
+    <color name="gn_border_page">#d4d4d3</color>
+    <color name="gn_background_tools">#f9f9f9</color>
+    <color name="gn_border_tools">#dadbda</color>
 </resources>

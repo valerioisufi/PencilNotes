@@ -12,7 +12,8 @@
         <activity
             android:name=".DrawActivity"
             android:exported="true"
-            android:immersive="true"/>
+            android:immersive="true"
+            android:theme="@style/Theme.Pencil"/>
         <activity
             android:name=".MainActivity"
             android:windowSoftInputMode="adjustPan">
