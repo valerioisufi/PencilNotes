@@ -3,20 +3,227 @@ package com.example.pencil
 import android.content.Context
 import android.util.Xml
 import org.xmlpull.v1.XmlPullParser
-import java.io.InputStream
+import org.xmlpull.v1.XmlSerializer
 
 class PencilFileXml(context: Context, nomeFile: String) {
-    private var file = FileManager(context, nomeFile)
+    private var fileManager = FileManager(context, nomeFile)
 
+    //var data : MutableMap<String, String> = mutableMapOf()
+    data class Page(val data_modifica : String){
+        var pathPenna = mutableListOf<MutableMap<String, String>>()
+        var pathEvidenziatore = mutableListOf<MutableMap<String, String>>()
+    }
+
+    var head = mutableMapOf<String, String>()
+    var body = mutableListOf<Page>()
+
+
+    /**
+     * Funzione per la lettura dei file XML
+     */
     fun readXML(){
-        val inputStream = file.file.inputStream()
+        if(fileManager.justCreated){
+            writeXML()
+        }
+
+        val inputStream = fileManager.file.inputStream()
 
         val parser: XmlPullParser = Xml.newPullParser()
         parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
         parser.setInput(inputStream, null)
 
-        parser.nextTag()
+        dataReader(parser)
+    }
+
+    /**
+     * Ogni volta che in una funzione raggiungo un start_tag
+     * e quindi richiamo un'altra funzione, mi assicuro che nella funzione
+     * chiamata raggiungo sempre l'end_tag corrispettivo
+     */
+    private fun dataReader(parser: XmlPullParser){
+        while(!(parser.depth == 1 && parser.eventType == XmlPullParser.END_TAG)){
+            // start_tag data e tag successivi
+            parser.nextTag()
+
+            if(parser.name == "head"){
+                headReader(parser)
+            } else if(parser.name == "body"){
+                bodyReader(parser)
+            }
+        }
+    }
+
+    private fun headReader(parser: XmlPullParser) {
+        val startDepht = parser.depth
+        while(!(parser.depth == startDepht && parser.eventType == XmlPullParser.END_TAG)){
+            parser.nextTag()
+
+            /*if(parser.name == "page"){
+                val data_modifica = parser.getAttributeValue(null, "data_modifica")
+                body.add(Page(data_modifica))
+
+                pageReader(parser)
+            }*/
+
+        }
+    }
+    private fun bodyReader(parser: XmlPullParser) {
+        val startDepht = parser.depth
+        while(!(parser.depth == startDepht && parser.eventType == XmlPullParser.END_TAG)){
+            parser.nextTag()
+
+            if(parser.name == "page"){
+                val data_modifica = parser.getAttributeValue(null, "data_modifica")
+                body.add(Page(data_modifica))
+
+                pageReader(parser)
+            }
+
+        }
+    }
+
+    private fun pageReader(parser: XmlPullParser) {
+        val startDepht = parser.depth
+        while(!(parser.depth == startDepht && parser.eventType == XmlPullParser.END_TAG)){
+            parser.nextTag()
+
+            if(parser.name == "path_penna"){
+                pathReader(parser, parser.name)
+            }else if(parser.name == "path_evidenziatore"){
+                pathReader(parser, parser.name)
+            }
+
+        }
+    }
+
+    private fun pathReader(parser: XmlPullParser, type: String) {
+        val startDepht = parser.depth
+        while(!(parser.depth == startDepht && parser.eventType == XmlPullParser.END_TAG)){
+            parser.nextTag()
+
+            if(parser.name == "elemento"){
+                val elementoDepht = parser.depth
+                val elementoMap = mutableMapOf<String, String>()
+
+                while(!(parser.depth == elementoDepht && parser.eventType == XmlPullParser.END_TAG)){
+                    parser.nextTag()
+
+                    if(parser.name == "path"){
+                        elementoMap[parser.name] = parser.nextText()
+                    }else if(parser.name == "style"){
+                        elementoMap[parser.name] = parser.nextText()
+                    }else if(parser.name == "rect"){
+                        elementoMap[parser.name] = parser.nextText()
+                    }
+                }
+
+                if(type == "path_penna"){
+                    body.last().pathPenna.add(elementoMap)
+                }else if(type == "path_evidenziatore"){
+                    body.last().pathEvidenziatore.add(elementoMap)
+                }
+            }
+
+        }
     }
 
 
+    /**
+     * Funzione per la scrittura dei file XML
+     */
+    fun writeXML(){
+        val outputStreamWriter = fileManager.file.writer()
+
+        val serializer = Xml.newSerializer()
+        serializer.setOutput(outputStreamWriter)
+
+        //Start Document
+        serializer.startDocument("UTF-8", true)
+        serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true)
+        serializer.startTag("", "data")
+
+        headWriter(serializer)
+        bodyWriter(serializer)
+
+        //End tag <file>
+        serializer.endTag("", "data")
+        serializer.endDocument()
+    }
+
+    private fun headWriter(serializer: XmlSerializer){
+        serializer.startTag("", "head")
+
+        // TODO: 07/11/2021
+
+        serializer.endTag("", "head")
+    }
+    private fun bodyWriter(serializer: XmlSerializer){
+        serializer.startTag("", "body")
+
+        for(page in body){
+            serializer.startTag("", "page")
+            serializer.attribute(null, "data_modifica", page.data_modifica)
+
+            // path_penna
+            serializer.startTag("", "path_penna")
+            for(elemento in page.pathPenna){
+                serializer.startTag("", "elemento")
+
+                serializer.startTag("", "path")
+                serializer.text(elemento["path"])
+                serializer.endTag("", "path")
+
+                serializer.startTag("", "style")
+                serializer.text(elemento["style"])
+                serializer.endTag("", "style")
+
+                serializer.startTag("", "rect")
+                serializer.text(elemento["rect"])
+                serializer.endTag("", "rect")
+
+                serializer.endTag("", "elemento")
+            }
+            serializer.endTag("", "path_penna")
+
+            // path_evidenziatore
+            serializer.startTag("", "path_evidenziatore")
+            for(elemento in page.pathEvidenziatore){
+                serializer.startTag("", "elemento")
+
+                serializer.startTag("", "path")
+                serializer.text(elemento["path"])
+                serializer.endTag("", "path")
+
+                serializer.startTag("", "style")
+                serializer.text(elemento["style"])
+                serializer.endTag("", "style")
+
+                serializer.startTag("", "rect")
+                serializer.text(elemento["rect"])
+                serializer.endTag("", "rect")
+
+                serializer.endTag("", "elemento")
+            }
+            serializer.endTag("", "path_evidenziatore")
+
+
+            serializer.endTag("", "page")
+        }
+
+        serializer.endTag("", "body")
+    }
+
+
+    /**
+     * Page function
+     */
+    fun getPage(index: Int): Page {
+        return body[index]
+    }
+    fun setPage(index: Int, page : Page){
+        body[index] = page
+    }
+    fun newPage(index: Int = body.lastIndex + 1, data_modifica: String){
+        body.add(index, Page(data_modifica))
+    }
 }

@@ -104,28 +104,31 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
 
-    data class InfPath(var path: String, var paint: Paint, var rect: RectF)//, var save : Boolean)
+    data class InfPath(var path: String, var paint: Paint, var rect: RectF)
 
-    private var pathList = mutableListOf<InfPath>()
+    lateinit var page: Page
+    //private var pathList = mutableListOf<InfPath>()
     private var lastPath: InfPath = InfPath("", paint, RectF())
-    lateinit var drawFile: FileManager
+    lateinit var drawFile: PencilFileXml
 
-    fun readFile(nomeFile: String) {
-        drawFile = FileManager(context, nomeFile)
+    data class Page(val data_modifica : String){
+        var pathPenna = mutableListOf<InfPath>()
+        var pathEvidenziatore = mutableListOf<InfPath>()
+    }
 
-        val textFile = drawFile.text
-        val listLine = split(textFile, "\n").toList()
-        for(line in listLine){
-            var listTemp = split(line, ";").toList()
+    fun readPage(nomeFile: String) {
+        drawFile = PencilFileXml(context, nomeFile)
+        drawFile.readXML()
 
-            var pathS = listTemp[0]
-            var paintS = listTemp[1]
-            var rectS = listTemp[2]
+        if(drawFile.body.lastIndex == -1){
+            drawFile.newPage(index = 0, "")
+        }
+        val pageTemp = drawFile.getPage(0)
+        page = Page("")
 
-            var paintList = split(paintS, "#").toList()
-            var rectList = split(rectS, "#").toList()
-
-            var paintTemp = Paint().apply {
+        fun stringToPaint(paintS: String): Paint {
+            val paintList = split(paintS, "#").toList()
+            val paintTemp = Paint().apply {
                 color = paintList[0].toInt()
                 // Smooths out edges of what is drawn without affecting shape.
                 isAntiAlias = true
@@ -140,42 +143,83 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 strokeCap = Paint.Cap.ROUND // default: BUTT
                 strokeWidth = paintList[2].toFloat()
             }
-            var rectTemp = RectF().apply {
+            return paintTemp
+        }
+        fun stringToRect(rectS: String): RectF {
+            val rectList = split(rectS, "#").toList()
+            val rectTemp = RectF().apply {
                 left = rectList[0].toFloat()
                 top = rectList[1].toFloat()
                 right = rectList[2].toFloat()
                 bottom = rectList[3].toFloat()
             }
-
-            var infPath = InfPath(pathS, paintTemp, rectTemp)
-            pathList.add(infPath)
-
-            invalidate()
+            return rectTemp
         }
+        for(elemento in pageTemp.pathPenna){
+            val pathS = elemento["path"]
+            val paintS = elemento["style"]
+            val rectS = elemento["rect"]
+
+            val paintTemp = stringToPaint(paintS!!)
+            val rectTemp = stringToRect(rectS!!)
+
+            val infPath = InfPath(pathS!!, paintTemp, rectTemp)
+            page.pathPenna.add(infPath)
+        }
+        for(elemento in pageTemp.pathEvidenziatore){
+            val pathS = elemento["path"]
+            val paintS = elemento["style"]
+            val rectS = elemento["rect"]
+
+            val paintTemp = stringToPaint(paintS!!)
+            val rectTemp = stringToRect(rectS!!)
+
+            val infPath = InfPath(pathS!!, paintTemp, rectTemp)
+            page.pathEvidenziatore.add(infPath)
+        }
+
+        invalidate()
     }
 
-    fun writeFile(path: String, paint: Paint, rect: RectF) {
-        var textFile = drawFile.text
-        if (textFile != "") {
-            textFile += "\n"
-        }
-        var pathS = path
-        var paintS =
+    fun writePage() {
+        fun paintToString(paint: Paint): String {
+            val paintS =
                 paint.color.toString() + "#" +
-                when (paint.style) {
-                    Paint.Style.STROKE -> "STROKE"
-                    Paint.Style.FILL -> "FILL"
-                    Paint.Style.FILL_AND_STROKE -> "FILL_AND_STROKE"
-                } + "#" +
-                paint.strokeWidth.toString()
-        var rectS = rect.left.toString() + "#" + rect.top.toString() + "#" + rect.right.toString() + "#" + rect.bottom.toString()
-        textFile += "$pathS;$paintS;$rectS"
+                        when (paint.style) {
+                            Paint.Style.STROKE -> "STROKE"
+                            Paint.Style.FILL -> "FILL"
+                            Paint.Style.FILL_AND_STROKE -> "FILL_AND_STROKE"
+                        } + "#" +
+                        paint.strokeWidth.toString()
+            return paintS
+        }
+        fun rectToString(rect: RectF): String {
+            val rectS = rect.left.toString() + "#" + rect.top.toString() + "#" + rect.right.toString() + "#" + rect.bottom.toString()
+            return rectS
+        }
 
-        drawFile.text = textFile
-        drawFile.writeToFile()
+        val pageTemp = PencilFileXml.Page("")
+        for(elemento in page.pathPenna){
+            val elementoMap = mutableMapOf<String, String>()
+            elementoMap["path"] = elemento.path
+            elementoMap["style"] = paintToString(elemento.paint)
+            elementoMap["rect"] = rectToString(elemento.rect)
+
+            pageTemp.pathPenna.add(elementoMap)
+        }
+        for(elemento in page.pathEvidenziatore){
+            val elementoMap = mutableMapOf<String, String>()
+            elementoMap["path"] = elemento.path
+            elementoMap["style"] = paintToString(elemento.paint)
+            elementoMap["rect"] = rectToString(elemento.rect)
+
+            pageTemp.pathEvidenziatore.add(elementoMap)
+        }
+
+        drawFile.setPage(0, pageTemp)
     }
 
-    fun newPath(path: String, paint: Paint) {
+    fun newPath(path: String, paint: Paint/*, type: String = "Penna"*/) {
         lastPath = InfPath(path, paint, pageRect)
         drawLastPath = true
 
@@ -188,22 +232,24 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         invalidate()
     }
 
-    fun savePath(path: String, paint: Paint) {
+    fun savePath(path: String, paint: Paint, type: String = "Penna") {
         lastPath.path = path
         lastPath.paint = paint
 
-        pathList.add(lastPath)
-        writeFile(lastPath.path, lastPath.paint, lastPath.rect)
+        when(type){
+            "Penna" -> page.pathPenna.add(lastPath)
+            "Evidenziatore" -> page.pathEvidenziatore.add(lastPath)
+        }
 
         drawLastPath = false
-        //redraw = true
-
         var paint = Paint(lastPath.paint)
         paint.strokeWidth = lastPath.paint.strokeWidth * scaleFactorPaint
 
         pageCanvas.drawPath(readPath(lastPath.path), paint)
-
         invalidate()
+
+        writePage()
+        drawFile.writeXML()
     }
 
     private fun readPath(path: String): Path {
@@ -322,13 +368,13 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
     private fun drawPagePaths(canvas: Canvas, rectScaleToFit: RectF = pageRect){
-        for (i in pathList.indices) {
-            var path = readPath(pathList[i].path)
-            pathMatrix.setRectToRect(pathList[i].rect, rectScaleToFit, Matrix.ScaleToFit.CENTER)
+        for (i in page.pathPenna.indices) {
+            var path = readPath(page.pathPenna[i].path)
+            pathMatrix.setRectToRect(page.pathPenna[i].rect, rectScaleToFit, Matrix.ScaleToFit.CENTER)
             path.transform(pathMatrix)
 
-            var paint = Paint(pathList[i].paint)
-            paint.strokeWidth = pathList[i].paint.strokeWidth * scaleFactorPaint
+            var paint = Paint(page.pathPenna[i].paint)
+            paint.strokeWidth = page.pathPenna[i].paint.strokeWidth * scaleFactorPaint
 
             canvas.drawPath(path, paint)
         }

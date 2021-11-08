@@ -49,9 +49,9 @@ class DrawActivity : AppCompatActivity() {
         var intent = intent
         val titoloFile = intent.getStringExtra("titoloFile")
         var nomeFile = replace(titoloFile, arrayOf(" "), arrayOf("_")).toString()
-        nomeFile += ".txt"
+        nomeFile += ".xml"
 
-        drawView.readFile(nomeFile)
+        drawView.readPage(nomeFile)
 
 
         val sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)

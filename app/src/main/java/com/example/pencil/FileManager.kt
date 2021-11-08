@@ -16,6 +16,7 @@ import java.lang.IllegalStateException
 class FileManager(context: Context, nomeFile: String) {
     // creo l'oggetto File(), lo apro e lo leggo
     var file: File = File(context.filesDir, nomeFile)
+    var justCreated = false
 
     // variabili che ospitano il testo contenuto nel file
     var text = ""
@@ -30,14 +31,15 @@ class FileManager(context: Context, nomeFile: String) {
     init {
         if (!file.exists()) {
             file.createNewFile()
+            justCreated = true
         }
 
-        if (file.extension != "xml") {
+        if (file.extension == "txt") {
             readFromFile()
         }
 
-        if(file.extension == "xml" && text == ""){
-            createXMLFile()
+        if(file.extension == "xml" && justCreated){
+            //createXMLFile()
         }
     }
 
@@ -105,7 +107,6 @@ class FileManager(context: Context, nomeFile: String) {
         IOException::class
     )*/
     fun createXMLFile() {
-
         val xmlSerializer = Xml.newSerializer()
         val writer = StringWriter()
         xmlSerializer.setOutput(writer)
