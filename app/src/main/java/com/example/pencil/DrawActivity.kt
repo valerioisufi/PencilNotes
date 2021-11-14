@@ -1,6 +1,7 @@
 package com.example.pencil
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.graphics.*
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -14,10 +15,12 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.*
 import android.graphics.Bitmap
 import android.content.Context
+import android.content.Intent
 
 import android.graphics.drawable.BitmapDrawable
 
 import android.graphics.drawable.Drawable
+import android.provider.DocumentsContract
 import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
@@ -25,8 +28,13 @@ import android.renderscript.ScriptIntrinsicBlur
 import android.text.TextUtils.replace
 import androidx.annotation.WorkerThread
 import com.google.android.material.chip.Chip
+import android.graphics.pdf.PdfRenderer
+import android.util.Log
+import androidx.core.net.toFile
+import java.io.File
+import java.io.InputStream
 
-
+private const val TAG = "DrawActivity"
 class DrawActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,14 +52,17 @@ class DrawActivity : AppCompatActivity() {
         colorShowView = findViewById(R.id.colorShowView)
         dimensioneTrattoTextView = findViewById(R.id.dimensioneTrattoTextView)
         blurEffect = findViewById(R.id.blurEffect)
+        contatoreTextView = findViewById(R.id.contatoreTextView)
 
 
         var intent = intent
         val titoloFile = intent.getStringExtra("titoloFile")
-        var nomeFile = replace(titoloFile, arrayOf(" "), arrayOf("_")).toString()
+        nomeFile = replace(titoloFile, arrayOf(" "), arrayOf("_")).toString()
+        cartella = nomeFile
         nomeFile += ".xml"
 
-        drawView.readPage(nomeFile)
+        drawView.readFile(nomeFile, cartella)
+        drawView.readPage(nPage)
 
 
         val sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
@@ -240,6 +251,7 @@ class DrawActivity : AppCompatActivity() {
     private lateinit var colorShowView: ColorShowView
     private lateinit var dimensioneTrattoTextView: TextView
     private lateinit var blurEffect: View
+    private lateinit var contatoreTextView: TextView
 
     private var modePenna = true
     private var continueScaleTranslate = false
@@ -520,5 +532,101 @@ class DrawActivity : AppCompatActivity() {
         }
 
         blurEffect.visibility = View.INVISIBLE
+    }
+
+    var cartella = ""
+    var nomeFile = ""
+    var nPage = 0
+    fun redo(view: View){
+        nPage += 1
+        drawView.changePage(nPage)
+
+        contatoreTextView.text = ("n." + nPage)
+
+        textViewData.text = drawView.drawFile.fileManager.file.readText()
+    }
+    fun undo(view: View){
+        if (nPage > 0) {
+            nPage -= 1
+            drawView.changePage(nPage)
+
+            contatoreTextView.text = ("n." + nPage)
+        }
+    }
+
+    val PICK_PDF_FILE = 2
+    fun addObject(view: View){
+        // Request code for selecting a PDF document.
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/pdf"
+
+            // Optionally, specify a URI for the file that should appear in the
+            // system file picker when it loads.
+            //putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri)
+        }
+
+        startActivityForResult(intent, PICK_PDF_FILE)
+    }
+    override fun onActivityResult(
+        requestCode: Int, resultCode: Int, resultData: Intent?) {
+        super.onActivityResult(requestCode, resultCode, resultData)
+
+        if (requestCode == PICK_PDF_FILE
+            && resultCode == Activity.RESULT_OK) {
+            // The result data contains a URI for the document or directory that
+            // the user selected.
+            resultData?.data?.also { uri ->
+                val id = drawView.addRisorsa(cartella, ".pdf")
+                val inputStream = contentResolver.openInputStream(uri)
+                val outputFile = FileManager(this, id + ".pdf", cartella)
+                val outputStream = outputFile.file.outputStream()
+                //Log.d(TAG, "onActivityResult: " + uri + ";" + uri.path)
+
+                val buffer = ByteArray(1024)
+                var n = 0
+                if (inputStream != null) {
+                    while (inputStream.read(buffer).also { n = it } != -1) outputStream.write(buffer, 0, n)
+                }
+
+                inputStream?.close()
+                outputStream.close()
+
+
+                // Perform operations on the document using its URI.
+                // create a new renderer
+                val parcelFileDescriptor = contentResolver.openFileDescriptor(uri, "r")
+                val renderer = PdfRenderer(parcelFileDescriptor!!)
+
+                // let us just render all pages
+                val pageCount = renderer.pageCount
+
+                var indexPage = nPage
+                for (indexPdf in 0 until pageCount){
+                    drawView.addBackgroundPdf(id, indexPdf, indexPage)
+                    indexPage++
+                }
+
+                /*for (i in 0 until pageCount) {
+                    val page: PdfRenderer.Page = renderer.openPage(1)
+
+                    var bitmapTemp = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
+                    // say we render for showing on the screen
+                    page.render(bitmapTemp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+
+                    // do stuff with the bitmap
+                    drawView.backgroundPage = bitmapTemp
+                    //bitmapTemp.recycle()
+
+                    // close the page
+                    page.close()
+                }*/
+
+                // close the renderer
+                renderer.close()
+
+
+            }
+        }
     }
 }

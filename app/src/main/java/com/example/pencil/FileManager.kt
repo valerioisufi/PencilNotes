@@ -13,9 +13,10 @@ import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
 
 
-class FileManager(context: Context, nomeFile: String) {
+class FileManager(context: Context, nomeFile: String, cartellaFile: String = "") {
     // creo l'oggetto File(), lo apro e lo leggo
-    var file: File = File(context.filesDir, nomeFile)
+    var cartella: File = File(context.filesDir, cartellaFile)
+    var file: File = File(context.filesDir, "$cartellaFile/$nomeFile")
     var justCreated = false
 
     // variabili che ospitano il testo contenuto nel file
@@ -30,6 +31,7 @@ class FileManager(context: Context, nomeFile: String) {
 
     init {
         if (!file.exists()) {
+            cartella.mkdirs()
             file.createNewFile()
             justCreated = true
         }

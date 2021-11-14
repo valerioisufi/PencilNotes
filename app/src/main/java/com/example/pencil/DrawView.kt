@@ -2,13 +2,17 @@ package com.example.pencil
 
 import android.content.Context
 import android.graphics.*
+import android.graphics.pdf.PdfRenderer
+import android.os.ParcelFileDescriptor
 import android.text.TextUtils.split
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.toRect
 import androidx.core.graphics.transform
+import java.io.File
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -43,6 +47,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         if (redraw) {
             //pageCanvas.clipRect(windowRect)
             drawPage(pageCanvas)
+            drawPageBackground(pageCanvas)
 
             drawPagePaths(pageCanvas)
             //pageCanvas.clipRect(pageRect)
@@ -89,7 +94,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
 
         //canvas.drawBitmap(pageBitmap, 0f, 0f, null)
-        //drawPageBackground(canvas)
+        //drawViewBackground(canvas)
 
         if (drawLastPath) {
             var paint = Paint(lastPath.paint)
@@ -99,7 +104,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             //Log.d(TAG, "onDraw: drawLastPath")
         }
 
-        drawPageBackground(canvas)
+        drawViewBackground(canvas)
         drawPageBorder(canvas)
     }
 
@@ -107,23 +112,30 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     data class InfPath(var path: String, var paint: Paint, var rect: RectF)
 
     lateinit var page: Page
+    var nPage = 0
     //private var pathList = mutableListOf<InfPath>()
     private var lastPath: InfPath = InfPath("", paint, RectF())
     lateinit var drawFile: PencilFileXml
 
     data class Page(val data_modifica : String){
+        var background : Bitmap? = null
         var pathPenna = mutableListOf<InfPath>()
         var pathEvidenziatore = mutableListOf<InfPath>()
     }
 
-    fun readPage(nomeFile: String) {
-        drawFile = PencilFileXml(context, nomeFile)
+    fun readFile(nomeFile: String, cartellaFile: String){
+        drawFile = PencilFileXml(context, nomeFile, cartellaFile)
         drawFile.readXML()
-
-        if(drawFile.body.lastIndex == -1){
-            drawFile.newPage(index = 0, "")
+    }
+    fun changePage(index: Int){
+        nPage = index
+        readPage(nPage)
+    }
+    fun readPage(index: Int = nPage) {
+        if(drawFile.body.lastIndex < index){
+            drawFile.newPage(index, "")
         }
-        val pageTemp = drawFile.getPage(0)
+        val pageTemp = drawFile.getPage(index)
         page = Page("")
 
         fun stringToPaint(paintS: String): Paint {
@@ -178,10 +190,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             page.pathEvidenziatore.add(infPath)
         }
 
+        redraw = true
         invalidate()
     }
 
-    fun writePage() {
+    fun writePage(index: Int = nPage) {
         fun paintToString(paint: Paint): String {
             val paintS =
                 paint.color.toString() + "#" +
@@ -216,7 +229,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             pageTemp.pathEvidenziatore.add(elementoMap)
         }
 
-        drawFile.setPage(0, pageTemp)
+        drawFile.body[index].pathPenna = pageTemp.pathPenna
+        drawFile.body[index].pathEvidenziatore = pageTemp.pathEvidenziatore
     }
 
     fun newPath(path: String, paint: Paint/*, type: String = "Penna"*/) {
@@ -248,7 +262,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         pageCanvas.drawPath(readPath(lastPath.path), paint)
         invalidate()
 
-        writePage()
+        writePage(nPage)
         drawFile.writeXML()
     }
 
@@ -277,6 +291,83 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             i++
         }
         return realPath
+    }
+    private fun readBackground(){
+        if(drawFile.body[nPage].background != null){
+            var id = drawFile.body[nPage].background?.get("id")
+            var indexPdf = drawFile.body[nPage].background!!["index"]?.toInt()!!
+
+            //Log.d(TAG, "readBackground: " +"$id;$indexPdf")
+            //Log.d(TAG, "readBackground: " + drawFile.head[id]?.get("path"))
+            var fileTemp = File(context.filesDir, drawFile.head[id]?.get("path"))
+            //Log.d(TAG, "readBackground: " + fileTemp.exists())
+            val renderer = PdfRenderer(ParcelFileDescriptor.open(fileTemp, ParcelFileDescriptor.MODE_READ_ONLY))
+
+            val pagePdf: PdfRenderer.Page = renderer.openPage(indexPdf)
+
+            // say we render for showing on the screen
+            var bitmapTemp = Bitmap.createBitmap(pageRect.width().toInt(), pageRect.height().toInt(), Bitmap.Config.ARGB_8888)
+            /*var path1 = Path()
+            path1.addRect(pageRect, Path.Direction.CW)
+            var path2 = Path()
+            path2.addRect(windowRect, Path.Direction.CW)
+
+            var finalPath = Path()
+            finalPath.op(path1, path2, Path.Op.DIFFERENCE)
+            var renderRect = RectF()
+            finalPath.isRect(renderRect)
+            Log.d(TAG, "readBackground: isRect" + finalPath.isRect(null))*/
+
+            var renderRect = Rect()
+
+            pagePdf.render(bitmapTemp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+
+            // do stuff with the bitmap
+            page.background = bitmapTemp
+            //bitmapTemp.recycle()
+
+            // close the page
+            pagePdf.close()
+        }
+    }
+
+    /**
+     * funzione per l'aggiunta delle risorse
+     */
+    fun addRisorsa(cartella: String, type: String): String {
+        var id = ""
+        if(drawFile.head.isEmpty()){
+            id = "#0"
+        }else{
+            var idInt = 0
+            for(i in drawFile.head.keys){
+                val idTemp = i.replace("#", "").toInt()
+                if (idTemp > idInt){
+                    idInt = idTemp
+                }
+            }
+            idInt++
+            id = "#$idInt"
+        }
+
+        val path = "$cartella/$id$type"
+        drawFile.head[id] = mutableMapOf(Pair("path", path), Pair("type", type))
+
+        return id
+    }
+    fun addBackgroundPdf(id: String, indexPdf: Int, indexPage: Int){
+        if (indexPage > drawFile.body.lastIndex){
+            drawFile.newPage(indexPage, "")
+        }
+        drawFile.body[indexPage].background = mutableMapOf(Pair("id", id), Pair("index", indexPdf.toString()))
+
+        if (indexPage == nPage){
+            readBackground()
+
+            redraw = true
+            invalidate()
+        }
+        drawFile.writeXML()
     }
 
     /*fun getPaint(): Paint {
@@ -367,16 +458,30 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         //canvas.clipRect(pageRect)
     }
 
+    private fun drawPageBackground(canvas: Canvas, rectScaleToFit: RectF = pageRect){
+        readBackground()
+        if (page.background != null){
+            canvas.drawBitmap(page.background!!, null, rectScaleToFit, null)
+        }
+    }
+
     private fun drawPagePaths(canvas: Canvas, rectScaleToFit: RectF = pageRect){
-        for (i in page.pathPenna.indices) {
-            var path = readPath(page.pathPenna[i].path)
-            pathMatrix.setRectToRect(page.pathPenna[i].rect, rectScaleToFit, Matrix.ScaleToFit.CENTER)
+        fun drawPath(pathTemp: String, paintTemp: Paint, rectTemp: RectF){
+            val path = readPath(pathTemp)
+            pathMatrix.setRectToRect(rectTemp, rectScaleToFit, Matrix.ScaleToFit.CENTER)
             path.transform(pathMatrix)
 
-            var paint = Paint(page.pathPenna[i].paint)
-            paint.strokeWidth = page.pathPenna[i].paint.strokeWidth * scaleFactorPaint
+            val paint = Paint(paintTemp)
+            paint.strokeWidth = paintTemp.strokeWidth * scaleFactorPaint
 
             canvas.drawPath(path, paint)
+        }
+
+        for (i in page.pathEvidenziatore.indices) {
+            drawPath(page.pathEvidenziatore[i].path, page.pathEvidenziatore[i].paint, page.pathEvidenziatore[i].rect)
+        }
+        for (i in page.pathPenna.indices) {
+            drawPath(page.pathPenna[i].path, page.pathPenna[i].paint, page.pathPenna[i].rect)
         }
     }
 
@@ -397,7 +502,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         canvas.drawRect(pageRect, paintPage)
     }
 
-    private fun drawPageBackground(canvas: Canvas) {
+    private fun drawViewBackground(canvas: Canvas) {
         var path1 = Path()
         path1.addRect(windowRect, Path.Direction.CW)
         var path2 = Path()
@@ -406,10 +511,10 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         var finalPath = Path()
         finalPath.op(path1, path2, Path.Op.DIFFERENCE)
 
-        val paintPageBackground = Paint().apply {
+        val paintViewBackground = Paint().apply {
             color = ResourcesCompat.getColor(resources, R.color.gn_background_page, null)
         }
-        canvas.drawPath(finalPath, paintPageBackground)
+        canvas.drawPath(finalPath, paintViewBackground)
         //canvas.drawColor(ResourcesCompat.getColor(resources, R.color.dark_elevation_00dp, null))
     }
 
@@ -421,6 +526,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         cachePageCanvas = Canvas(cachePageBitmap)
 
         var rectScaleToFit = RectF(0f, 0f, pageRect.width(), pageRect.height())
+        drawPageBackground(cachePageCanvas, rectScaleToFit)
         drawPagePaths(cachePageCanvas, rectScaleToFit)
     }
 
@@ -557,11 +663,14 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 moveMatrix.getValues(f)
                 scaleFactorPaint = f[Matrix.MSCALE_X]
 
-                if (scaleFactorPaint * scaleFactor < 0.5f) {
-                    scaleFactor = 0.5f / scaleFactorPaint
+                // scale max e scale min
+                val scaleMax = 5f
+                val scaleMin = 0.5f
+                if (scaleFactorPaint * scaleFactor < scaleMin) {
+                    scaleFactor = scaleMin / scaleFactorPaint
                 }
-                if (scaleFactorPaint * scaleFactor > 5f) {
-                    scaleFactor = 5f / scaleFactorPaint
+                if (scaleFactorPaint * scaleFactor > scaleMax) {
+                    scaleFactor = scaleMax / scaleFactorPaint
                 }
                 moveMatrix.postScale(scaleFactor, scaleFactor, moveFocusPos.x, moveFocusPos.y)
 
@@ -593,6 +702,16 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 invalidate()*/
             }
         }
+    }
+
+
+
+    // funzione che riporta moveMatrix in una condizione normale
+    fun scaleTranslateAnimation(startMatrix: Matrix, finalMatrix: Matrix){
+        val durata = 1f
 
     }
+
+
+
 }

@@ -24,6 +24,27 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
+            <TextView
+                android:id="@+id/contatoreTextView"
+                style="@style/BodyTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="n.0"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/imageView10"
+                style="@style/IconImageButton"
+                android:layout_marginStart="8dp"
+                android:onClick="addObject"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/contatoreTextView"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_add_circle_outline" />
+
             <ImageView
                 android:id="@+id/imageView11"
                 style="@style/IconImageButton"
@@ -31,7 +52,25 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_settings" />
+                app:srcCompat="@drawable/ic_more_horiz" />
+
+            <ImageView
+                android:id="@+id/imageView8"
+                style="@style/IconImageButton"
+                android:onClick="redo"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/imageView11"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_redo" />
+
+            <ImageView
+                android:id="@+id/imageView9"
+                style="@style/IconImageButton"
+                android:onClick="undo"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/imageView8"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_undo" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -121,18 +160,32 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/commandView" />
 
-    <TextView
-        android:id="@+id/textViewData"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="TextView"
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/drawView"
-        app:layout_constraintStart_toStartOf="@+id/drawView"
-        app:layout_constraintTop_toBottomOf="@+id/commandView" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/drawView">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textViewData"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
+                android:text="TextView"
+                android:textColor="#000000" />
+        </LinearLayout>
+    </ScrollView>
 
     <View
         android:id="@+id/blurEffect"

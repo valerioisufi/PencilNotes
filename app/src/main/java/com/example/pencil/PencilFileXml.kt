@@ -5,16 +5,17 @@ import android.util.Xml
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlSerializer
 
-class PencilFileXml(context: Context, nomeFile: String) {
-    private var fileManager = FileManager(context, nomeFile)
+class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "") {
+    var fileManager = FileManager(context, nomeFile, cartellaFile)
 
     //var data : MutableMap<String, String> = mutableMapOf()
     data class Page(val data_modifica : String){
+        var background : MutableMap<String, String>? = null
         var pathPenna = mutableListOf<MutableMap<String, String>>()
         var pathEvidenziatore = mutableListOf<MutableMap<String, String>>()
     }
 
-    var head = mutableMapOf<String, String>()
+    var head = mutableMapOf<String, MutableMap<String, String>>()
     var body = mutableListOf<Page>()
 
 
@@ -58,13 +59,25 @@ class PencilFileXml(context: Context, nomeFile: String) {
         while(!(parser.depth == startDepht && parser.eventType == XmlPullParser.END_TAG)){
             parser.nextTag()
 
-            /*if(parser.name == "page"){
-                val data_modifica = parser.getAttributeValue(null, "data_modifica")
-                body.add(Page(data_modifica))
+            if(parser.name == "risorsa"){
+                val risorsaDepht = parser.depth
 
-                pageReader(parser)
-            }*/
+                var id = parser.getAttributeValue(null, "id")
+                val risorsaMap = mutableMapOf<String, String>()
 
+                while(!(parser.depth == risorsaDepht && parser.eventType == XmlPullParser.END_TAG)){
+                    parser.nextTag()
+
+                    if(parser.name == "path"){
+                        risorsaMap[parser.name] = parser.nextText()
+                    }else if(parser.name == "type"){
+                        risorsaMap[parser.name] = parser.nextText()
+                    }
+                }
+
+                head[id] = risorsaMap
+
+            }
         }
     }
     private fun bodyReader(parser: XmlPullParser) {
@@ -91,6 +104,8 @@ class PencilFileXml(context: Context, nomeFile: String) {
                 pathReader(parser, parser.name)
             }else if(parser.name == "path_evidenziatore"){
                 pathReader(parser, parser.name)
+            }else if(parser.name == "background"){
+                body.last().background = risorsaReader(parser)
             }
 
         }
@@ -127,6 +142,23 @@ class PencilFileXml(context: Context, nomeFile: String) {
         }
     }
 
+    private fun risorsaReader(parser: XmlPullParser): MutableMap<String, String> {
+        val startDepht = parser.depth
+        val risorsaMap = mutableMapOf<String, String>()
+
+        while(!(parser.depth == startDepht && parser.eventType == XmlPullParser.END_TAG)){
+            parser.nextTag()
+
+            if(parser.name == "id"){
+                risorsaMap[parser.name] = parser.nextText()
+            }else if(parser.name == "index"){
+                risorsaMap[parser.name] = parser.nextText()
+            }
+        }
+
+        return risorsaMap
+    }
+
 
     /**
      * Funzione per la scrittura dei file XML
@@ -153,7 +185,20 @@ class PencilFileXml(context: Context, nomeFile: String) {
     private fun headWriter(serializer: XmlSerializer){
         serializer.startTag("", "head")
 
-        // TODO: 07/11/2021
+        for(idRisorsa in head.keys){
+            serializer.startTag("", "risorsa")
+            serializer.attribute(null, "id", idRisorsa)
+
+            serializer.startTag("", "path")
+            serializer.text(head[idRisorsa]?.get("path"))
+            serializer.endTag("", "path")
+
+            serializer.startTag("", "type")
+            serializer.text(head[idRisorsa]?.get("type"))
+            serializer.endTag("", "type")
+
+            serializer.endTag("", "risorsa")
+        }
 
         serializer.endTag("", "head")
     }
@@ -163,6 +208,19 @@ class PencilFileXml(context: Context, nomeFile: String) {
         for(page in body){
             serializer.startTag("", "page")
             serializer.attribute(null, "data_modifica", page.data_modifica)
+
+            if(page.background != null){
+                // background
+                serializer.startTag("", "background")
+                    serializer.startTag("", "id")
+                    serializer.text(page.background!!["id"])
+                    serializer.endTag("", "id")
+
+                    serializer.startTag("", "index")
+                    serializer.text(page.background!!["index"])
+                    serializer.endTag("", "index")
+                serializer.endTag("", "background")
+            }
 
             // path_penna
             serializer.startTag("", "path_penna")

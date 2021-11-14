@@ -16,6 +16,7 @@
             android:theme="@style/Theme.Pencil"/>
         <activity
             android:name=".MainActivity"
+            android:theme="@style/Theme.Pencil"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
