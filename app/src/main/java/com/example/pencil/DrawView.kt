@@ -23,6 +23,7 @@ private const val TAG = "DrawView"
  */
 class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
+    private var maxError = 100
     private lateinit var pageRect: RectF
     private lateinit var windowRect: RectF
     private var path = Path()
@@ -73,6 +74,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             windowMatrixTransform.setRectToRect(startRect, endRect, Matrix.ScaleToFit.CENTER)
 
             //scalingCanvas.drawBitmap(pageBitmap, windowMatrixTransform, null)
+            canvas.drawBitmap(pageBitmap, windowMatrixTransform, null)
 
             //drawPage(pageCanvas)
             //canvas.drawBitmap(scalingBitmap, 0f, 0f, null)
@@ -99,9 +101,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
         if (drawLastPath) {
             var paint = Paint(lastPath.paint)
-            paint.strokeWidth = lastPath.paint.strokeWidth * scaleFactorPaint
+            paint.strokeWidth = page.dimensioni.calcSpessore(lastPath.paint.strokeWidth, pageRect.width().toInt()).toFloat()
 
-            canvas.drawPath(readPath(lastPath.path), paint)
+            canvas.drawPath(pathFitCurve(lastPath.path, maxError), paint)
             //Log.d(TAG, "onDraw: drawLastPath")
         }
 
@@ -118,8 +120,12 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private var lastPath: InfPath = InfPath("", paint, RectF())
     lateinit var drawFile: PencilFileXml
 
-    data class Page(val data_modifica : String){
-        var background : Bitmap? = null
+    var widthPagePredefinito = 210
+    var heightPagePredefinito = 297
+    var risoluzionePagePredefinito = 300
+
+    data class Page(var dimensioni: Dimensioni){
+        //var background : Bitmap? = null
         var pathPenna = mutableListOf<InfPath>()
         var pathEvidenziatore = mutableListOf<InfPath>()
     }
@@ -134,10 +140,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
     fun readPage(index: Int = nPage) {
         if(drawFile.body.lastIndex < index){
-            drawFile.newPage(index, "")
+            drawFile.newPage(index, widthPagePredefinito, heightPagePredefinito, risoluzionePagePredefinito)
         }
         val pageTemp = drawFile.getPage(index)
-        page = Page("")
+        val dimensioni = Dimensioni(widthPagePredefinito.toFloat(), heightPagePredefinito.toFloat(), risoluzionePagePredefinito.toFloat())
+        page = Page(dimensioni)
 
         fun stringToPaint(paintS: String): Paint {
             val paintList = split(paintS, "#").toList()
@@ -212,7 +219,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             return rectS
         }
 
-        val pageTemp = PencilFileXml.Page("")
+        val pageTemp = PencilFileXml.Page(widthPagePredefinito, heightPagePredefinito, risoluzionePagePredefinito)
         for(elemento in page.pathPenna){
             val elementoMap = mutableMapOf<String, String>()
             elementoMap["path"] = elemento.path
@@ -258,9 +265,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
         drawLastPath = false
         var paint = Paint(lastPath.paint)
-        paint.strokeWidth = lastPath.paint.strokeWidth * scaleFactorPaint
+        paint.strokeWidth = page.dimensioni.calcSpessore(lastPath.paint.strokeWidth, pageRect.width().toInt()).toFloat()
 
-        pageCanvas.drawPath(readPath(lastPath.path), paint)
+        pageCanvas.drawPath(pathFitCurve(lastPath.path, maxError), paint)
         invalidate()
 
         writePage(nPage)
@@ -320,7 +327,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
     fun addBackgroundPdf(id: String, indexPdf: Int, indexPage: Int){
         if (indexPage > drawFile.body.lastIndex){
-            drawFile.newPage(indexPage, "")
+            drawFile.newPage(indexPage, widthPagePredefinito, heightPagePredefinito, risoluzionePagePredefinito)
         }
         drawFile.body[indexPage].background = mutableMapOf(Pair("id", id), Pair("index", indexPdf.toString()))
 
@@ -502,12 +509,13 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private fun drawPagePaths(canvas: Canvas, rectScaleToFit: RectF = pageRect){
         fun drawPath(pathTemp: String, paintTemp: Paint, rectTemp: RectF){
-            val path = readPath(pathTemp)
+            val path = pathFitCurve(pathTemp, maxError)
             pathMatrix.setRectToRect(rectTemp, rectScaleToFit, Matrix.ScaleToFit.CENTER)
             path.transform(pathMatrix)
 
             val paint = Paint(paintTemp)
-            paint.strokeWidth = paintTemp.strokeWidth * scaleFactorPaint
+            paint.strokeWidth =
+                page.dimensioni.calcSpessore(paintTemp.strokeWidth, rectScaleToFit.width().toInt()).toFloat()
 
             canvas.drawPath(path, paint)
         }
@@ -557,11 +565,15 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private lateinit var cachePageBitmap: Bitmap
     private fun drawPageCache(){
         if (::cachePageBitmap.isInitialized) cachePageBitmap.recycle()
-        // TODO: 14/11/2021 Sistemare dimensione massima della bitmap 
-        cachePageBitmap = Bitmap.createBitmap(pageRect.width().toInt(), pageRect.height().toInt(), Bitmap.Config.ARGB_8888)
+        // TODO: 14/11/2021 Sistemare dimensione massima della bitmap
+        var risoluzionePxInch = 300
+        cachePageBitmap = Bitmap.createBitmap(
+            page.dimensioni.calcWidthFromRisoluzionePxInch(risoluzionePxInch).toInt(),
+            page.dimensioni.calcHeightFromRisoluzionePxInch(risoluzionePxInch).toInt(),
+            Bitmap.Config.ARGB_8888)
         cachePageCanvas = Canvas(cachePageBitmap)
 
-        var rectScaleToFit = RectF(0f, 0f, pageRect.width(), pageRect.height())
+        var rectScaleToFit = RectF(0f, 0f, cachePageBitmap.width.toFloat(), cachePageBitmap.height.toFloat())
         drawPage(cachePageCanvas, rectScaleToFit)
         drawPageBackground(cachePageBitmap, rectScaleToFit)
         drawPagePaths(cachePageCanvas, rectScaleToFit)
@@ -633,7 +645,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     //private var scaleCache = false
     private var drawLastPath = false
-    private var scaleFactorPaint = 1f
+    //private var scaleFactorPaint = 1f
 
     /**
      * Funzione che si occupa dello scale e dello spostamento

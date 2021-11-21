@@ -543,7 +543,7 @@ class DrawActivity : AppCompatActivity() {
 
         contatoreTextView.text = ("n." + nPage)
 
-        textViewData.text = drawView.drawFile.fileManager.file.readText()
+        //textViewData.text = drawView.drawFile.fileManager.file.readText()
     }
     fun undo(view: View){
         if (nPage > 0) {

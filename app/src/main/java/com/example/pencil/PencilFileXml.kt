@@ -9,7 +9,8 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
     var fileManager = FileManager(context, nomeFile, cartellaFile)
 
     //var data : MutableMap<String, String> = mutableMapOf()
-    data class Page(val data_modifica : String){
+    data class Page(var widthMm: Int = 0, var heightMm: Int = 0, var risoluzionePxInch: Int = 0){
+
         var background : MutableMap<String, String>? = null
         var pathPenna = mutableListOf<MutableMap<String, String>>()
         var pathEvidenziatore = mutableListOf<MutableMap<String, String>>()
@@ -86,8 +87,12 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
             parser.nextTag()
 
             if(parser.name == "page"){
-                val data_modifica = parser.getAttributeValue(null, "data_modifica")
-                body.add(Page(data_modifica))
+                //val data_modifica = parser.getAttributeValue(null, "data_modifica")
+                val widthMm = parser.getAttributeValue(null, "widthMm").toInt()
+                val heightMm = parser.getAttributeValue(null, "heightMm").toInt()
+                val risoluzioneDpi = parser.getAttributeValue(null, "risoluzionePxInch").toInt()
+
+                body.add(Page(widthMm, heightMm, risoluzioneDpi))
 
                 pageReader(parser)
             }
@@ -207,7 +212,9 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
 
         for(page in body){
             serializer.startTag("", "page")
-            serializer.attribute(null, "data_modifica", page.data_modifica)
+            serializer.attribute(null, "widthMm", page.widthMm.toString())
+            serializer.attribute(null, "heightMm", page.heightMm.toString())
+            serializer.attribute(null, "risoluzionePxInch", page.risoluzionePxInch.toString())
 
             if(page.background != null){
                 // background
@@ -281,7 +288,7 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
     fun setPage(index: Int, page : Page){
         body[index] = page
     }
-    fun newPage(index: Int = body.lastIndex + 1, data_modifica: String){
-        body.add(index, Page(data_modifica))
+    fun newPage(index: Int = body.lastIndex + 1, widthMm: Int, heightMm: Int, risoluzionePxInch: Int){
+        body.add(index, Page(widthMm, heightMm, risoluzionePxInch))
     }
 }
