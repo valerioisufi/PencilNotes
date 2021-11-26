@@ -23,7 +23,7 @@ private const val TAG = "DrawView"
  */
 class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
-    private var maxError = 100
+    var maxError = 10
     private lateinit var pageRect: RectF
     private lateinit var windowRect: RectF
     private var path = Path()
@@ -103,7 +103,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             var paint = Paint(lastPath.paint)
             paint.strokeWidth = page.dimensioni.calcSpessore(lastPath.paint.strokeWidth, pageRect.width().toInt()).toFloat()
 
-            canvas.drawPath(pathFitCurve(lastPath.path, maxError), paint)
+            canvas.drawPath(readPath(lastPath.path), paint)
             //Log.d(TAG, "onDraw: drawLastPath")
         }
 
@@ -255,7 +255,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
     fun savePath(path: String, paint: Paint, type: String = "Penna") {
-        lastPath.path = path
+        lastPath.path = pathFitCurve(path, maxError)
         lastPath.paint = paint
 
         when(type){
@@ -267,7 +267,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         var paint = Paint(lastPath.paint)
         paint.strokeWidth = page.dimensioni.calcSpessore(lastPath.paint.strokeWidth, pageRect.width().toInt()).toFloat()
 
-        pageCanvas.drawPath(pathFitCurve(lastPath.path, maxError), paint)
+        //var pathTemp = pathFitCurve(lastPath.path, maxError)
+        pageCanvas.drawPath(readPath(lastPath.path), paint)
         invalidate()
 
         writePage(nPage)
@@ -285,6 +286,13 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                     realPath.moveTo(stringPath[i + 1].toFloat(), stringPath[i + 2].toFloat())
                     i += 2
                 }
+                "L" -> {
+                    realPath.lineTo(
+                        stringPath[i + 1].toFloat(),
+                        stringPath[i + 2].toFloat(),
+                    )
+                    i += 2
+                }
                 "Q" -> {
                     realPath.quadTo(
                         stringPath[i + 1].toFloat(),
@@ -293,6 +301,17 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                         stringPath[i + 4].toFloat()
                     )
                     i += 4
+                }
+                "C" -> {
+                    realPath.cubicTo(
+                        stringPath[i + 1].toFloat(),
+                        stringPath[i + 2].toFloat(),
+                        stringPath[i + 3].toFloat(),
+                        stringPath[i + 4].toFloat(),
+                        stringPath[i + 5].toFloat(),
+                        stringPath[i + 6].toFloat()
+                    )
+                    i += 6
                 }
             }
 
@@ -509,7 +528,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private fun drawPagePaths(canvas: Canvas, rectScaleToFit: RectF = pageRect){
         fun drawPath(pathTemp: String, paintTemp: Paint, rectTemp: RectF){
-            val path = pathFitCurve(pathTemp, maxError)
+            val path = readPath(pathTemp)
             pathMatrix.setRectToRect(rectTemp, rectScaleToFit, Matrix.ScaleToFit.CENTER)
             path.transform(pathMatrix)
 
@@ -714,7 +733,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
                 // scale max e scale min
                 val scaleMax = 5f
-                val scaleMin = 0.5f
+                val scaleMin = 1f
                 if (lastScaleFactor * scaleFactor < scaleMin) {
                     scaleFactor = scaleMin / lastScaleFactor
                 }

@@ -1,47 +1,57 @@
 package com.example.pencil
 
-import android.graphics.Path
 import android.text.TextUtils
 import kotlin.math.floor
 import kotlin.math.hypot
 import kotlin.math.max
 
 
-fun pathFitCurve(pathString: String, maxError: Int): Path {
+fun pathFitCurve(pathString: String, maxError: Int): String {
     var pointsList : MutableList<MutableList<Double>> = mutableListOf()
-    var stringPathList = TextUtils.split(pathString, " ")
+    var pathList = TextUtils.split(pathString, " ")
 
     var i = 0
-    while (i < stringPathList.size) {
-        when (stringPathList[i]) {
+    while (i < pathList.size) {
+        when (pathList[i]) {
             "M" -> {
-                pointsList.add(mutableListOf(stringPathList[i + 1].toDouble(), stringPathList[i + 2].toDouble()))
+                pointsList.add(mutableListOf(pathList[i + 1].toDouble(), pathList[i + 2].toDouble()))
+                i += 2
+            }
+            "L" -> {
+                pointsList.add(mutableListOf(pathList[i + 1].toDouble(), pathList[i + 2].toDouble()))
                 i += 2
             }
             "Q" -> {
-                pointsList.add(mutableListOf(stringPathList[i + 3].toDouble(), stringPathList[i + 4].toDouble()))
+                pointsList.add(mutableListOf(pathList[i + 3].toDouble(), pathList[i + 4].toDouble()))
                 i += 4
             }
         }
-
         i++
     }
 
     var bezierCurveList = fitCurve(pointsList, maxError)
-    var path = Path()
-    path.moveTo(bezierCurveList[0][0][0].toFloat(), bezierCurveList[0][0][1].toFloat())
+    var pathTemp = ""
+
+    /*path.moveTo(bezierCurveList[0][0][0].toFloat(), bezierCurveList[0][0][1].toFloat())*/
+    pathTemp += "M " +
+            bezierCurveList[0][0][0].toFloat() + " " + bezierCurveList[0][0][1].toFloat() + " "
+
     if (bezierCurveList[0].size > 1) {
         for (bezierCurve in bezierCurveList) {
             //path.lineTo(bezierCurve[3][0].toFloat(), bezierCurve[3][1].toFloat())
-            path.cubicTo(
+            pathTemp += "C " +
+                    bezierCurve[1][0].toFloat() + " " + bezierCurve[1][1].toFloat() + " " +
+                    bezierCurve[2][0].toFloat() + " " + bezierCurve[2][1].toFloat() + " " +
+                    bezierCurve[3][0].toFloat() + " " + bezierCurve[3][1].toFloat() + " "
+            /*path.cubicTo(
                 bezierCurve[1][0].toFloat(), bezierCurve[1][1].toFloat(),
                 bezierCurve[2][0].toFloat(), bezierCurve[2][1].toFloat(),
                 bezierCurve[3][0].toFloat(), bezierCurve[3][1].toFloat()
-            )
+            )*/
         }
     }
 
-    return path
+    return pathTemp
 }
 
 /**
@@ -60,11 +70,11 @@ fun fitCurve(points: MutableList<MutableList<Double>>, maxError: Int): MutableLi
         return mutableListOf(mutableListOf(mutableListOf(points[0][1], points[0][1])))
     }
 
-    val len = points.size;
-    val leftTangent = createTangent(points[1], points[0]);
-    val rightTangent = createTangent(points[len - 2], points[len - 1]);
+    val len = points.size
+    val leftTangent = createTangent(points[1], points[0])
+    val rightTangent = createTangent(points[len - 2], points[len - 1])
 
-    return fitCubic(points, leftTangent, rightTangent, maxError);
+    return fitCubic(points, leftTangent, rightTangent, maxError)
 }
 
 /**
@@ -149,8 +159,8 @@ fun fitCubic(points: MutableList<MutableList<Double>>, leftTangent: MutableList<
                 }
             }
 
-            prevErr = maxError;
-            prevSplit = splitPoint;
+            prevErr = maxError
+            prevSplit = splitPoint
         }
     }
 

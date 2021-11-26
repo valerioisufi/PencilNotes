@@ -3,14 +3,9 @@ package com.example.pencil
 import android.content.Context
 import android.text.TextUtils.split
 import java.io.File
-import java.util.regex.Pattern
 import android.util.Xml
 
-import org.xmlpull.v1.XmlSerializer
-import java.io.IOException
 import java.io.StringWriter
-import java.lang.IllegalArgumentException
-import java.lang.IllegalStateException
 
 
 class FileManager(context: Context, nomeFile: String, cartellaFile: String = "") {

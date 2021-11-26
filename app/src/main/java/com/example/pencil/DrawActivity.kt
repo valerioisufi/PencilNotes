@@ -16,11 +16,11 @@ import androidx.core.view.*
 import android.graphics.Bitmap
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 
 import android.graphics.drawable.BitmapDrawable
 
 import android.graphics.drawable.Drawable
-import android.provider.DocumentsContract
 import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
@@ -29,10 +29,6 @@ import android.text.TextUtils.replace
 import androidx.annotation.WorkerThread
 import com.google.android.material.chip.Chip
 import android.graphics.pdf.PdfRenderer
-import android.util.Log
-import androidx.core.net.toFile
-import java.io.File
-import java.io.InputStream
 
 private const val TAG = "DrawActivity"
 class DrawActivity : AppCompatActivity() {
@@ -65,7 +61,7 @@ class DrawActivity : AppCompatActivity() {
         drawView.readPage(nPage)
 
 
-        val sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+        sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
         modePenna = sharedPref.getBoolean(getString(R.string.mode_penna), true)
         modePennaView.isChecked = modePenna
 
@@ -79,7 +75,7 @@ class DrawActivity : AppCompatActivity() {
         actionBar?.hide()*/
 
         paintMatita = Paint().apply {
-            color = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
+            color = sharedPref.getInt("colorMatita", ResourcesCompat.getColor(resources, R.color.colorPaint, null))
             // Smooths out edges of what is drawn without affecting shape.
             isAntiAlias = true
             // Dithering affects how colors with higher-precision than the device are down-sampled.
@@ -90,7 +86,7 @@ class DrawActivity : AppCompatActivity() {
             strokeWidth = 3f // default: Hairline-width (really thin)
         }
         paintPenna = Paint().apply {
-            color = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
+            color = sharedPref.getInt("colorPenna", ResourcesCompat.getColor(resources, R.color.colorPaint, null))
             // Smooths out edges of what is drawn without affecting shape.
             isAntiAlias = true
             // Dithering affects how colors with higher-precision than the device are down-sampled.
@@ -101,7 +97,7 @@ class DrawActivity : AppCompatActivity() {
             strokeWidth = 3f // default: Hairline-width (really thin)
         }
         paintEvidenziatore = Paint().apply {
-            color = ResourcesCompat.getColor(resources, R.color.colorEvidenziatore, null)
+            color = sharedPref.getInt("colorEvidenziatore", ResourcesCompat.getColor(resources, R.color.colorEvidenziatore, null))
             // Smooths out edges of what is drawn without affecting shape.
             isAntiAlias = true
             // Dithering affects how colors with higher-precision than the device are down-sampled.
@@ -109,10 +105,10 @@ class DrawActivity : AppCompatActivity() {
             style = Paint.Style.STROKE // default: FILL
             strokeJoin = Paint.Join.ROUND // default: MITER
             strokeCap = Paint.Cap.ROUND // default: BUTT
-            strokeWidth = 40f // default: Hairline-width (really thin)
+            strokeWidth = 20f // default: Hairline-width (really thin)
         }
         paintGomma = Paint().apply {
-            color = ResourcesCompat.getColor(resources, R.color.white, null)
+            color = sharedPref.getInt("colorGomma", ResourcesCompat.getColor(resources, R.color.white, null))
             // Smooths out edges of what is drawn without affecting shape.
             isAntiAlias = true
             // Dithering affects how colors with higher-precision than the device are down-sampled.
@@ -120,10 +116,10 @@ class DrawActivity : AppCompatActivity() {
             style = Paint.Style.STROKE // default: FILL
             strokeJoin = Paint.Join.ROUND // default: MITER
             strokeCap = Paint.Cap.ROUND // default: BUTT
-            strokeWidth = 30f // default: Hairline-width (really thin)
+            strokeWidth = 20f // default: Hairline-width (really thin)
         }
         paintAreaSelezione = Paint().apply {
-            color = ResourcesCompat.getColor(resources, R.color.colorAreaSelezione, null)
+            color = sharedPref.getInt("colorAreaSelezione", ResourcesCompat.getColor(resources, R.color.colorAreaSelezione, null))
             // Smooths out edges of what is drawn without affecting shape.
             isAntiAlias = true
             // Dithering affects how colors with higher-precision than the device are down-sampled.
@@ -225,15 +221,31 @@ class DrawActivity : AppCompatActivity() {
                 when(pennelloAttivo){
                     Pennello.MATITA -> {
                         paintMatita.color = newColor
+                        with (sharedPref.edit()) {
+                            putInt("colorMatita", newColor)
+                            apply()
+                        }
                     }
                     Pennello.PENNA -> {
                         paintPenna.color = newColor
+                        with (sharedPref.edit()) {
+                            putInt("colorPenna", newColor)
+                            apply()
+                        }
                     }
                     Pennello.EVIDENZIATORE -> {
                         paintEvidenziatore.color = newColor
+                        with (sharedPref.edit()) {
+                            putInt("colorEvidenziatore", newColor)
+                            apply()
+                        }
                     }
                     Pennello.GOMMA -> {
                         paintGomma.color = newColor
+                        with (sharedPref.edit()) {
+                            putInt("colorGomma", newColor)
+                            apply()
+                        }
                     }
                 }
             }
@@ -241,6 +253,7 @@ class DrawActivity : AppCompatActivity() {
 
     }
 
+    private lateinit var sharedPref: SharedPreferences
 
     private lateinit var drawView: DrawView
     private lateinit var textViewData: TextView
@@ -319,12 +332,12 @@ class DrawActivity : AppCompatActivity() {
     private fun touchMove(event: MotionEvent) {
         // QuadTo() adds a quadratic bezier from the last point,
         // approaching control point (x1,y1), and ending at (x2,y2).
-        textViewData.text =
+        /*textViewData.text =
             event.x.toString() + '\n' + event.y.toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_DISTANCE)
                 .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_TILT)
-                .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_ORIENTATION).toString()
-        path = path + "Q " + currentX + " " + currentY + " " + (event.x + currentX) / 2 + " " + (event.y + currentY) / 2 + " " //.quadTo(currentX, currentY, (event.x + currentX) / 2, (event.y + currentY) / 2)
-
+                .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_ORIENTATION).toString()*/
+        //path = path + "Q " + currentX + " " + currentY + " " + (event.x + currentX) / 2 + " " + (event.y + currentY) / 2 + " " //.quadTo(currentX, currentY, (event.x + currentX) / 2, (event.y + currentY) / 2)
+        path = path + "L " + event.x + " " + event.y + " "
 
         currentX = event.x
         currentY = event.y
@@ -352,10 +365,10 @@ class DrawActivity : AppCompatActivity() {
     }
 
     private fun hoverMove(event: MotionEvent) {
-        textViewData.text =
+        /*textViewData.text =
             event.x.toString() + '\n' + event.y.toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_DISTANCE)
                 .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_TILT)
-                .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_ORIENTATION).toString()
+                .toString() + '\n' + event.getAxisValue(MotionEvent.AXIS_ORIENTATION).toString()*/
 
         /*if(event.getAxisValue(MotionEvent.AXIS_TILT) > 1.3f && event.getAxisValue(MotionEvent.AXIS_ORIENTATION) > -0.5f && event.getAxisValue(MotionEvent.AXIS_ORIENTATION) < 0.5f){
             path.quadTo(currentX, currentY, (event.x + currentX) / 2, (event.y + currentY) / 2)
