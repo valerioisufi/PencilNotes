@@ -1,4 +1,4 @@
-package com.example.pencil
+package com.example.pencil.page
 
 import android.content.Context
 import android.graphics.*
@@ -10,8 +10,11 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
-import androidx.core.graphics.toRect
 import androidx.core.graphics.transform
+import com.example.pencil.R
+import com.example.pencil.file.PencilFileXml
+import com.example.pencil.page.path.pathFitCurve
+import com.example.pencil.page.path.stringToPath
 import java.io.File
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -103,7 +106,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             var paint = Paint(lastPath.paint)
             paint.strokeWidth = page.dimensioni.calcSpessore(lastPath.paint.strokeWidth, pageRect.width().toInt()).toFloat()
 
-            canvas.drawPath(readPath(lastPath.path), paint)
+            canvas.drawPath(stringToPath(lastPath.path), paint)
             //Log.d(TAG, "onDraw: drawLastPath")
         }
 
@@ -255,7 +258,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
     fun savePath(path: String, paint: Paint, type: String = "Penna") {
-        lastPath.path = pathFitCurve(path, maxError)
+        var errorCalc = page.dimensioni.calcSpessore(maxError.toFloat(), pageRect.width().toInt())
+        lastPath.path = pathFitCurve(path, errorCalc)
         lastPath.paint = paint
 
         when(type){
@@ -268,56 +272,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         paint.strokeWidth = page.dimensioni.calcSpessore(lastPath.paint.strokeWidth, pageRect.width().toInt()).toFloat()
 
         //var pathTemp = pathFitCurve(lastPath.path, maxError)
-        pageCanvas.drawPath(readPath(lastPath.path), paint)
+        pageCanvas.drawPath(stringToPath(lastPath.path), paint)
         invalidate()
 
         writePage(nPage)
         drawFile.writeXML()
-    }
-
-    private fun readPath(path: String): Path {
-        var realPath = Path()
-        var stringPath = split(path, " ")
-
-        var i = 0
-        while (i < stringPath.size) {
-            when (stringPath[i]) {
-                "M" -> {
-                    realPath.moveTo(stringPath[i + 1].toFloat(), stringPath[i + 2].toFloat())
-                    i += 2
-                }
-                "L" -> {
-                    realPath.lineTo(
-                        stringPath[i + 1].toFloat(),
-                        stringPath[i + 2].toFloat(),
-                    )
-                    i += 2
-                }
-                "Q" -> {
-                    realPath.quadTo(
-                        stringPath[i + 1].toFloat(),
-                        stringPath[i + 2].toFloat(),
-                        stringPath[i + 3].toFloat(),
-                        stringPath[i + 4].toFloat()
-                    )
-                    i += 4
-                }
-                "C" -> {
-                    realPath.cubicTo(
-                        stringPath[i + 1].toFloat(),
-                        stringPath[i + 2].toFloat(),
-                        stringPath[i + 3].toFloat(),
-                        stringPath[i + 4].toFloat(),
-                        stringPath[i + 5].toFloat(),
-                        stringPath[i + 6].toFloat()
-                    )
-                    i += 6
-                }
-            }
-
-            i++
-        }
-        return realPath
     }
 
     /**
@@ -528,7 +487,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private fun drawPagePaths(canvas: Canvas, rectScaleToFit: RectF = pageRect){
         fun drawPath(pathTemp: String, paintTemp: Paint, rectTemp: RectF){
-            val path = readPath(pathTemp)
+            val path = stringToPath(pathTemp)
             pathMatrix.setRectToRect(rectTemp, rectScaleToFit, Matrix.ScaleToFit.CENTER)
             path.transform(pathMatrix)
 
@@ -768,6 +727,18 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                     pageCanvas.drawPath(path, infPath.paint)
                 }
                 invalidate()*/
+            }
+
+            MotionEvent.ACTION_CANCEL -> {
+                moveMatrix = startMatrix
+
+                val f = FloatArray(9)
+                moveMatrix.getValues(f)
+                lastScaleFactor = f[Matrix.MSCALE_X]
+
+                createPage()
+                scaling = true
+                invalidate()
             }
         }
     }

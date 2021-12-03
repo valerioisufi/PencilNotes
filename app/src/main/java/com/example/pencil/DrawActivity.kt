@@ -29,6 +29,10 @@ import android.text.TextUtils.replace
 import androidx.annotation.WorkerThread
 import com.google.android.material.chip.Chip
 import android.graphics.pdf.PdfRenderer
+import com.example.pencil.file.FileManager
+import com.example.pencil.page.DrawView
+import com.example.pencil.page.tool.ColorPickerView
+import com.example.pencil.page.tool.ColorShowView
 
 private const val TAG = "DrawActivity"
 class DrawActivity : AppCompatActivity() {
@@ -416,39 +420,6 @@ class DrawActivity : AppCompatActivity() {
         AREA_SELEZIONE
     }
 
-
-    /**
-     * Blurs the given Bitmap image
-     * @param bitmap Image to blur
-     * @param applicationContext Application context
-     * @return Blurred bitmap image
-     */
-    @WorkerThread
-    fun blurBitmap(bitmap: Bitmap, applicationContext: Context): Bitmap {
-        lateinit var rsContext: RenderScript
-        try {
-
-            // Create the output bitmap
-            val output = Bitmap.createBitmap(
-                bitmap.width, bitmap.height, bitmap.config)
-
-            // Blur the image
-            rsContext = RenderScript.create(applicationContext, RenderScript.ContextType.DEBUG)
-            val inAlloc = Allocation.createFromBitmap(rsContext, bitmap)
-            val outAlloc = Allocation.createTyped(rsContext, inAlloc.type)
-            val theIntrinsic = ScriptIntrinsicBlur.create(rsContext, Element.U8_4(rsContext))
-            theIntrinsic.apply {
-                setRadius(10f)
-                theIntrinsic.setInput(inAlloc)
-                theIntrinsic.forEach(outAlloc)
-            }
-            outAlloc.copyTo(output)
-
-            return output
-        } finally {
-            rsContext.finish()
-        }
-    }
 
     // Tasti
     fun showColorPickerView(view: View){

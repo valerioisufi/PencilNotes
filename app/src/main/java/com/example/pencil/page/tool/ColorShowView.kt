@@ -1,4 +1,4 @@
-package com.example.pencil
+package com.example.pencil.page.tool
 
 import android.content.Context
 import android.graphics.*
@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
+import com.example.pencil.R
 import kotlin.math.ceil
 
 /**

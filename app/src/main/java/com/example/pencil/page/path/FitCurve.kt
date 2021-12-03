@@ -1,9 +1,8 @@
-package com.example.pencil
+package com.example.pencil.page.path
 
 import android.text.TextUtils
 import kotlin.math.floor
 import kotlin.math.hypot
-import kotlin.math.max
 
 
 fun pathFitCurve(pathString: String, maxError: Int): String {
@@ -342,7 +341,7 @@ fun reparameterize(bezier: MutableList<MutableList<Double>>, points: MutableList
     }
     return results;
     */
-    return parameters.mapIndexed { i, p -> newtonRaphsonRootFind(bezier, points[i], p)}
+    return parameters.mapIndexed { i, p -> newtonRaphsonRootFind(bezier, points[i], p) }
 }
 
 /**
@@ -631,6 +630,8 @@ fun qprime(ctrlPoly: MutableList<MutableList<Double>>, t: Double): MutableList<D
 
 //Evaluates cubic bezier second derivative at t, return point
 fun qprimeprime(ctrlPoly: MutableList<MutableList<Double>>, t: Double): MutableList<Double> {
-    return addArrays(mulItems( addArrays(subtract(ctrlPoly[2], mulItems(ctrlPoly[1], 2.0)), ctrlPoly[0]),  6 * (1.0 - t) ),
-        mulItems( addArrays(subtract(ctrlPoly[3], mulItems(ctrlPoly[2], 2.0)), ctrlPoly[1]),  6 *        t  ))
+    return addArrays(
+        mulItems( addArrays(subtract(ctrlPoly[2], mulItems(ctrlPoly[1], 2.0)), ctrlPoly[0]),  6 * (1.0 - t) ),
+        mulItems( addArrays(subtract(ctrlPoly[3], mulItems(ctrlPoly[2], 2.0)), ctrlPoly[1]),  6 *        t  )
+    )
 }

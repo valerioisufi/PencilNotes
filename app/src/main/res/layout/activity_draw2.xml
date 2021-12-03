@@ -82,7 +82,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/constraintLayout3">
 
-            <com.example.pencil.ColorShowView
+            <com.example.pencil.page.tool.ColorShowView
                 android:id="@+id/colorShowView"
                 style="@style/IconImageButton"
                 android:layout_marginStart="16dp"
@@ -95,62 +95,74 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <ImageView
+            <com.example.pencil.page.tool.StrumentoView
                 android:id="@+id/Matita"
                 style="@style/IconImageButton"
-                android:layout_marginStart="8dp"
+                android:background="@drawable/ripple_on_light"
                 android:onClick="choosePennello"
                 android:padding="12dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/Gomma"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/colorShowView"
+                app:layout_constraintHorizontal_chainStyle="packed"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/pencil" />
+                app:srcCompat="@drawable/ic_strumento_penna"
+                app:typeStrumento="Penna" />
+
 
             <ImageView
                 android:id="@+id/Gomma"
                 style="@style/IconImageButton"
-                android:layout_marginStart="8dp"
+                android:background="@drawable/ripple_on_light"
                 android:onClick="choosePennello"
                 android:padding="12dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/Evidenziatore"
-                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toEndOf="@+id/Matita"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/eraser" />
+                app:srcCompat="@drawable/ic_strumento_gomma" />
 
-            <ImageView
+            <com.example.pencil.page.tool.StrumentoView
                 android:id="@+id/Evidenziatore"
                 style="@style/IconImageButton"
-                android:layout_marginStart="8dp"
+                android:background="@drawable/ripple_on_light"
                 android:onClick="choosePennello"
                 android:padding="12dp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/Penna"
-                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintEnd_toStartOf="@+id/strumento_lazo"
                 app:layout_constraintStart_toEndOf="@+id/Gomma"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/marker" />
+                app:srcCompat="@drawable/ic_strumento_evidenziatore"
+                app:typeStrumento="Evidenziatore" />
 
             <ImageView
-                android:id="@+id/Penna"
+                android:id="@+id/strumento_lazo"
                 style="@style/IconImageButton"
-                android:layout_marginStart="8dp"
+                android:background="@drawable/ripple_on_light"
+                android:onClick="choosePennello"
+                android:padding="12dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/strumento_text"
+                app:layout_constraintStart_toEndOf="@+id/Evidenziatore"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_strumento_lazo" />
+
+            <ImageView
+                android:id="@+id/strumento_text"
+                style="@style/IconImageButton"
+                android:background="@drawable/ripple_on_light"
                 android:onClick="choosePennello"
                 android:padding="12dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/Evidenziatore"
+                app:layout_constraintStart_toEndOf="@+id/strumento_lazo"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/pen" />
+                app:srcCompat="@drawable/ic_strumento_testo" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.example.pencil.DrawView
+    <com.example.pencil.page.DrawView
         android:id="@+id/drawView"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -221,7 +233,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <com.example.pencil.ColorPickerView
+        <com.example.pencil.page.tool.ColorPickerView
             android:id="@+id/colorPicker"
             android:layout_width="0dp"
             android:layout_height="320dp"

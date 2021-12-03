@@ -40,7 +40,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.example.pencil.ColorShowView
+    <com.example.pencil.page.tool.ColorShowView
         android:id="@+id/colorShowView"
         android:layout_width="48dp"
         android:layout_height="48dp"
@@ -196,7 +196,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <com.example.pencil.ColorPickerView
+        <com.example.pencil.page.tool.ColorPickerView
             android:id="@+id/colorPicker"
             android:layout_width="0dp"
             android:layout_height="320dp"
