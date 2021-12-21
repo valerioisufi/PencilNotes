@@ -26,15 +26,16 @@
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_redo.xml" value="0.26614583333333336" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_search.xml" value="0.26614583333333336" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_settings.xml" value="0.2703125" />
-        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_strumento_evidenziatore.xml" value="0.26614583333333336" />
-        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_strumento_gomma.xml" value="0.26614583333333336" />
+        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_strumento_evidenziatore.xml" value="0.37864583333333335" />
+        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_strumento_gomma.xml" value="0.37864583333333335" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_strumento_lazo.xml" value="0.26614583333333336" />
-        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_strumento_penna.xml" value="0.536" />
+        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_strumento_penna.xml" value="0.37864583333333335" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_strumento_testo.xml" value="0.26614583333333336" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ic_undo.xml" value="0.26614583333333336" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/launcher_screen.xml" value="0.26614583333333336" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/plus_small.xml" value="0.26614583333333336" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ripple_on_dark.xml" value="0.26614583333333336" />
+        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ripple_on_draw_strumento.xml" value="0.37864583333333335" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ripple_on_light.xml" value="0.14375" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/shape_action_button.xml" value="0.26614583333333336" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/shape_bg_mask.xml" value="0.26614583333333336" />
@@ -54,12 +55,13 @@
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout-land/activity_draw.xml" value="0.264" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout-qwerty/new_file.xml" value="0.5620608899297423" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/activity_draw.xml" value="0.264" />
-        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/activity_draw2.xml" value="0.264" />
+        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/activity_draw2.xml" value="0.4" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/activity_home.xml" value="0.264" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/activity_home2.xml" value="0.307475317348378" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/activity_main.xml" value="0.3190104166666667" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/dettagli_file_layout.xml" value="0.2" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/dialog_dettagli_file.xml" value="0.4" />
+        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/dialog_draw_impostazioni.xml" value="0.25" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/dialog_draw_paint.xml" value="0.25" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/dialog_new_file.xml" value="0.25" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/layout/file_notes_item.xml" value="0.536" />

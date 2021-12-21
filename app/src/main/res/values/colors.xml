@@ -36,4 +36,8 @@
     <color name="gn_border_page">#d4d4d3</color>
     <color name="gn_background_tools">#f9f9f9</color>
     <color name="gn_border_tools">#dadbda</color>
+
+    <color name="bezier_curva">#000000</color>
+    <color name="bezier_punto_controlo">#BEFF4444</color>
+    <color name="bezier_linea_controlo">#8000DDFF</color>
 </resources>

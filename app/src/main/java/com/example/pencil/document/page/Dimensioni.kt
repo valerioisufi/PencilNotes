@@ -1,4 +1,4 @@
-package com.example.pencil.page
+package com.example.pencil.document.page
 
 /**
  * Classe per le funzioni che controllano le dimensioni della pagina

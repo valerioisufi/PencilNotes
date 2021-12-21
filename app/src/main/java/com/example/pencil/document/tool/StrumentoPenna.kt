@@ -1,0 +1,161 @@
+package com.example.pencil.document.tool
+
+import android.app.Dialog
+import android.content.Context
+import android.graphics.Paint
+import android.media.Image
+import android.util.AttributeSet
+import android.view.Gravity
+import android.view.MotionEvent
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.SeekBar
+import android.widget.TextView
+import android.widget.Toast
+import androidx.core.content.res.ResourcesCompat
+import com.example.pencil.R
+import com.example.pencil.document.DrawView
+import com.example.pencil.sharedPref
+
+class StrumentoPenna(var context: Context, var view: ImageView){
+    // variabili con i valori dell'oggetto, stroke (pt) e color
+    var strokeWidthStrumento = sharedPref.getFloat("strokePenna", 2.5f)
+    var colorStrumento = sharedPref.getInt("colorPenna", ResourcesCompat.getColor(view.resources, R.color.colorPaint, null))
+
+    init {
+        view.setColorFilter(colorStrumento, android.graphics.PorterDuff.Mode.MULTIPLY)
+
+        view.setOnLongClickListener {
+            strumentiDialog()
+            return@setOnLongClickListener true
+        }
+    }
+
+    /**
+     * Gestione del MotionEvent
+     */
+    private var path = ""
+    private var currentX = 0f
+    private var currentY = 0f
+    fun gestioneMotionEvent(v: DrawView, event: MotionEvent){
+        fun touchStart(v: DrawView, event: MotionEvent) {
+            path = ""
+            path = path + "M " + event.x + " " + event.y + " " //.moveTo(event.x, event.y)
+
+            currentX = event.x
+            currentY = event.y
+
+            var tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
+            var orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
+
+            v.newPath(path, getPaint())
+        }
+        fun touchMove(v: DrawView, event: MotionEvent) {
+            path = path + "L " + event.x + " " + event.y + " "
+
+            currentX = event.x
+            currentY = event.y
+
+            // Draw the path in the extra bitmap to cache it.
+            v.rewritePath(path)
+        }
+        fun touchUp(v: DrawView, event: MotionEvent) {
+            v.savePath(path, getPaint())
+
+            // Reset the path so it doesn't get drawn again.
+            path = ""
+        }
+
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> touchStart(v, event)
+            MotionEvent.ACTION_MOVE -> touchMove(v, event)
+            MotionEvent.ACTION_UP -> touchUp(v, event)
+        }
+    }
+
+    /**
+     * Gestione dei drawEvent
+     */
+
+
+
+
+
+
+
+
+    fun getPaint(): Paint {
+        val paintTemp = Paint().apply {
+            color = colorStrumento
+            // Smooths out edges of what is drawn without affecting shape.
+            isAntiAlias = true
+            // Dithering affects how colors with higher-precision than the device are down-sampled.
+            isDither = true
+            style = Paint.Style.STROKE // default: FILL
+            strokeJoin = Paint.Join.ROUND // default: MITER
+            strokeCap = Paint.Cap.ROUND // default: BUTT
+            strokeWidth = strokeWidthStrumento
+        }
+        return paintTemp
+    }
+
+    fun strumentiDialog() {
+        var dialog = Dialog(context)
+        dialog.setContentView(R.layout.dialog_draw_paint)
+
+        var window = dialog.window!!
+        window.setBackgroundDrawableResource(android.R.color.transparent)
+        window.setGravity(Gravity.CENTER)
+        window.attributes.windowAnimations = R.style.DialogAnimation
+
+        dialog.setCancelable(true)
+        window.setLayout(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        val coloreTrattoColorPickerView = dialog.findViewById<ColorPickerView>(R.id.dialogDrawPaint_coloreTrattoColorPickerView)
+        val dimensioneTrattoSeekbar = dialog.findViewById<SeekBar>(R.id.dialogDrawPaint_dimensioneTrattoSeekbar)
+        val dimensioneTrattoTextView = dialog.findViewById<TextView>(R.id.dialogDrawPaint_dimensioneTrattoTextView)
+
+        coloreTrattoColorPickerView.color = colorStrumento
+        dimensioneTrattoSeekbar.progress = (strokeWidthStrumento * 10).toInt()
+        dimensioneTrattoTextView.text = (strokeWidthStrumento.toString() + "pt")
+
+        dialog.show()
+
+        dimensioneTrattoSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seek: SeekBar, progress: Int, fromUser: Boolean) {
+                var progressTemp = (progress * 0.1).toFloat()
+                strokeWidthStrumento = progressTemp
+
+                dimensioneTrattoTextView.text = (progressTemp.toString() + "pt")
+
+                with (sharedPref.edit()) {
+                    putFloat("strokePenna", strokeWidthStrumento)
+                    apply()
+                }
+            }
+            override fun onStartTrackingTouch(seek: SeekBar) {}
+            override fun onStopTrackingTouch(seek: SeekBar) {
+                Toast.makeText(context,
+                    "La dimesione è: " + (seek.progress * 0.1 ) + "pt",
+                    Toast.LENGTH_SHORT).show()
+                //paint.strokeWidth = seek.progress.toFloat()
+            }
+        })
+
+        coloreTrattoColorPickerView.setOnColorChangedListener(object : ColorPickerView.OnColorChangedListener{
+            override fun onColorChanged(newColor: Int) {
+                //colorShowView.color = newColor
+                view.setColorFilter(newColor, android.graphics.PorterDuff.Mode.MULTIPLY)
+                colorStrumento = newColor
+
+                with (sharedPref.edit()) {
+                    putInt("colorPenna", newColor)
+                    apply()
+                }
+            }
+        })
+    }
+}

@@ -1,4 +1,4 @@
-package com.example.pencil.page
+package com.example.pencil.document
 
 import android.content.Context
 import android.graphics.*
@@ -12,10 +12,16 @@ import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.transform
 import com.example.pencil.R
+import com.example.pencil.document.page.Dimensioni
+import com.example.pencil.document.page.GestionePagina
+import com.example.pencil.document.path.DrawMotionEvent
+import com.example.pencil.document.path.pathFitCurve
+import com.example.pencil.document.path.stringToList
+import com.example.pencil.document.path.stringToPath
+import com.example.pencil.document.tool.*
 import com.example.pencil.file.PencilFileXml
-import com.example.pencil.page.path.pathFitCurve
-import com.example.pencil.page.path.stringToPath
 import java.io.File
+import kotlin.math.log
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -25,12 +31,23 @@ private const val TAG = "DrawView"
  * TODO: document your custom view class.
  */
 class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
+    enum class Pennello(val value: Int) {
+        PENNA(0),
+        GOMMA(1),
+        EVIDENZIATORE(2),
+        LAZO(3),
+        TESTO(4);
+
+        companion object {
+            fun fromInt(value: Int) = values().first { it.value == value }
+        }
+    }
 
     var maxError = 10
     private lateinit var pageRect: RectF
     private lateinit var windowRect: RectF
     private var path = Path()
-    private var paint = Paint().apply {
+    var paint = Paint().apply {
         color = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
         // Smooths out edges of what is drawn without affecting shape.
         isAntiAlias = true
@@ -41,6 +58,34 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         strokeCap = Paint.Cap.ROUND // default: BUTT
         strokeWidth = 3f // default: Hairline-width (really thin)
     }
+
+    fun setDrawMotioEvent(drawMotionEvent: DrawMotionEvent){
+        setOnTouchListener { v, event ->
+            v.performClick()
+            drawMotionEvent.onTouchView(this, event)
+
+            return@setOnTouchListener true
+        }
+
+        setOnHoverListener { v, event ->
+            drawMotionEvent.onHoverView(this, event)
+
+            return@setOnHoverListener true
+        }
+    }
+
+    var strumentoAttivo = Pennello.PENNA
+
+    var strumentoPenna: StrumentoPenna? = null
+    var strumentoEvidenziatore: StrumentoEvidenziatore? = null
+    var strumentoGomma: StrumentoGomma? = null
+    var strumentoLazo: StrumentoLazo? = null
+    var strumentoTesto: StrumentoTesto? = null
+
+    var paginaAttuale = GestionePagina(context, this)
+
+
+
 
 
     var pathMatrix = Matrix()
@@ -86,21 +131,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             canvas.drawBitmap(pageBitmap, 0f, 0f, null)
 
         }
-
-        //drawPage()
-        //canvas.drawBitmap(pageBitmap, 0f, 0f, null)
-
-        /*for (i in pathList) {
-            drawPath(i)
-        }*/
-
-        /*if(scaleCache){
-            scaleCache = false
-        }*/
-
-
-        //canvas.drawBitmap(pageBitmap, 0f, 0f, null)
-        //drawViewBackground(canvas)
 
         if (drawLastPath) {
             var paint = Paint(lastPath.paint)
@@ -316,49 +346,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         drawFile.writeXML()
     }
 
-    /*fun getPaint(): Paint {
-        return paint
-    }
 
-    fun setPaint(_paint: Paint) {
-        paint = _paint
-    }
-
-    fun getPath(): Path {
-        return path
-    }*/
-
-    /*fun setPath(_path: Path) {
-        path = applyMatrix(_path)
-
-        invalidate()
-    }*/
-
-    /*fun savePath(_path: Path) {
-        pageCanvas.drawPath(applyMatrix(_path), paint)
-
-        invalidate()
-    }*/
-
-    /*fun addPathPaint(_path: Path, _paint: Paint, save : Boolean = false) {
-
-        val infPath = InfPath(_path, _paint, RectF(pageRect), save)
-        if (save){
-            val lastPathIndex = pathList.count() - 1
-            pathList[lastPathIndex] = infPath
-        }else{
-            val lastPathIndex = pathList.count() - 1
-            if(lastPathIndex < 0){
-                pathList.add(infPath)
-            } else if(pathList[lastPathIndex].save) {
-                pathList.add(infPath)
-            } else{
-                pathList[lastPathIndex] = infPath
-            }
-        }
-
-        invalidate()
-    }*/
 
     fun setPathPaint(_path: Path, _paint: Paint) {
         path = _path
@@ -375,9 +363,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private fun drawPath(infPath: InfPath) {
         var pathMatrix = Matrix()
         pathMatrix.setRectToRect(infPath.rect, pageRect, Matrix.ScaleToFit.CENTER)
-        //_path.transform(pathMatrix)
-
-        //pageCanvas.drawPath(infPath.path, infPath.paint)
     }
 
     private fun drawPage(canvas: Canvas, rect: RectF = pageRect) {
@@ -409,26 +394,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             var id = drawFile.body[nPage].background?.get("id")
             var indexPdf = drawFile.body[nPage].background!!["index"]?.toInt()!!
 
-            //Log.d(TAG, "readBackground: " +"$id;$indexPdf")
-            //Log.d(TAG, "readBackground: " + drawFile.head[id]?.get("path"))
             var fileTemp = File(context.filesDir, drawFile.head[id]?.get("path"))
-            //Log.d(TAG, "readBackground: " + fileTemp.exists())
             val renderer = PdfRenderer(ParcelFileDescriptor.open(fileTemp, ParcelFileDescriptor.MODE_READ_ONLY))
 
+
             val pagePdf: PdfRenderer.Page = renderer.openPage(indexPdf)
-
-            // say we render for showing on the screen
-            //var bitmapTemp = Bitmap.createBitmap(pageRect.width().toInt(), pageRect.height().toInt(), Bitmap.Config.ARGB_8888)
-            /*var path1 = Path()
-            path1.addRect(pageRect, Path.Direction.CW)
-            var path2 = Path()
-            path2.addRect(windowRect, Path.Direction.CW)
-
-            var finalPath = Path()
-            finalPath.op(path1, path2, Path.Op.DIFFERENCE)
-            var renderRect = RectF()
-            finalPath.isRect(renderRect)
-            Log.d(TAG, "readBackground: isRect" + finalPath.isRect(null))*/
 
             var renderRect = Rect()
             if (rectScaleToFit.left < 0f){
@@ -453,11 +423,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             }
             Log.d(TAG, "drawPageBackground: " + renderRect.toString())
 
-            /*val contentLeft = renderRect.left
-            val contentTop = renderRect.top
-            val contentRight: Int = renderRect.right
-            val contentBottom: Int = renderRect.bottom*/
-
             // If transform is not set, stretch page to whole clipped area
             val renderMatrix = Matrix()
             val clipWidth: Float = rectScaleToFit.width()
@@ -472,22 +437,119 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
             pagePdf.render(bitmap, renderRect, renderMatrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
-            // do stuff with the bitmap
-            //page.background = bitmapTemp
-            //bitmapTemp.recycle()
-
             // close the page
             pagePdf.close()
         }
-
-        /*if (page.background != null){
-            canvas.drawBitmap(page.background!!, null, rectScaleToFit, null)
-        }*/
     }
 
     private fun drawPagePaths(canvas: Canvas, rectScaleToFit: RectF = pageRect){
+        fun drawPathStructure(pathTemp: String, rectTemp: RectF){
+            var paintPuntoControllo = Paint().apply {
+                color = ResourcesCompat.getColor(resources, R.color.bezier_punto_controlo, null)
+                strokeWidth = 0.5f
+                style = Paint.Style.STROKE
+
+                isAntiAlias = true
+                isDither = true
+            }
+            var paintLineacControllo = Paint().apply {
+                color = ResourcesCompat.getColor(resources, R.color.bezier_linea_controlo, null)
+                strokeWidth = 3f
+                style = Paint.Style.STROKE
+
+                isAntiAlias = true
+                isDither = true
+            }
+            var paintCurva = Paint().apply {
+                color = ResourcesCompat.getColor(resources, R.color.bezier_curva, null)
+                strokeWidth = 2f
+                style = Paint.Style.STROKE
+
+                isAntiAlias = true
+                isDither = true
+            }
+
+            /**
+             * pathMatrix è già stato modificato per corrispondere al tracciato corrente
+             */
+            var pathList = stringToList(pathTemp)
+            var x = 0f
+            var y = 0f
+
+            for (pathSegmento in pathList){
+                var pathToDraw = Path()
+
+                when(pathSegmento["type"]){
+                    "M" -> {
+                        x = pathSegmento["x"]!!.toFloat()
+                        y = pathSegmento["y"]!!.toFloat()
+
+//                        pathToDraw.addCircle(x, y, 5f, Path.Direction.CW)
+//                        pathToDraw.transform(pathMatrix)
+//                        canvas.drawPath(pathToDraw, paintPuntoControllo)
+                    }
+                    "L" -> {
+                        pathToDraw.moveTo(x, y)
+                        x = pathSegmento["x"]!!.toFloat()
+                        y = pathSegmento["y"]!!.toFloat()
+                        pathToDraw.lineTo(x, y)
+                        pathToDraw.transform(pathMatrix)
+                        canvas.drawPath(pathToDraw, paintCurva)
+
+//                        pathToDraw.rewind()
+//                        pathToDraw.addCircle(x, y, 5f, Path.Direction.CW)
+//                        pathToDraw.transform(pathMatrix)
+//                        canvas.drawPath(pathToDraw, paintPuntoControllo)
+                    }
+                    "C" -> {
+                        pathToDraw.moveTo(x, y)
+                        var x1 = pathSegmento["x1"]!!.toFloat()
+                        var y1 = pathSegmento["y1"]!!.toFloat()
+                        pathToDraw.lineTo(x1, y1)
+                        pathToDraw.transform(pathMatrix)
+                        canvas.drawPath(pathToDraw, paintLineacControllo)
+
+                        pathToDraw.rewind()
+                        pathToDraw.addCircle(x1, y1, 2f, Path.Direction.CW)
+                        pathToDraw.transform(pathMatrix)
+                        canvas.drawPath(pathToDraw, paintPuntoControllo)
+
+                        pathToDraw.reset()
+                        pathToDraw.moveTo(x, y)
+                        x = pathSegmento["x"]!!.toFloat()
+                        y = pathSegmento["y"]!!.toFloat()
+                        var x2 = pathSegmento["x2"]!!.toFloat()
+                        var y2 = pathSegmento["y2"]!!.toFloat()
+                        pathToDraw.cubicTo(x1, y1, x2, y2, x, y)
+                        pathToDraw.transform(pathMatrix)
+                        canvas.drawPath(pathToDraw, paintCurva)
+
+//                        pathToDraw.rewind()
+//                        pathToDraw.addCircle(x, y, 5f, Path.Direction.CW)
+//                        pathToDraw.transform(pathMatrix)
+//                        canvas.drawPath(pathToDraw, paintPuntoControllo)
+
+                        pathToDraw.reset()
+                        pathToDraw.moveTo(x, y)
+                        pathToDraw.lineTo(x2, y2)
+                        pathToDraw.transform(pathMatrix)
+                        canvas.drawPath(pathToDraw, paintLineacControllo)
+
+                        pathToDraw.reset()
+                        pathToDraw.addCircle(x2, y2, 2f, Path.Direction.CW)
+                        pathToDraw.transform(pathMatrix)
+                        canvas.drawPath(pathToDraw, paintPuntoControllo)
+                    }
+
+
+                }
+            }
+
+        }
+
+
         fun drawPath(pathTemp: String, paintTemp: Paint, rectTemp: RectF){
-            val path = stringToPath(pathTemp)
+            val path: Path = stringToPath(pathTemp)
             pathMatrix.setRectToRect(rectTemp, rectScaleToFit, Matrix.ScaleToFit.CENTER)
             path.transform(pathMatrix)
 
@@ -496,6 +558,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 page.dimensioni.calcSpessore(paintTemp.strokeWidth, rectScaleToFit.width().toInt()).toFloat()
 
             canvas.drawPath(path, paint)
+            drawPathStructure(pathTemp, rectTemp)
         }
 
         for (i in page.pathEvidenziatore.indices) {
@@ -586,9 +649,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private lateinit var scalingCanvas: Canvas
     private lateinit var scalingBitmap: Bitmap
 
-    //private lateinit var pathCanvas: Canvas
-    //private lateinit var pathBitmap: Bitmap
-
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
 
@@ -609,14 +669,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         createPage()
     }
 
-
-    // private val backgroundColor = ResourcesCompat.getColor(resources, R.color.colorBackground, null)
-    // private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
-
-    /*private fun applyMatrix(path: Path):Path{
-        //path.transform(canvasMatrix)
-        return path
-    }*/
 
     private var redraw = true
     private var scaling = false
@@ -720,13 +772,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
                 redraw = true
                 invalidate()
-
-                /*for(infPath in pathList){
-                    var path = readPath(infPath.path)
-                    path.transform(moveMatrix)
-                    pageCanvas.drawPath(path, infPath.paint)
-                }
-                invalidate()*/
             }
 
             MotionEvent.ACTION_CANCEL -> {

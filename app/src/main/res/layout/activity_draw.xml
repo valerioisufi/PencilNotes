@@ -40,34 +40,34 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.example.pencil.page.tool.ColorShowView
+    <com.example.pencil.document.tool.ColorShowView
         android:id="@+id/colorShowView"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:onClick="showColorPickerView"
         android:padding="4dp"
         app:layout_constraintBottom_toBottomOf="@+id/commandView"
-        app:layout_constraintEnd_toStartOf="@+id/Matita"
+        app:layout_constraintEnd_toStartOf="@+id/strumento_penna"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="@+id/commandView"
         app:layout_constraintTop_toTopOf="@+id/commandView" />
 
     <ImageButton
-        android:id="@+id/Evidenziatore"
+        android:id="@+id/strumento_evidenziatore"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:backgroundTint="#00FFFFFF"
         android:onClick="choosePennello"
         android:scaleType="centerInside"
         app:layout_constraintBottom_toBottomOf="@+id/Penna"
-        app:layout_constraintEnd_toStartOf="@+id/Gomma"
+        app:layout_constraintEnd_toStartOf="@+id/strumento_gomma"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/Penna"
         app:layout_constraintTop_toTopOf="@+id/Penna"
         app:srcCompat="@drawable/marker" />
 
     <ImageButton
-        android:id="@+id/Matita"
+        android:id="@+id/strumento_penna"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:backgroundTint="#00FFFFFF"
@@ -87,25 +87,25 @@
         android:backgroundTint="#00FFFFFF"
         android:onClick="choosePennello"
         android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@+id/Matita"
-        app:layout_constraintEnd_toStartOf="@+id/Evidenziatore"
+        app:layout_constraintBottom_toBottomOf="@+id/strumento_penna"
+        app:layout_constraintEnd_toStartOf="@+id/strumento_evidenziatore"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/Matita"
-        app:layout_constraintTop_toTopOf="@+id/Matita"
+        app:layout_constraintStart_toEndOf="@+id/strumento_penna"
+        app:layout_constraintTop_toTopOf="@+id/strumento_penna"
         app:srcCompat="@drawable/pen" />
 
     <ImageButton
-        android:id="@+id/Gomma"
+        android:id="@+id/strumento_gomma"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:backgroundTint="#00FFFFFF"
         android:onClick="choosePennello"
         android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@+id/Evidenziatore"
+        app:layout_constraintBottom_toBottomOf="@+id/strumento_evidenziatore"
         app:layout_constraintEnd_toStartOf="@+id/imageButton11"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/Evidenziatore"
-        app:layout_constraintTop_toTopOf="@+id/Evidenziatore"
+        app:layout_constraintStart_toEndOf="@+id/strumento_evidenziatore"
+        app:layout_constraintTop_toTopOf="@+id/strumento_evidenziatore"
         app:srcCompat="@drawable/eraser" />
 
     <ImageButton
@@ -117,11 +117,11 @@
         android:minHeight="48dp"
         android:onClick="showImpostazioniView"
         android:scaleType="fitCenter"
-        app:layout_constraintBottom_toBottomOf="@+id/Gomma"
+        app:layout_constraintBottom_toBottomOf="@+id/strumento_gomma"
         app:layout_constraintEnd_toEndOf="@+id/commandView"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/Gomma"
-        app:layout_constraintTop_toTopOf="@+id/Gomma"
+        app:layout_constraintStart_toEndOf="@+id/strumento_gomma"
+        app:layout_constraintTop_toTopOf="@+id/strumento_gomma"
         app:srcCompat="@drawable/ic_settings" />
 
     <TextView
@@ -196,7 +196,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <com.example.pencil.page.tool.ColorPickerView
+        <com.example.pencil.document.tool.ColorPickerView
             android:id="@+id/colorPicker"
             android:layout_width="0dp"
             android:layout_height="320dp"

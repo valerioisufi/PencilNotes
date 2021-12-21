@@ -1,4 +1,4 @@
-package com.example.pencil.page.tool
+package com.example.pencil.document.tool
 
 import android.content.Context
 import android.graphics.*
