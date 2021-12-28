@@ -3,247 +3,184 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".DrawActivity">
+    android:layout_height="match_parent">
 
-    <com.example.pencil.DrawView
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/commandView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#4b5c80"
+        android:fitsSystemWindows="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintLayout3"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:background="#4b5c80"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/contatoreTextView"
+                style="@style/BodyTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="n.0"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/imageView10"
+                style="@style/IconImageButton"
+                android:layout_marginStart="8dp"
+                android:onClick="addObject"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/contatoreTextView"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_add_circle_outline" />
+
+            <com.example.pencil.document.tool.DrawImpostazioni
+                android:id="@+id/drawImpostazioni"
+                style="@style/IconImageButton"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_more_horiz" />
+
+            <ImageView
+                android:id="@+id/imageView8"
+                style="@style/IconImageButton"
+                android:onClick="redo"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/drawImpostazioni"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_redo" />
+
+            <ImageView
+                android:id="@+id/imageView9"
+                style="@style/IconImageButton"
+                android:onClick="undo"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/imageView8"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_undo" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/shape_draw_tools"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/constraintLayout3">
+
+            <ImageView
+                android:id="@+id/strumento_penna"
+                style="@style/IconImageButton"
+                android:background="@drawable/ripple_on_draw_strumento"
+                android:onClick="choosePennello"
+                android:padding="12dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/strumento_gomma"
+                app:layout_constraintHorizontal_chainStyle="packed"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_strumento_penna" />
+
+
+            <ImageView
+                android:id="@+id/strumento_gomma"
+                style="@style/IconImageButton"
+                android:background="@drawable/ripple_on_draw_strumento"
+                android:onClick="choosePennello"
+                android:padding="12dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/strumento_evidenziatore"
+                app:layout_constraintStart_toEndOf="@+id/strumento_penna"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_strumento_gomma" />
+
+            <ImageView
+                android:id="@+id/strumento_evidenziatore"
+                style="@style/IconImageButton"
+                android:background="@drawable/ripple_on_draw_strumento"
+                android:onClick="choosePennello"
+                android:padding="12dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/strumento_lazo"
+                app:layout_constraintStart_toEndOf="@+id/strumento_gomma"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_strumento_evidenziatore" />
+
+            <ImageView
+                android:id="@+id/strumento_lazo"
+                style="@style/IconImageButton"
+                android:background="@drawable/ripple_on_draw_strumento"
+                android:onClick="choosePennello"
+                android:padding="12dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/strumento_testo"
+                app:layout_constraintStart_toEndOf="@+id/strumento_evidenziatore"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_strumento_lazo" />
+
+            <ImageView
+                android:id="@+id/strumento_testo"
+                style="@style/IconImageButton"
+                android:background="@drawable/ripple_on_draw_strumento"
+                android:onClick="choosePennello"
+                android:padding="12dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/strumento_lazo"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_strumento_testo" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.example.pencil.document.DrawView
         android:id="@+id/drawView"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <View
-        android:id="@+id/blurEffect"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:onClick="closeViewLayout"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <View
-        android:id="@+id/commandView"
-        android:layout_width="0dp"
-        android:layout_height="64dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:background="@drawable/shape_menu"
-        android:onClick="height"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <com.example.pencil.document.tool.ColorShowView
-        android:id="@+id/colorShowView"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:onClick="showColorPickerView"
-        android:padding="4dp"
-        app:layout_constraintBottom_toBottomOf="@+id/commandView"
-        app:layout_constraintEnd_toStartOf="@+id/strumento_penna"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="@+id/commandView"
-        app:layout_constraintTop_toTopOf="@+id/commandView" />
-
-    <ImageButton
-        android:id="@+id/strumento_evidenziatore"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:backgroundTint="#00FFFFFF"
-        android:onClick="choosePennello"
-        android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@+id/Penna"
-        app:layout_constraintEnd_toStartOf="@+id/strumento_gomma"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/Penna"
-        app:layout_constraintTop_toTopOf="@+id/Penna"
-        app:srcCompat="@drawable/marker" />
-
-    <ImageButton
-        android:id="@+id/strumento_penna"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:backgroundTint="#00FFFFFF"
-        android:onClick="choosePennello"
-        android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@+id/colorShowView"
-        app:layout_constraintEnd_toStartOf="@+id/Penna"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/colorShowView"
-        app:layout_constraintTop_toTopOf="@+id/colorShowView"
-        app:srcCompat="@drawable/pencil" />
-
-    <ImageButton
-        android:id="@+id/Penna"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:backgroundTint="#00FFFFFF"
-        android:onClick="choosePennello"
-        android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@+id/strumento_penna"
-        app:layout_constraintEnd_toStartOf="@+id/strumento_evidenziatore"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/strumento_penna"
-        app:layout_constraintTop_toTopOf="@+id/strumento_penna"
-        app:srcCompat="@drawable/pen" />
-
-    <ImageButton
-        android:id="@+id/strumento_gomma"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:backgroundTint="#00FFFFFF"
-        android:onClick="choosePennello"
-        android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@+id/strumento_evidenziatore"
-        app:layout_constraintEnd_toStartOf="@+id/imageButton11"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/strumento_evidenziatore"
-        app:layout_constraintTop_toTopOf="@+id/strumento_evidenziatore"
-        app:srcCompat="@drawable/eraser" />
-
-    <ImageButton
-        android:id="@+id/imageButton11"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:backgroundTint="#00FFFFFF"
-        android:minWidth="48dp"
-        android:minHeight="48dp"
-        android:onClick="showImpostazioniView"
-        android:scaleType="fitCenter"
-        app:layout_constraintBottom_toBottomOf="@+id/strumento_gomma"
-        app:layout_constraintEnd_toEndOf="@+id/commandView"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/strumento_gomma"
-        app:layout_constraintTop_toTopOf="@+id/strumento_gomma"
-        app:srcCompat="@drawable/ic_settings" />
-
-    <TextView
-        android:id="@+id/textViewData"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="TextView"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/drawView"
-        app:layout_constraintStart_toStartOf="@+id/drawView"
         app:layout_constraintTop_toBottomOf="@+id/commandView" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/impostazioniLayout"
+    <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:background="@color/dark_elevation_04dp"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/commandView">
+        app:layout_constraintTop_toTopOf="@+id/drawView">
 
-        <TextView
-            android:id="@+id/textView6"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:text="Attivare modalità Penna"
-            android:textColor="@color/colorAreaDefinitiva"
-            app:layout_constraintEnd_toStartOf="@+id/modePennaView"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:orientation="vertical">
 
-        <com.google.android.material.chip.Chip
-            android:id="@+id/modePennaView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checkable="true"
-            android:checked="true"
-            app:layout_constraintBottom_toBottomOf="@+id/textView6"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/textView6"
-            app:layout_constraintTop_toTopOf="@+id/textView6" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/pencilLayout"
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:background="@drawable/shape_pencil_settings"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/commandView">
-
-        <TextView
-            android:id="@+id/textView3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:fontFamily="@font/roboto"
-            android:text="Colore Tratto"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <com.example.pencil.document.tool.ColorPickerView
-            android:id="@+id/colorPicker"
-            android:layout_width="0dp"
-            android:layout_height="320dp"
-            android:layout_marginTop="16dp"
-            android:padding="10dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView3" />
-
-        <TextView
-            android:id="@+id/textView2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            android:fontFamily="@font/roboto"
-            android:text="Dimensione Tratto"
-            app:layout_constraintBottom_toTopOf="@+id/seekBar"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/colorPicker" />
-
-        <SeekBar
-            android:id="@+id/seekBar"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="32dp"
-            android:max="250"
-            android:min="5"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/dimensioneTrattoTextView"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <TextView
-            android:id="@+id/dimensioneTrattoTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:fontFamily="@font/roboto"
-            android:text="0px"
-            app:layout_constraintBottom_toBottomOf="@+id/seekBar"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/seekBar" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:id="@+id/textViewData"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
+                android:text="TextView"
+                android:textColor="#000000" />
+        </LinearLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

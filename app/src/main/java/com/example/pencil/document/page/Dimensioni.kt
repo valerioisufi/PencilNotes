@@ -3,7 +3,7 @@ package com.example.pencil.document.page
 /**
  * Classe per le funzioni che controllano le dimensioni della pagina
  */
-class Dimensioni(widthTemp: Float, heightTemp: Float, risoluzioneTemp: Float) {
+class Dimensioni(widthTemp: Float, heightTemp: Float) {
     class Misura(grandezza: Float, type: Unit){
         enum class Unit{
             PIXEL, INCH, DOT, CM, MM

@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
-import android.text.TextUtils.split
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
@@ -12,7 +11,6 @@ import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.transform
 import com.example.pencil.R
-import com.example.pencil.document.page.Dimensioni
 import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.path.DrawMotionEvent
 import com.example.pencil.document.path.pathFitCurve
@@ -21,7 +19,6 @@ import com.example.pencil.document.path.stringToPath
 import com.example.pencil.document.tool.*
 import com.example.pencil.file.PencilFileXml
 import java.io.File
-import kotlin.math.log
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -43,22 +40,18 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
     }
 
-    var maxError = 10
-    private lateinit var pageRect: RectF
-    private lateinit var windowRect: RectF
-    private var path = Path()
-    var paint = Paint().apply {
-        color = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
-        // Smooths out edges of what is drawn without affecting shape.
-        isAntiAlias = true
-        // Dithering affects how colors with higher-precision than the device are down-sampled.
-        isDither = true
-        style = Paint.Style.STROKE // default: FILL
-        strokeJoin = Paint.Join.ROUND // default: MITER
-        strokeCap = Paint.Cap.ROUND // default: BUTT
-        strokeWidth = 3f // default: Hairline-width (really thin)
-    }
+    var strumentoAttivo = Pennello.PENNA
 
+    var strumentoPenna: StrumentoPenna? = null
+    var strumentoEvidenziatore: StrumentoEvidenziatore? = null
+    var strumentoGomma: StrumentoGomma? = null
+    var strumentoLazo: StrumentoLazo? = null
+    var strumentoTesto: StrumentoTesto? = null
+
+
+    /**
+     * Funzioni per impostare il DrawView
+     */
     fun setDrawMotioEvent(drawMotionEvent: DrawMotionEvent){
         setOnTouchListener { v, event ->
             v.performClick()
@@ -74,15 +67,23 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
     }
 
-    var strumentoAttivo = Pennello.PENNA
 
-    var strumentoPenna: StrumentoPenna? = null
-    var strumentoEvidenziatore: StrumentoEvidenziatore? = null
-    var strumentoGomma: StrumentoGomma? = null
-    var strumentoLazo: StrumentoLazo? = null
-    var strumentoTesto: StrumentoTesto? = null
+    var maxError = 2
+    lateinit var pageRect: RectF
+    private lateinit var windowRect: RectF
+    var paint = Paint().apply {
+        color = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
+        // Smooths out edges of what is drawn without affecting shape.
+        isAntiAlias = true
+        // Dithering affects how colors with higher-precision than the device are down-sampled.
+        isDither = true
+        style = Paint.Style.STROKE // default: FILL
+        strokeJoin = Paint.Join.ROUND // default: MITER
+        strokeCap = Paint.Cap.ROUND // default: BUTT
+        strokeWidth = 3f // default: Hairline-width (really thin)
+    }
 
-    var paginaAttuale = GestionePagina(context, this)
+    //var paginaAttuale = GestionePagina(context, this)
 
 
 
@@ -134,7 +135,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
         if (drawLastPath) {
             var paint = Paint(lastPath.paint)
-            paint.strokeWidth = page.dimensioni.calcSpessore(lastPath.paint.strokeWidth, pageRect.width().toInt()).toFloat()
+            paint.strokeWidth = drawFile.body[pageAttuale].dimensioni.calcSpessore(lastPath.paint.strokeWidth, pageRect.width().toInt()).toFloat()
 
             canvas.drawPath(stringToPath(lastPath.path), paint)
             //Log.d(TAG, "onDraw: drawLastPath")
@@ -145,169 +146,24 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
 
-    data class InfPath(var path: String, var paint: Paint, var rect: RectF)
-
-    lateinit var page: Page
-    var nPage = 0
-    //private var pathList = mutableListOf<InfPath>()
-    private var lastPath: InfPath = InfPath("", paint, RectF())
     lateinit var drawFile: PencilFileXml
-
-    var widthPagePredefinito = 210
-    var heightPagePredefinito = 297
-    var risoluzionePagePredefinito = 300
-
-    data class Page(var dimensioni: Dimensioni){
-        //var background : Bitmap? = null
-        var pathPenna = mutableListOf<InfPath>()
-        var pathEvidenziatore = mutableListOf<InfPath>()
-    }
-
     fun readFile(nomeFile: String, cartellaFile: String){
         drawFile = PencilFileXml(context, nomeFile, cartellaFile)
         drawFile.readXML()
     }
+    var pageAttuale = 0
     fun changePage(index: Int){
-        nPage = index
-        readPage(nPage)
-    }
-    fun readPage(index: Int = nPage) {
-        if(drawFile.body.lastIndex < index){
-            drawFile.newPage(index, widthPagePredefinito, heightPagePredefinito, risoluzionePagePredefinito)
-        }
-        val pageTemp = drawFile.getPage(index)
-        val dimensioni = Dimensioni(widthPagePredefinito.toFloat(), heightPagePredefinito.toFloat(), risoluzionePagePredefinito.toFloat())
-        page = Page(dimensioni)
+        pageAttuale = drawFile.getPageIndex(index)
 
-        fun stringToPaint(paintS: String): Paint {
-            val paintList = split(paintS, "#").toList()
-            val paintTemp = Paint().apply {
-                color = paintList[0].toInt()
-                // Smooths out edges of what is drawn without affecting shape.
-                isAntiAlias = true
-                // Dithering affects how colors with higher-precision than the device are down-sampled.
-                isDither = true
-                style = when (paintList[1]) {
-                    "STROKE" -> Paint.Style.STROKE
-                    "FILL" -> Paint.Style.FILL
-                    else -> Paint.Style.FILL_AND_STROKE
-                }
-                strokeJoin = Paint.Join.ROUND // default: MITER
-                strokeCap = Paint.Cap.ROUND // default: BUTT
-                strokeWidth = paintList[2].toFloat()
-            }
-            return paintTemp
-        }
-        fun stringToRect(rectS: String): RectF {
-            val rectList = split(rectS, "#").toList()
-            val rectTemp = RectF().apply {
-                left = rectList[0].toFloat()
-                top = rectList[1].toFloat()
-                right = rectList[2].toFloat()
-                bottom = rectList[3].toFloat()
-            }
-            return rectTemp
-        }
-        for(elemento in pageTemp.pathPenna){
-            val pathS = elemento["path"]
-            val paintS = elemento["style"]
-            val rectS = elemento["rect"]
-
-            val paintTemp = stringToPaint(paintS!!)
-            val rectTemp = stringToRect(rectS!!)
-
-            val infPath = InfPath(pathS!!, paintTemp, rectTemp)
-            page.pathPenna.add(infPath)
-        }
-        for(elemento in pageTemp.pathEvidenziatore){
-            val pathS = elemento["path"]
-            val paintS = elemento["style"]
-            val rectS = elemento["rect"]
-
-            val paintTemp = stringToPaint(paintS!!)
-            val rectTemp = stringToRect(rectS!!)
-
-            val infPath = InfPath(pathS!!, paintTemp, rectTemp)
-            page.pathEvidenziatore.add(infPath)
-        }
-
+        drawLastPath = false
         redraw = true
         invalidate()
     }
 
-    fun writePage(index: Int = nPage) {
-        fun paintToString(paint: Paint): String {
-            val paintS =
-                paint.color.toString() + "#" +
-                        when (paint.style) {
-                            Paint.Style.STROKE -> "STROKE"
-                            Paint.Style.FILL -> "FILL"
-                            Paint.Style.FILL_AND_STROKE -> "FILL_AND_STROKE"
-                        } + "#" +
-                        paint.strokeWidth.toString()
-            return paintS
-        }
-        fun rectToString(rect: RectF): String {
-            val rectS = rect.left.toString() + "#" + rect.top.toString() + "#" + rect.right.toString() + "#" + rect.bottom.toString()
-            return rectS
-        }
 
-        val pageTemp = PencilFileXml.Page(widthPagePredefinito, heightPagePredefinito, risoluzionePagePredefinito)
-        for(elemento in page.pathPenna){
-            val elementoMap = mutableMapOf<String, String>()
-            elementoMap["path"] = elemento.path
-            elementoMap["style"] = paintToString(elemento.paint)
-            elementoMap["rect"] = rectToString(elemento.rect)
+    data class InfPath(var path: String, var paint: Paint, var rect: RectF)
+    var lastPath: InfPath = InfPath("", paint, RectF())
 
-            pageTemp.pathPenna.add(elementoMap)
-        }
-        for(elemento in page.pathEvidenziatore){
-            val elementoMap = mutableMapOf<String, String>()
-            elementoMap["path"] = elemento.path
-            elementoMap["style"] = paintToString(elemento.paint)
-            elementoMap["rect"] = rectToString(elemento.rect)
-
-            pageTemp.pathEvidenziatore.add(elementoMap)
-        }
-
-        drawFile.body[index].pathPenna = pageTemp.pathPenna
-        drawFile.body[index].pathEvidenziatore = pageTemp.pathEvidenziatore
-    }
-
-    fun newPath(path: String, paint: Paint/*, type: String = "Penna"*/) {
-        lastPath = InfPath(path, paint, pageRect)
-        drawLastPath = true
-
-        Log.d(TAG, "newPath: newPath")
-    }
-
-    fun rewritePath(path: String) {
-        lastPath.path = path
-
-        invalidate()
-    }
-
-    fun savePath(path: String, paint: Paint, type: String = "Penna") {
-        var errorCalc = page.dimensioni.calcSpessore(maxError.toFloat(), pageRect.width().toInt())
-        lastPath.path = pathFitCurve(path, errorCalc)
-        lastPath.paint = paint
-
-        when(type){
-            "Penna" -> page.pathPenna.add(lastPath)
-            "Evidenziatore" -> page.pathEvidenziatore.add(lastPath)
-        }
-
-        drawLastPath = false
-        var paint = Paint(lastPath.paint)
-        paint.strokeWidth = page.dimensioni.calcSpessore(lastPath.paint.strokeWidth, pageRect.width().toInt()).toFloat()
-
-        //var pathTemp = pathFitCurve(lastPath.path, maxError)
-        pageCanvas.drawPath(stringToPath(lastPath.path), paint)
-        invalidate()
-
-        writePage(nPage)
-        drawFile.writeXML()
-    }
 
     /**
      * funzione per l'aggiunta delle risorse
@@ -334,36 +190,19 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         return id
     }
     fun addBackgroundPdf(id: String, indexPdf: Int, indexPage: Int){
-        if (indexPage > drawFile.body.lastIndex){
-            drawFile.newPage(indexPage, widthPagePredefinito, heightPagePredefinito, risoluzionePagePredefinito)
+        drawFile.preparePageIndex(indexPage)
+        drawFile.body[indexPage].background = GestionePagina.Image(GestionePagina.Image.TypeImage.PDF).apply {
+            this.id = id
+            index = indexPdf
         }
-        drawFile.body[indexPage].background = mutableMapOf(Pair("id", id), Pair("index", indexPdf.toString()))
 
-        if (indexPage == nPage){
+        if (indexPage == pageAttuale){
             redraw = true
             invalidate()
         }
         drawFile.writeXML()
     }
 
-
-
-    fun setPathPaint(_path: Path, _paint: Paint) {
-        path = _path
-        paint = _paint
-        invalidate()
-    }
-
-    fun savePathPaint(_path: Path, _paint: Paint) {
-        pageCanvas.drawPath(_path, _paint)
-        invalidate()
-    }
-
-
-    private fun drawPath(infPath: InfPath) {
-        var pathMatrix = Matrix()
-        pathMatrix.setRectToRect(infPath.rect, pageRect, Matrix.ScaleToFit.CENTER)
-    }
 
     private fun drawPage(canvas: Canvas, rect: RectF = pageRect) {
         val paintPage = Paint().apply {
@@ -390,9 +229,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
     private fun drawPageBackground(bitmap: Bitmap, rectScaleToFit: RectF = pageRect){
-        if(drawFile.body[nPage].background != null){
-            var id = drawFile.body[nPage].background?.get("id")
-            var indexPdf = drawFile.body[nPage].background!!["index"]?.toInt()!!
+        if(drawFile.body[pageAttuale].background != null){
+            var id = drawFile.body[pageAttuale].background!!.id
+            var indexPdf = drawFile.body[pageAttuale].background!!.index
 
             var fileTemp = File(context.filesDir, drawFile.head[id]?.get("path"))
             val renderer = PdfRenderer(ParcelFileDescriptor.open(fileTemp, ParcelFileDescriptor.MODE_READ_ONLY))
@@ -555,17 +394,14 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
             val paint = Paint(paintTemp)
             paint.strokeWidth =
-                page.dimensioni.calcSpessore(paintTemp.strokeWidth, rectScaleToFit.width().toInt()).toFloat()
+                drawFile.body[pageAttuale].dimensioni.calcSpessore(paintTemp.strokeWidth, rectScaleToFit.width().toInt()).toFloat()
 
             canvas.drawPath(path, paint)
             drawPathStructure(pathTemp, rectTemp)
         }
 
-        for (i in page.pathEvidenziatore.indices) {
-            drawPath(page.pathEvidenziatore[i].path, page.pathEvidenziatore[i].paint, page.pathEvidenziatore[i].rect)
-        }
-        for (i in page.pathPenna.indices) {
-            drawPath(page.pathPenna[i].path, page.pathPenna[i].paint, page.pathPenna[i].rect)
+        for (tracciato in drawFile.body[pageAttuale].tracciati) {
+            drawPath(tracciato.pathString, tracciato.paintObject!!, tracciato.rectObject!!)
         }
     }
 
@@ -609,8 +445,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         // TODO: 14/11/2021 Sistemare dimensione massima della bitmap
         var risoluzionePxInch = 300
         cachePageBitmap = Bitmap.createBitmap(
-            page.dimensioni.calcWidthFromRisoluzionePxInch(risoluzionePxInch).toInt(),
-            page.dimensioni.calcHeightFromRisoluzionePxInch(risoluzionePxInch).toInt(),
+            drawFile.body[pageAttuale].dimensioni.calcWidthFromRisoluzionePxInch(risoluzionePxInch).toInt(),
+            drawFile.body[pageAttuale].dimensioni.calcHeightFromRisoluzionePxInch(risoluzionePxInch).toInt(),
             Bitmap.Config.ARGB_8888)
         cachePageCanvas = Canvas(cachePageBitmap)
 
@@ -643,7 +479,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private var widthView: Int = 0
     private var heightView: Int = 0
 
-    private lateinit var pageCanvas: Canvas
+    lateinit var pageCanvas: Canvas
     private lateinit var pageBitmap: Bitmap
 
     private lateinit var scalingCanvas: Canvas
@@ -674,7 +510,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private var scaling = false
 
     //private var scaleCache = false
-    private var drawLastPath = false
+    var drawLastPath = false
     //private var scaleFactorPaint = 1f
 
     /**

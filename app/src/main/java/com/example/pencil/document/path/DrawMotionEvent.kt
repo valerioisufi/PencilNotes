@@ -63,7 +63,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView){
         if (event.pointerCount == 2){
             v.scaleTranslate(event)
             if(!drawImpostazioni.modePenna) {
-                v.rewritePath("")
+                v.strumentoPenna!!.rewritePath(v, "")
             }
             continueScaleTranslate = true
         }

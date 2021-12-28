@@ -9,6 +9,8 @@ import android.widget.ImageView
 import androidx.core.content.res.ResourcesCompat
 import com.example.pencil.R
 import com.example.pencil.document.DrawView
+import com.example.pencil.document.page.GestionePagina
+import com.example.pencil.document.path.pathFitCurve
 import com.example.pencil.document.path.polygonClippingAlgorithm
 import com.example.pencil.document.path.stringToPath
 import com.example.pencil.sharedPref
@@ -49,7 +51,7 @@ class StrumentoGomma(var context: Context, var view: ImageView) {
             var tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
             var orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
 
-            v.newPath(path, getPaint())
+            newPath(v, path, getPaint())
         }
         fun touchMove(v: DrawView, event: MotionEvent) {
             path = path + "L " + event.x + " " + event.y + " "
@@ -61,7 +63,7 @@ class StrumentoGomma(var context: Context, var view: ImageView) {
             currentY = event.y
 
             // Draw the path in the extra bitmap to cache it.
-            v.rewritePath(path)
+            rewritePath(v, path)
         }
         fun touchUp(v: DrawView, event: MotionEvent) {
             path += "Z"
@@ -83,7 +85,7 @@ class StrumentoGomma(var context: Context, var view: ImageView) {
                         }
                     }
                     path += "Z"
-                    v.savePath(path, getPaint())
+                    savePath(v, path, getPaint())
                 }
             }
 
@@ -98,6 +100,44 @@ class StrumentoGomma(var context: Context, var view: ImageView) {
             MotionEvent.ACTION_MOVE -> touchMove(v, event)
             MotionEvent.ACTION_UP -> touchUp(v, event)
         }
+    }
+
+    /**
+     * Gestione dei drawEvent
+     */
+    fun newPath(v: DrawView, path: String, paint: Paint/*, type: String = "Penna"*/) {
+        v.lastPath = DrawView.InfPath(path, paint, v.pageRect)
+        v.drawLastPath = true
+    }
+
+    fun rewritePath(v: DrawView, path: String) {
+        v.lastPath.path = path
+
+        v.invalidate()
+    }
+
+    fun savePath(v: DrawView, path: String, paint: Paint, type: GestionePagina.Tracciato.TypeTracciato = GestionePagina.Tracciato.TypeTracciato.PENNA) {
+        var errorCalc = v.drawFile.body[v.pageAttuale].dimensioni.calcSpessore(v.maxError.toFloat(), v.pageRect.width().toInt())
+        v.lastPath.path = pathFitCurve(path, errorCalc)
+        v.lastPath.paint = paint
+
+        var tracciato = GestionePagina.Tracciato(type).apply {
+            pathString = v.lastPath.path
+            paintObject = v.lastPath.paint
+            rectObject = v.lastPath.rect
+        }
+        v.drawFile.body[v.pageAttuale].tracciati.add(tracciato)
+        v.drawFile.body[v.pageAttuale].tracciati.last().objectToString()
+
+        v.drawLastPath = false
+        var paint = Paint(v.lastPath.paint)
+        paint.strokeWidth = v.drawFile.body[v.pageAttuale].dimensioni.calcSpessore(v.lastPath.paint.strokeWidth, v.pageRect.width().toInt()).toFloat()
+
+        //var pathTemp = pathFitCurve(lastPath.path, maxError)
+        v.pageCanvas.drawPath(stringToPath(v.lastPath.path), paint)
+        v.invalidate()
+
+        v.drawFile.writeXML()
     }
 
 

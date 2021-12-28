@@ -2,7 +2,6 @@ package com.example.pencil
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.graphics.*
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -17,11 +16,11 @@ import android.content.SharedPreferences
 import android.text.TextUtils.replace
 import com.google.android.material.chip.Chip
 import android.graphics.pdf.PdfRenderer
-import android.widget.ImageView
 import androidx.core.app.ActivityCompat
+import com.example.pencil.customView.ColorPickerView
+import com.example.pencil.customView.ColorShowView
 import com.example.pencil.file.FileManager
 import com.example.pencil.document.DrawView
-import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.path.DrawMotionEvent
 import com.example.pencil.document.tool.*
 
@@ -37,7 +36,7 @@ class DrawActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_Pencil)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_draw2)
+        setContentView(R.layout.activity_draw)
 
         sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
 
@@ -75,24 +74,16 @@ class DrawActivity : AppCompatActivity() {
         nomeFile += ".xml"
 
         drawView.readFile(nomeFile, cartella)
-        drawView.readPage(nPage)
+        drawView.changePage(nPage)
 
 
-        //hideSystemUI()
+//        hideSystemUI()
 
-        /*// Hide the status bar.
-        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
-        // Remember that you should never show the action bar if the
-        // status bar is hidden, so hide that too if necessary.
-        actionBar?.hide()*/
-
-
-        //paint = drawView.getPaint()
-        //density = resources.displayMetrics.density
-        //drawViewTop = 80 * density
-
-
-
+//        // Hide the status bar.
+//        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
+//        // Remember that you should never show the action bar if the
+//        // status bar is hidden, so hide that too if necessary.
+//        actionBar?.hide()
 
     }
 
@@ -147,61 +138,6 @@ class DrawActivity : AppCompatActivity() {
 
     }
 
-    /*// Tasti
-    fun showColorPickerView(view: View){
-        var pencilLayout = findViewById<ConstraintLayout>(R.id.pencilLayout)
-        if(pencilLayout.visibility == View.VISIBLE){
-            pencilLayout.visibility = View.INVISIBLE
-            blurEffect.visibility = View.INVISIBLE
-        } else{
-            pencilLayout.visibility = View.VISIBLE
-
-            var bitmap = drawView.drawToBitmap(Bitmap.Config.ARGB_8888)
-            drawView.drawToBitmap(Bitmap.Config.ARGB_8888)
-            bitmap = blurBitmap(bitmap, this)
-            val d: Drawable = BitmapDrawable(resources, bitmap)
-            blurEffect.background = d
-            blurEffect.visibility = View.VISIBLE
-        }
-
-        //var colorShowView = findViewById<ColorShowView>(R.id.colorShowView)
-
-        when(pennelloAttivo){
-            Pennello.MATITA -> {
-                seekBar.progress = (paintMatita.strokeWidth * 10).toInt()
-                colorPicker.color = paintMatita.color
-            }
-            Pennello.PENNA -> {
-                seekBar.progress = (paintPenna.strokeWidth * 10).toInt()
-                colorPicker.color = paintPenna.color
-            }
-            Pennello.EVIDENZIATORE -> {
-                seekBar.progress = (paintEvidenziatore.strokeWidth * 10).toInt()
-                colorPicker.color = paintEvidenziatore.color
-            }
-            Pennello.GOMMA -> {
-                seekBar.progress = (paintGomma.strokeWidth * 10).toInt()
-                colorPicker.color = paintGomma.color
-            }
-        }
-
-        dimensioneTrattoTextView.text = (seekBar.progress * 0.1).toFloat().toString()
-    }*/
-
-
-    /*fun closeViewLayout(view: View){
-        var impostazioniLayout = findViewById<ConstraintLayout>(R.id.impostazioniLayout)
-        if(impostazioniLayout.visibility == View.VISIBLE){
-            impostazioniLayout.visibility = View.INVISIBLE
-        }
-
-        var pencilLayout = findViewById<ConstraintLayout>(R.id.pencilLayout)
-        if(pencilLayout.visibility == View.VISIBLE){
-            pencilLayout.visibility = View.INVISIBLE
-        }
-
-        blurEffect.visibility = View.INVISIBLE
-    }*/
 
     val PICK_PDF_FILE = 2
     fun addObject(view: View){
@@ -255,21 +191,6 @@ class DrawActivity : AppCompatActivity() {
                     drawView.addBackgroundPdf(id, indexPdf, indexPage)
                     indexPage++
                 }
-
-                /*for (i in 0 until pageCount) {
-                    val page: PdfRenderer.Page = renderer.openPage(1)
-
-                    var bitmapTemp = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
-                    // say we render for showing on the screen
-                    page.render(bitmapTemp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-
-                    // do stuff with the bitmap
-                    drawView.backgroundPage = bitmapTemp
-                    //bitmapTemp.recycle()
-
-                    // close the page
-                    page.close()
-                }*/
 
                 // close the renderer
                 renderer.close()

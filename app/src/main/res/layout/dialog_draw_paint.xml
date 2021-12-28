@@ -20,7 +20,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.example.pencil.document.tool.ColorPickerView
+    <com.example.pencil.customView.ColorPickerView
         android:id="@+id/dialogDrawPaint_coloreTrattoColorPickerView"
         android:layout_width="0dp"
         android:layout_height="0dp"

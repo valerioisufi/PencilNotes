@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_Pencil)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_home2)
+        setContentView(R.layout.activity_home)
 
         recentiFile = FileManager(this, "recentiFile.txt")
         Log.d(TAG, "onCreate: " + recentiFile.text)
