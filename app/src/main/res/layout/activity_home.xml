@@ -11,9 +11,7 @@
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/shape_toolbar"
-        android:fitsSystemWindows="true"
-        app:statusBarForeground="@drawable/shape_toolbar">
+        android:fitsSystemWindows="true">
 
         <include layout="@layout/toolbar_layout" />
 

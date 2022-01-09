@@ -17,6 +17,15 @@
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">false</item>
 
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+
+        <!-- Optional, if your app is drawing behind the status bar also. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+
+        <item name="android:windowLayoutInDisplayCutoutMode">
+            never <!-- default, shortEdges, or never -->
+        </item>
+
         <item name="android:windowBackground">@color/black</item>
     </style>
 </resources>
