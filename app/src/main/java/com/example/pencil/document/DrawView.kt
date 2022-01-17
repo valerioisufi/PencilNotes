@@ -4,17 +4,13 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
-import android.os.SystemClock
 import android.util.AttributeSet
 import android.util.Log
 import android.view.InputDevice
 import android.view.MotionEvent
-import android.view.ScaleGestureDetector
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.transform
-import androidx.core.view.GestureDetectorCompat
-import androidx.core.view.ScaleGestureDetectorCompat
 import com.example.pencil.R
 import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.path.DrawMotionEvent
@@ -26,7 +22,6 @@ import kotlinx.coroutines.*
 import java.io.File
 import kotlin.math.abs
 import kotlin.math.pow
-import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 private const val TAG = "DrawView"
@@ -66,12 +61,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         // Instantiate the gesture detector with the
         // application context and an implementation of
         // GestureDetector.OnGestureListener
-        drawMotionEvent.mDetector = GestureDetectorCompat(context, drawMotion)
+//        drawMotionEvent.mDetector = GestureDetectorCompat(context, drawMotion)
         // Set the gesture detector as the double tap
         // listener.
-        drawMotionEvent.mDetector.setOnDoubleTapListener(drawMotion)
-
-        drawMotionEvent.mScaleDetector = ScaleGestureDetector(context, drawMotionEvent.mScaleGestureListener)
+//        drawMotionEvent.mDetector.setOnDoubleTapListener(drawMotion)
+//        drawMotionEvent.mScaleDetector = ScaleGestureDetector(context, drawMotionEvent.mScaleGestureListener)
 
         setOnTouchListener { v, event ->
             v.performClick()
@@ -172,7 +166,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     var drawLastPath = false
     var drawTouchAnalyzer = false
 
-    var drawLastPathPaint = Paint(paint)
+    var drawLastPathPaint = Paint(paint).apply {
+        style = Paint.Style.STROKE
+    }
     lateinit var scalingPageRect: RectF
 
     override fun onDraw(canvas: Canvas) {
@@ -197,12 +193,12 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 //            }
 //            canvas.drawBitmap(onDrawBitmap, windowMatrixTransform, null)
 
-        } else if (makeCursoreOnDraw) {
-            canvas.drawBitmap(onDrawBitmap, 0f, 0f, null)
-            makeCursore(canvas)
-
         } else {
             canvas.drawBitmap(onDrawBitmap, 0f, 0f, null)
+        }
+
+        if (makeCursoreOnDraw) {
+            makeCursore(canvas)
         }
 
 
@@ -217,7 +213,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 ).toFloat()
             }
 
-            canvas.drawPath(stringToPath(lastPath.path), paint)
+            canvas.drawPath(stringToPath(lastPath.path), drawLastPathPaint)
         }
 
         makePageBackground(canvas, pageRect)
@@ -298,6 +294,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
      */
     suspend fun makePage(bitmapSource: Bitmap, rect: RectF? = null): Bitmap =
         withContext(Dispatchers.Default) {
+            Log.d(TAG, "redraw rect: $rect")
+            Log.d(TAG, "redrawPageRect: $redrawPageRect")
+
             val bitmap = Bitmap.createBitmap(bitmapSource)
             val canvas = Canvas(bitmap)
 
@@ -317,6 +316,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 rectTemp = rect
             }
             val rect = rectTemp
+            Log.d(TAG, "redraw rect 2: $rect")
 
             /**
              * make lo sfondo bianco della pagina
@@ -459,20 +459,21 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
 
-    lateinit var mEvent : MotionEvent
+    lateinit var mEvent: MotionEvent
     var cursorePaint = Paint(paint).apply {
         color = ResourcesCompat.getColor(resources, R.color.purple_200, null)
         style = Paint.Style.STROKE
         strokeWidth = 10f
     }
-    fun makeCursore(canvas: Canvas){
-        if(mEvent.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS){
-            if (mEvent.action == MotionEvent.ACTION_MOVE){
+
+    fun makeCursore(canvas: Canvas) {
+        if (mEvent.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
+            if (mEvent.action == MotionEvent.ACTION_MOVE) {
                 canvas.drawPoint(mEvent.x, mEvent.y, cursorePaint.apply {
                     color = ResourcesCompat.getColor(resources, R.color.purple_200, null)
                 })
 
-            } else if (mEvent.action == MotionEvent.ACTION_HOVER_MOVE){
+            } else if (mEvent.action == MotionEvent.ACTION_HOVER_MOVE) {
                 canvas.drawPoint(mEvent.x, mEvent.y, cursorePaint.apply {
                     color = ResourcesCompat.getColor(resources, R.color.purple_500, null)
                 })
@@ -487,7 +488,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     /**
      * funzioni di debug
      */
-    fun makeTouchAnalyzer(canvas: Canvas){
+    fun makeTouchAnalyzer(canvas: Canvas) {
         var xPrecision = mEvent.xPrecision
         var yPrecision = mEvent.yPrecision
 
@@ -497,7 +498,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         var inputDevice = mEvent.device
         var inputSource = mEvent.source
 
-        for(i in 0 until mEvent.pointerCount){
+        for (i in 0 until mEvent.pointerCount) {
             var toolType = mEvent.getToolType(i)
             var pointerId = mEvent.getPointerId(i)
 
@@ -520,22 +521,25 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             var pressure = mEvent.getAxisValue(MotionEvent.AXIS_PRESSURE, i)
             var orientation = mEvent.getAxisValue(MotionEvent.AXIS_ORIENTATION, i)
             var tilt = mEvent.getAxisValue(MotionEvent.AXIS_TILT, i)
-            var distance = mEvent.getAxisValue(MotionEvent.AXIS_DISTANCE, i) // non funziona con M-Pencil di Huawei
+            var distance = mEvent.getAxisValue(
+                MotionEvent.AXIS_DISTANCE,
+                i
+            ) // non funziona con M-Pencil di Huawei
 
             var x = mEvent.getX(i)
             var y = mEvent.getY(i)
 
 
             var toolRect = RectF(
-                x - toolMinor/2,
-                y - toolMajor/2,
-                x + toolMinor/2,
-                y + toolMajor/2
+                x - toolMinor / 2,
+                y - toolMajor / 2,
+                x + toolMinor / 2,
+                y + toolMajor / 2
             )
             var toolPath = Path().apply {
                 addOval(toolRect, Path.Direction.CW)
                 transform(Matrix().apply {
-                    setRotate((orientation*180/3.14).toFloat(), x, y)
+                    setRotate((orientation * 180 / 3.14).toFloat(), x, y)
                 })
             }
 
@@ -545,9 +549,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 strokeWidth = 10f
             })
 
-            if(toolType == MotionEvent.TOOL_TYPE_STYLUS){
+            if (toolType == MotionEvent.TOOL_TYPE_STYLUS) {
                 var stylusPath = Path().apply {
-                    addCircle(x, y, dpToPx(context, 30)*pressure, Path.Direction.CW)
+                    addCircle(x, y, dpToPx(context, 30) * pressure, Path.Direction.CW)
                 }
 
                 canvas.drawPath(stylusPath, Paint(paint).apply {
@@ -564,7 +568,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 //                    color = ResourcesCompat.getColor(resources, R.color.black, null)
 //                }
 //            )
-            for(historyIndex in 1 until mEvent.historySize){
+            for (historyIndex in 1 until mEvent.historySize) {
                 /**
                  * toolMajor e touchMajor (così come toolMinor e touchMinor)
                  * hanno lo stesso valore quando toolType = TOOL_TYPE_FINGER
@@ -581,10 +585,17 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 /**
                  * Axis Values
                  */
-                var pressureHistorical = mEvent.getHistoricalAxisValue(MotionEvent.AXIS_PRESSURE, i, historyIndex)
-                var orientationHistorical = mEvent.getHistoricalAxisValue(MotionEvent.AXIS_ORIENTATION, i, historyIndex)
-                var tiltHistorical = mEvent.getHistoricalAxisValue(MotionEvent.AXIS_TILT, i, historyIndex)
-                var distanceHistorical = mEvent.getHistoricalAxisValue(MotionEvent.AXIS_DISTANCE, i, historyIndex) // non funziona con M-Pencil di Huawei
+                var pressureHistorical =
+                    mEvent.getHistoricalAxisValue(MotionEvent.AXIS_PRESSURE, i, historyIndex)
+                var orientationHistorical =
+                    mEvent.getHistoricalAxisValue(MotionEvent.AXIS_ORIENTATION, i, historyIndex)
+                var tiltHistorical =
+                    mEvent.getHistoricalAxisValue(MotionEvent.AXIS_TILT, i, historyIndex)
+                var distanceHistorical = mEvent.getHistoricalAxisValue(
+                    MotionEvent.AXIS_DISTANCE,
+                    i,
+                    historyIndex
+                ) // non funziona con M-Pencil di Huawei
 
                 var xHistorical = mEvent.getHistoricalX(i, historyIndex)
                 var yHistorical = mEvent.getHistoricalY(i, historyIndex)
@@ -593,10 +604,10 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
     }
 
-    fun makeInputDeviceAnalyzer(canvas: Canvas){
+    fun makeInputDeviceAnalyzer(canvas: Canvas) {
         var deviceIds = InputDevice.getDeviceIds()
 
-        for (deviceId in deviceIds){
+        for (deviceId in deviceIds) {
             var inputDevice = InputDevice.getDevice(deviceId)
             var descriptor = inputDevice.descriptor
             var motionRanges = inputDevice.motionRanges
@@ -614,7 +625,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
         var widthPage = widthView - padding * 2
         var heightPage = (widthPage * sqrt(2.0)).toFloat()
-        if(widthView > heightView) {
+        if (widthView > heightView) {
             widthPage = (widthPage * sqrt(2.0)).toFloat()
             heightPage = widthView - padding * 2
         }
@@ -640,7 +651,10 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
      */
     var listTracciati = mutableListOf<Tracciato>()
 
-    data class Tracciato(var toolType: Int = MotionEvent.TOOL_TYPE_STYLUS, var inputDeviceDescriptor: String){
+    data class Tracciato(
+        var toolType: Int = MotionEvent.TOOL_TYPE_STYLUS,
+        var inputDeviceDescriptor: String
+    ) {
         var downTime: Long? = null
         var listPoint = mutableListOf<Punto>()
 
@@ -651,7 +665,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         var strokeWidth: Float = 3f
 
     }
-    data class Punto(var x: Float, var y:Float){
+
+    data class Punto(var x: Float, var y: Float) {
         var eventTime: Long? = null
 
         var toolMajor: Float? = null
@@ -854,8 +869,92 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     /**
      * funzione che si occupa dello scale e dello spostamento
      */
-    var startMatrix = Matrix()
-    var moveMatrix = Matrix()
+    private var startMatrix = Matrix()
+    private var moveMatrix = Matrix()
+
+
+    private val FIRST_POINTER_INDEX = 0
+    private val SECOND_POINTER_INDEX = 1
+
+    private var fStartPos = PointF()
+    private var sStartPos = PointF()
+
+    private var fMovePos = PointF()
+    private var sMovePos = PointF()
+
+    private var startDistance = 0f
+    private var moveDistance = 0f
+
+    private var lastTranslate = PointF(0f, 0f)
+    private var lastScaleFactor = 1f
+
+    private var scaleFactor = 1f
+    private var translate = PointF(0f, 0f)
+
+    private var startFocusPos = PointF()
+    private var moveFocusPos = PointF()
+
+
+    fun scaleTranslate(event: MotionEvent) {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                fStartPos = PointF(event.getX(FIRST_POINTER_INDEX), event.getY(FIRST_POINTER_INDEX))
+                sStartPos = PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
+
+                startDistance =
+                    sqrt((sStartPos.x - fStartPos.x).pow(2) + (sStartPos.y - fStartPos.y).pow(2))
+                startFocusPos =
+                    PointF((fStartPos.x + sStartPos.x) / 2, (fStartPos.y + sStartPos.y) / 2)
+
+                drawLastPath = false
+            }
+            MotionEvent.ACTION_MOVE -> {
+                fMovePos = PointF(event.getX(FIRST_POINTER_INDEX), event.getY(FIRST_POINTER_INDEX))
+                sMovePos = PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
+
+                moveDistance =
+                    sqrt((sMovePos.x - fMovePos.x).pow(2) + (sMovePos.y - fMovePos.y).pow(2))
+                moveFocusPos = PointF((fMovePos.x + sMovePos.x) / 2, (fMovePos.y + sMovePos.y) / 2)
+
+                translate =
+                    PointF(moveFocusPos.x - startFocusPos.x, moveFocusPos.y - startFocusPos.y)
+                scaleFactor = (moveDistance / startDistance)
+
+
+                moveMatrix.setTranslate(translate.x, translate.y)
+                moveMatrix.preConcat(startMatrix)
+
+                val f = FloatArray(9)
+                moveMatrix.getValues(f)
+                lastScaleFactor = f[Matrix.MSCALE_X]
+
+                // scale max e scale min
+                val scaleMax = 5f
+                val scaleMin = 1f
+                if (lastScaleFactor * scaleFactor < scaleMin) {
+                    scaleFactor = scaleMin / lastScaleFactor
+                }
+                if (lastScaleFactor * scaleFactor > scaleMax) {
+                    scaleFactor = scaleMax / lastScaleFactor
+                }
+                moveMatrix.postScale(scaleFactor, scaleFactor, moveFocusPos.x, moveFocusPos.y)
+
+                moveMatrix.getValues(f)
+                lastScaleFactor = f[Matrix.MSCALE_X]
+
+
+                Log.d("Scale factor: ", f[Matrix.MSCALE_X].toString())
+
+                draw(scaling = true)
+            }
+            MotionEvent.ACTION_POINTER_UP -> {
+                lastTranslate = PointF(translate.x, translate.y)
+                //lastScaleFactor = scaleFactor
+                draw(redraw = true)
+            }
+
+        }
+    }
 
     // funzione che riporta moveMatrix in una condizione normale
     fun scaleTranslateAnimation(startMatrix: Matrix, finalMatrix: Matrix) {

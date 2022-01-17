@@ -13,9 +13,9 @@
         <item name="colorOnSecondary">@color/light_blue_600</item>
 
 
-        <!-- Customize your theme here. -->
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">false</item>
+<!--        &lt;!&ndash; Customize your theme here. &ndash;&gt;-->
+<!--        <item name="android:windowTranslucentStatus">true</item>-->
+<!--        <item name="android:windowTranslucentNavigation">false</item>-->
 
         <item name="android:navigationBarColor">@android:color/transparent</item>
 

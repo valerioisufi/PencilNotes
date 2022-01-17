@@ -43,8 +43,8 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
     private var continueScaleTranslate = false
 
 
-    lateinit var mDetector: GestureDetectorCompat
-    lateinit var mScaleDetector: ScaleGestureDetector
+//    lateinit var mDetector: GestureDetectorCompat
+//    lateinit var mScaleDetector: ScaleGestureDetector
     fun onTouchView(event: MotionEvent) {
         drawView.mEvent = MotionEvent.obtain(event)
         drawView.draw(makeCursore = true)
@@ -102,35 +102,57 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
                 }
             }
 
+            /**
+             * gestisco il motionEvent in modo differente per ogni strumento
+             */
+            val tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
+            val orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
+
+            if(event.action == MotionEvent.ACTION_DOWN) {
+                if (tilt > 0.8f && orientation > -0.3f && orientation < 0.5f) {
+                    drawView.strumentoAttivo = DrawView.Pennello.EVIDENZIATORE
+                } else if (tilt > 0.2f && (orientation > 2.5f || orientation < -2.3f)) {
+//                    drawView.strumentoAttivo = DrawView.Pennello.LAZO
+                }
+            }
+
+            when(drawView.strumentoAttivo){
+                DrawView.Pennello.PENNA -> drawView.strumentoPenna?.gestioneMotionEvent(drawView, event)
+                DrawView.Pennello.EVIDENZIATORE -> drawView.strumentoEvidenziatore?.gestioneMotionEvent(drawView, event)
+                DrawView.Pennello.GOMMA -> drawView.strumentoGomma?.gestioneMotionEvent(drawView, event)
+            }
+
+        }
+
+        /**
+         * controllo il palmRejection
+         */
+        if (palmRejection(event)){
+            return
+        }
+
+        /**
+         * gesture per il cambio della pagina
+         */
+        if (drawImpostazioni.modePenna && event.pointerCount == 1 && event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER){
+            drawView.scrollChangePagina(event)
+        }
+
+        /**
+         * eseguo lo scaling
+         */
+        if (event.pointerCount == 2){
+            drawView.scaleTranslate(event)
+
+//            if(!drawImpostazioni.modePenna) {
+//                drawView.strumentoPenna!!.rewritePath(drawView, "")
+//            }
+//            continueScaleTranslate = true
         }
 
 
 
 
-//        for (i in 0..event.pointerCount - 1) {
-//            if (event.getToolType(i) == MotionEvent.TOOL_TYPE_STYLUS) {
-//
-//                val tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
-//                val orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
-//
-//                if(event.action == MotionEvent.ACTION_DOWN) {
-//                    if (tilt > 0.8f && orientation > -0.3f && orientation < 0.5f) {
-//                        //paint = drawStrumento.getPaint()
-//                        drawView.strumentoAttivo = DrawView.Pennello.EVIDENZIATORE
-//                    } else if (tilt > 0.2f && (orientation > 2.5f || orientation < -2.3f)) {
-//                        //paint = Paint(paintAreaSelezione)
-////                    drawView.strumentoAttivo = DrawView.Pennello.LAZO
-//                    }
-//                }
-//
-//                when(drawView.strumentoAttivo){
-//                    DrawView.Pennello.PENNA -> drawView.strumentoPenna?.gestioneMotionEvent(drawView, event)
-//                    DrawView.Pennello.EVIDENZIATORE -> drawView.strumentoEvidenziatore?.gestioneMotionEvent(drawView, event)
-//                    DrawView.Pennello.GOMMA -> drawView.strumentoGomma?.gestioneMotionEvent(drawView, event)
-//                }
-//
-//            }
-//        }
 //
 //        if (!drawImpostazioni.modePenna && event.pointerCount == 1 && event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER){
 //            if(!continueScaleTranslate) {
@@ -282,151 +304,74 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
         return true
     }
 
+//    /**
+//     * The scale listener, used for handling multi-finger scale gestures.
+//     */
+//    val mScaleGestureListener = object : ScaleGestureDetector.OnScaleGestureListener {
+//
+//        var beginSpan = 0f
+//        var beginFocus = PointF()
+//        override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+//            beginSpan = detector.currentSpan
+//            beginFocus = PointF(detector.focusX, detector.focusY)
+//
+//            drawView.startMatrix = Matrix(drawView.moveMatrix)
+//
+//            return true
+//        }
+//
+//        override fun onScale(detector: ScaleGestureDetector): Boolean {
+//            var currentSpan = detector.currentSpan
+//            var currentFocus = PointF(detector.focusX, detector.focusY)
+//
+//            var translate = PointF(currentFocus.x - beginFocus.x, currentFocus.y - beginFocus.y)
+//            var scaleFactor = (currentSpan / beginSpan)
+//
+//            drawView.moveMatrix.setTranslate(translate.x, translate.y)
+//            drawView.moveMatrix.preConcat(drawView.startMatrix)
+//
+//            val f = FloatArray(9)
+//            drawView.moveMatrix.getValues(f)
+//            var tempScaleFactor = f[Matrix.MSCALE_X]
+//
+//            // scale max e scale min
+//            val scaleMax = 5f
+//            val scaleMin = 1f
+//            if (tempScaleFactor * scaleFactor < scaleMin) {
+//                scaleFactor = scaleMin / tempScaleFactor
+//            }
+//            if (tempScaleFactor * scaleFactor > scaleMax) {
+//                scaleFactor = scaleMax / tempScaleFactor
+//            }
+//            drawView.moveMatrix.postScale(scaleFactor, scaleFactor, currentFocus.x, currentFocus.y)
+//
+//            drawView.draw(redraw = false, scaling = true)
+//
+//            return true
+//        }
+//
+//        override fun onScaleEnd(detector: ScaleGestureDetector) {
+//            drawView.draw(redraw = true, scaling = false)
+//        }
+//
+//    }
+
     /**
-     * The scale listener, used for handling multi-finger scale gestures.
+     * funzine che restituisce TRUE quando viene appoggiato sullo schermo il palmo della mano
      */
-    val mScaleGestureListener = object : ScaleGestureDetector.OnScaleGestureListener {
-
-        var beginSpan = 0f
-        var beginFocus = PointF()
-        override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
-            beginSpan = detector.currentSpan
-            beginFocus = PointF(detector.focusX, detector.focusY)
-
-            drawView.startMatrix = Matrix(drawView.moveMatrix)
-
-            return true
-        }
-
-        override fun onScale(detector: ScaleGestureDetector): Boolean {
-            var currentSpan = detector.currentSpan
-            var currentFocus = PointF(detector.focusX, detector.focusY)
-
-            var translate = PointF(currentFocus.x - beginFocus.x, currentFocus.y - beginFocus.y)
-            var scaleFactor = (currentSpan / beginSpan)
-
-            drawView.moveMatrix.setTranslate(translate.x, translate.y)
-            drawView.moveMatrix.preConcat(drawView.startMatrix)
-
-            val f = FloatArray(9)
-            drawView.moveMatrix.getValues(f)
-            var tempScaleFactor = f[Matrix.MSCALE_X]
-
-            // scale max e scale min
-            val scaleMax = 5f
-            val scaleMin = 1f
-            if (tempScaleFactor * scaleFactor < scaleMin) {
-                scaleFactor = scaleMin / tempScaleFactor
+    fun palmRejection(event: MotionEvent): Boolean{
+        for (i in 0 until event.pointerCount){
+            if (event.getToolMinor(i) / event.getToolMajor(i) < 0.6){
+                return true
             }
-            if (tempScaleFactor * scaleFactor > scaleMax) {
-                scaleFactor = scaleMax / tempScaleFactor
-            }
-            drawView.moveMatrix.postScale(scaleFactor, scaleFactor, currentFocus.x, currentFocus.y)
-
-            drawView.draw(redraw = false, scaling = true)
-
-            return true
         }
-
-        override fun onScaleEnd(detector: ScaleGestureDetector) {
-            drawView.draw(redraw = true, scaling = false)
-        }
-
+        return false
     }
 
     /**
      * funzione che si occupa dello scale e dello spostamento
      */
-//    private var startMatrix = Matrix()
-//    private var moveMatrix = Matrix()
-//
-//
-//    private val FIRST_POINTER_INDEX = 0
-//    private val SECOND_POINTER_INDEX = 1
-//
-//    private var fStartPos = PointF()
-//    private var sStartPos = PointF()
-//
-//    private var fMovePos = PointF()
-//    private var sMovePos = PointF()
-//
-//    private var startDistance = 0f
-//    private var moveDistance = 0f
-//
-//    private var lastTranslate = PointF(0f, 0f)
-//    private var lastScaleFactor = 1f
-//
-//    private var scaleFactor = 1f
-//    private var translate = PointF(0f, 0f)
-//
-//    private var startFocusPos = PointF()
-//    private var moveFocusPos = PointF()
-//
-//
-//    fun scaleTranslate(event: MotionEvent) {
-//        when (event.actionMasked) {
-//            MotionEvent.ACTION_POINTER_DOWN -> {
-//                fStartPos = PointF(event.getX(FIRST_POINTER_INDEX), event.getY(FIRST_POINTER_INDEX))
-//                sStartPos =
-//                    PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
-//
-//
-//                startDistance =
-//                    sqrt((sStartPos.x - fStartPos.x).pow(2) + (sStartPos.y - fStartPos.y).pow(2))
-//                startFocusPos =
-//                    PointF((fStartPos.x + sStartPos.x) / 2, (fStartPos.y + sStartPos.y) / 2)
-//
-//                startMatrix = Matrix(moveMatrix)
-//                drawLastPath = false
-//            }
-//            MotionEvent.ACTION_MOVE -> {
-//                fMovePos = PointF(event.getX(FIRST_POINTER_INDEX), event.getY(FIRST_POINTER_INDEX))
-//                sMovePos =
-//                    PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
-//
-//                moveDistance =
-//                    sqrt((sMovePos.x - fMovePos.x).pow(2) + (sMovePos.y - fMovePos.y).pow(2))
-//                moveFocusPos = PointF((fMovePos.x + sMovePos.x) / 2, (fMovePos.y + sMovePos.y) / 2)
-//
-//                translate =
-//                    PointF(moveFocusPos.x - startFocusPos.x, moveFocusPos.y - startFocusPos.y)
-//                scaleFactor = (moveDistance / startDistance)
-//
-//
-//                moveMatrix.setTranslate(translate.x, translate.y)
-//                moveMatrix.preConcat(startMatrix)
-//
-//                val f = FloatArray(9)
-//                moveMatrix.getValues(f)
-//                lastScaleFactor = f[Matrix.MSCALE_X]
-//
-//                // scale max e scale min
-//                val scaleMax = 5f
-//                val scaleMin = 1f
-//                if (lastScaleFactor * scaleFactor < scaleMin) {
-//                    scaleFactor = scaleMin / lastScaleFactor
-//                }
-//                if (lastScaleFactor * scaleFactor > scaleMax) {
-//                    scaleFactor = scaleMax / lastScaleFactor
-//                }
-//                moveMatrix.postScale(scaleFactor, scaleFactor, moveFocusPos.x, moveFocusPos.y)
-//
-//                moveMatrix.getValues(f)
-//                lastScaleFactor = f[Matrix.MSCALE_X]
-//
-//
-////                Log.d("Scale factor: ", f[Matrix.MTRANS_X].toString())
-//
-//                draw(redraw = false, scaling = true)
-//            }
-//            MotionEvent.ACTION_POINTER_UP -> {
-//                lastTranslate = PointF(translate.x, translate.y)
-//                //lastScaleFactor = scaleFactor
-//                draw(redraw = true, scaling = false)
-//            }
-//
-//        }
-//    }
+
 
 
 }
