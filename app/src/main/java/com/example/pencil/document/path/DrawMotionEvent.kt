@@ -47,7 +47,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
 //    lateinit var mScaleDetector: ScaleGestureDetector
     fun onTouchView(event: MotionEvent) {
         drawView.mEvent = MotionEvent.obtain(event)
-        drawView.draw(makeCursore = true)
+//        drawView.draw(makeCursore = true)
 
         // Let the GestureDetector and the ScaleGestureDetector inspect all events.
 //        mDetector.onTouchEvent(event)

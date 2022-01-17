@@ -175,6 +175,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
         if (redrawOnDraw) {
             canvas.drawBitmap(onDrawBitmap, 0f, 0f, null)
+
         } else if (scalingOnDraw) {
             // trasformo e disegno la pagina intera memorizzata nella cache
             canvas.drawBitmap(
@@ -195,6 +196,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
         } else {
             canvas.drawBitmap(onDrawBitmap, 0f, 0f, null)
+
         }
 
         if (makeCursoreOnDraw) {
@@ -272,13 +274,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             scalingOnDraw = true
             makeCursoreOnDraw = false
             invalidate()
-        } else if (makeCursore) {
-            if (::jobRedraw.isInitialized) jobRedraw.cancel()
-
-            redrawOnDraw = false
-            scalingOnDraw = false
-            makeCursoreOnDraw = true
-            invalidate()
         } else {
             redrawOnDraw = false
             scalingOnDraw = false
@@ -294,9 +289,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
      */
     suspend fun makePage(bitmapSource: Bitmap, rect: RectF? = null): Bitmap =
         withContext(Dispatchers.Default) {
-            Log.d(TAG, "redraw rect: $rect")
-            Log.d(TAG, "redrawPageRect: $redrawPageRect")
-
             val bitmap = Bitmap.createBitmap(bitmapSource)
             val canvas = Canvas(bitmap)
 
@@ -683,136 +675,23 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         var distance: Float? = null // non funziona con M-Pencil di Huawei
     }
 
-
-//
 //    /**
-//     * Disegna i tracciati
+//     * onLayout
 //     */
-//    private fun drawPagePaths(canvas: Canvas, rectScaleToFit: RectF = pageRect) {
-//        fun drawPathStructure(pathTemp: String, rectTemp: RectF) {
-//            var paintPuntoControllo = Paint().apply {
-//                color = ResourcesCompat.getColor(resources, R.color.bezier_punto_controlo, null)
-//                strokeWidth = drawFile.body[pageAttuale].dimensioni.calcSpessore(
-//                    1f,
-//                    rectScaleToFit.width().toInt()
-//                ).toFloat()
-//                style = Paint.Style.STROKE
+//    var exclusionRects = mutableListOf<Rect>()
+//    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+//        super.onLayout(changed, left, top, right, bottom)
 //
-//                isAntiAlias = true
-//                isDither = true
-//            }
-//            var paintLineacControllo = Paint().apply {
-//                color = ResourcesCompat.getColor(resources, R.color.bezier_linea_controlo, null)
-//                strokeWidth = 3f
-//                style = Paint.Style.STROKE
+//        // Update rect bounds and the exclusionRects list
+//        exclusionRects.add(Rect().apply {
+//            this.right = right
+//            this.left = left
+//            this.bottom = bottom
+//            this.top = bottom - dpToPx(context, 200)
 //
-//                isAntiAlias = true
-//                isDither = true
-//            }
-//            var paintCurva = Paint().apply {
-//                color = ResourcesCompat.getColor(resources, R.color.bezier_curva, null)
-//                strokeWidth = 2f
-//                style = Paint.Style.STROKE
-//
-//                isAntiAlias = true
-//                isDither = true
-//            }
-//
-//            /**
-//             * pathMatrix è già stato modificato per corrispondere al tracciato corrente
-//             */
-//            var pathList = stringToList(pathTemp)
-//            var x = 0f
-//            var y = 0f
-//
-//            for (pathSegmento in pathList) {
-//                var pathToDraw = Path()
-//
-//                when (pathSegmento["type"]) {
-//                    "M" -> {
-//                        x = pathSegmento["x"]!!.toFloat()
-//                        y = pathSegmento["y"]!!.toFloat()
-//
-////                        pathToDraw.addCircle(x, y, 5f, Path.Direction.CW)
-////                        pathToDraw.transform(pathMatrix)
-////                        canvas.drawPath(pathToDraw, paintPuntoControllo)
-//                    }
-//                    "L" -> {
-//                        pathToDraw.moveTo(x, y)
-//                        x = pathSegmento["x"]!!.toFloat()
-//                        y = pathSegmento["y"]!!.toFloat()
-//                        pathToDraw.lineTo(x, y)
-//                        pathToDraw.transform(pathMatrix)
-//                        canvas.drawPath(pathToDraw, paintCurva)
-//
-////                        pathToDraw.rewind()
-////                        pathToDraw.addCircle(x, y, 5f, Path.Direction.CW)
-////                        pathToDraw.transform(pathMatrix)
-////                        canvas.drawPath(pathToDraw, paintPuntoControllo)
-//                    }
-//                    "C" -> {
-//                        pathToDraw.moveTo(x, y)
-//                        var x1 = pathSegmento["x1"]!!.toFloat()
-//                        var y1 = pathSegmento["y1"]!!.toFloat()
-//                        pathToDraw.lineTo(x1, y1)
-//                        pathToDraw.transform(pathMatrix)
-//                        canvas.drawPath(pathToDraw, paintLineacControllo)
-//
-//                        pathToDraw.rewind()
-//                        pathToDraw.addCircle(x1, y1, 2f, Path.Direction.CW)
-//                        pathToDraw.transform(pathMatrix)
-//                        canvas.drawPath(pathToDraw, paintPuntoControllo)
-//
-//                        pathToDraw.reset()
-//                        pathToDraw.moveTo(x, y)
-//                        x = pathSegmento["x"]!!.toFloat()
-//                        y = pathSegmento["y"]!!.toFloat()
-//                        var x2 = pathSegmento["x2"]!!.toFloat()
-//                        var y2 = pathSegmento["y2"]!!.toFloat()
-//                        pathToDraw.cubicTo(x1, y1, x2, y2, x, y)
-//                        pathToDraw.transform(pathMatrix)
-//                        canvas.drawPath(pathToDraw, paintCurva)
-//
-////                        pathToDraw.rewind()
-////                        pathToDraw.addCircle(x, y, 5f, Path.Direction.CW)
-////                        pathToDraw.transform(pathMatrix)
-////                        canvas.drawPath(pathToDraw, paintPuntoControllo)
-//
-//                        pathToDraw.reset()
-//                        pathToDraw.moveTo(x, y)
-//                        pathToDraw.lineTo(x2, y2)
-//                        pathToDraw.transform(pathMatrix)
-//                        canvas.drawPath(pathToDraw, paintLineacControllo)
-//
-//                        pathToDraw.reset()
-//                        pathToDraw.addCircle(x2, y2, 2f, Path.Direction.CW)
-//                        pathToDraw.transform(pathMatrix)
-//                        canvas.drawPath(pathToDraw, paintPuntoControllo)
-//                    }
-//
-//
-//                }
-//            }
-//
-//        }
-
-    /**
-     * onLayout
-     */
-    var exclusionRects = mutableListOf<Rect>()
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(changed, left, top, right, bottom)
-
-        // Update rect bounds and the exclusionRects list
-        exclusionRects.add(Rect().apply {
-            this.right = right
-            this.left = left
-            this.bottom = bottom
-            this.top = bottom - dpToPx(context, 200)
-
-        })
-        systemGestureExclusionRects = exclusionRects
-    }
+//        })
+//        systemGestureExclusionRects = exclusionRects
+//    }
 
     /**
      * onSizeChanged
@@ -906,6 +785,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 startFocusPos =
                     PointF((fStartPos.x + sStartPos.x) / 2, (fStartPos.y + sStartPos.y) / 2)
 
+                startMatrix = Matrix(moveMatrix)
                 drawLastPath = false
             }
             MotionEvent.ACTION_MOVE -> {
@@ -956,11 +836,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
     }
 
-    // funzione che riporta moveMatrix in una condizione normale
-    fun scaleTranslateAnimation(startMatrix: Matrix, finalMatrix: Matrix) {
-        val durata = 1f
-
-    }
+//    // funzione che riporta moveMatrix in una condizione normale
+//    fun scaleTranslateAnimation(startMatrix: Matrix, finalMatrix: Matrix) {
+//        val durata = 1f
+//
+//    }
 
 
 }
