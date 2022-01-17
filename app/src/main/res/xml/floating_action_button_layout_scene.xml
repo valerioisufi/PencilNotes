@@ -43,15 +43,24 @@
             android:layout_width="wrap_content"
             android:id="@+id/textView8"
             android:alpha="0" />
+        <Constraint
+            android:layout_height="0dp"
+            motion:layout_constraintStart_toStartOf="@id/imageView"
+            motion:layout_constraintTop_toTopOf="@id/imageView"
+            motion:layout_constraintBottom_toBottomOf="@id/imageView"
+            motion:layout_constraintEnd_toEndOf="@id/imageView"
+            android:layout_width="0dp"
+            android:id="@+id/view"
+            android:alpha="0" />
     </ConstraintSet>
 
     <ConstraintSet android:id="@+id/folderLayout">
     </ConstraintSet>
-
     <Transition
         motion:constraintSetStart="@+id/folderLayout"
         motion:constraintSetEnd="@+id/homeLayout"
         motion:duration="250">
+        <OnClick motion:targetId="@+id/imageView" />
         <OnClick motion:targetId="@+id/view" />
     </Transition>
 </MotionScene>

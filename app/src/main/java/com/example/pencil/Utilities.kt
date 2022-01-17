@@ -1,9 +1,7 @@
 package com.example.pencil
 
-import android.R
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Rect
 import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
@@ -11,11 +9,6 @@ import android.renderscript.ScriptIntrinsicBlur
 import android.util.DisplayMetrics
 import android.util.TypedValue
 import androidx.annotation.WorkerThread
-import androidx.appcompat.app.AppCompatActivity
-
-import android.os.Build
-import android.view.View
-
 
 fun dpToPx(dipValue: Int, metrics: DisplayMetrics): Int {
     val `val` = TypedValue.applyDimension(
@@ -57,23 +50,4 @@ fun blurBitmap(bitmap: Bitmap, applicationContext: Context): Bitmap {
     } finally {
         rsContext.finish()
     }
-}
-
-var exclusionRects: MutableList<Rect> = ArrayList()
-fun updateGestureExclusion(activity: AppCompatActivity) {
-    exclusionRects.clear()
-    val rect = Rect(0, 0, dpToPx(activity, 16), getScreenHeight(activity))
-    exclusionRects.add(rect)
-    activity.findViewById<View>(R.id.content).systemGestureExclusionRects =
-        exclusionRects
-}
-
-fun getScreenHeight(activity: AppCompatActivity): Int {
-    val displayMetrics = DisplayMetrics()
-    activity.windowManager.defaultDisplay.getMetrics(displayMetrics)
-    return displayMetrics.heightPixels
-}
-
-fun dpToPx(context: Context, i: Int): Int {
-    return (i.toFloat() * context.resources.displayMetrics.density).toInt()
 }

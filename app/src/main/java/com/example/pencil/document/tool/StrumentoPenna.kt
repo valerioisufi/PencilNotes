@@ -79,18 +79,18 @@ class StrumentoPenna(var context: Context, var view: ImageView){
      * Gestione dei drawEvent
      */
     fun newPath(v: DrawView, path: String, paint: Paint/*, type: String = "Penna"*/) {
-        v.lastPath = DrawView.InfPath(path, paint, v.redrawPageRect)
+        v.lastPath = DrawView.InfPath(path, paint, v.pageRect)
         v.drawLastPath = true
     }
 
     fun rewritePath(v: DrawView, path: String) {
         v.lastPath.path = path
 
-        v.draw(false, false)
+        v.invalidate()
     }
 
     fun savePath(v: DrawView, path: String, paint: Paint, type: GestionePagina.Tracciato.TypeTracciato = GestionePagina.Tracciato.TypeTracciato.PENNA) {
-        var errorCalc = v.drawFile.body[v.pageAttuale].dimensioni.calcSpessore(v.maxError.toFloat(), v.redrawPageRect.width().toInt())
+        var errorCalc = v.drawFile.body[v.pageAttuale].dimensioni.calcSpessore(v.maxError.toFloat(), v.pageRect.width().toInt())
         v.lastPath.path = pathFitCurve(path, errorCalc)
         v.lastPath.paint = paint
 
@@ -103,10 +103,12 @@ class StrumentoPenna(var context: Context, var view: ImageView){
         v.drawFile.body[v.pageAttuale].tracciati.last().objectToString()
 
         v.drawLastPath = false
+        var paint = Paint(v.lastPath.paint)
+        paint.strokeWidth = v.drawFile.body[v.pageAttuale].dimensioni.calcSpessore(v.lastPath.paint.strokeWidth, v.pageRect.width().toInt()).toFloat()
 
         //var pathTemp = pathFitCurve(lastPath.path, maxError)
-        v.makeSingleTracciato(v.lastPath.path, v.lastPath.paint)
-        v.draw(false, false)
+        v.pageCanvas.drawPath(stringToPath(v.lastPath.path), paint)
+        v.invalidate()
 
         v.drawFile.writeXML()
     }

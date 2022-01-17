@@ -16,7 +16,6 @@ import android.content.SharedPreferences
 import android.text.TextUtils.replace
 import com.google.android.material.chip.Chip
 import android.graphics.pdf.PdfRenderer
-import android.view.GestureDetector
 import androidx.core.app.ActivityCompat
 import com.example.pencil.customView.ColorPickerView
 import com.example.pencil.customView.ColorShowView
@@ -24,11 +23,6 @@ import com.example.pencil.file.FileManager
 import com.example.pencil.document.DrawView
 import com.example.pencil.document.path.DrawMotionEvent
 import com.example.pencil.document.tool.*
-import android.view.ViewTreeObserver
-import android.view.ViewTreeObserver.OnGlobalLayoutListener
-import android.view.WindowInsets
-import kotlinx.coroutines.*
-
 
 lateinit var sharedPref: SharedPreferences
 lateinit var drawImpostazioni: DrawImpostazioni
@@ -42,7 +36,6 @@ class DrawActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_Pencil)
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_draw)
 
         sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
@@ -84,48 +77,14 @@ class DrawActivity : AppCompatActivity() {
         drawView.changePage(nPage)
 
 
-//        // 'content' is the root view of your layout xml.
-//        val rootView = findViewById<ConstraintLayout>(R.id.drawViewRoot)
-//        val treeObserver: ViewTreeObserver = rootView.viewTreeObserver
-//        treeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
-//            override fun onGlobalLayout() {
-//                rootView.viewTreeObserver.removeOnGlobalLayoutListener(this)
-//                updateGestureExclusion(this@DrawActivity)
-//            }
-//        })
-
-        window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
-            // Note that system bars will only be "visible" if none of the
-            // LOW_PROFILE, HIDE_NAVIGATION, or FULLSCREEN flags are set.
-            if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
-                // TODO: The system bars are visible. Make any desired
-                // adjustments to your UI, such as showing the action bar or
-                // other navigational controls.
-
-                CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
-                    delay(1000)
-                    hideSystemUI()
-                }
-
-            } else {
-                // TODO: The system bars are NOT visible. Make any desired
-                // adjustments to your UI, such as hiding the action bar or
-                // other navigational controls.
-            }
-        }
-
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        hideSystemUI()
+//        hideSystemUI()
 
 //        // Hide the status bar.
 //        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
 //        // Remember that you should never show the action bar if the
 //        // status bar is hidden, so hide that too if necessary.
 //        actionBar?.hide()
+
     }
 
     var cartella = ""
@@ -143,14 +102,12 @@ class DrawActivity : AppCompatActivity() {
 
 
     private fun hideSystemUI() {
-
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, drawView).let { controller ->
             controller.hide(WindowInsetsCompat.Type.systemBars())
             controller.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE
         }
-
     }
 
     private fun showSystemUI() {

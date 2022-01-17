@@ -18,15 +18,11 @@ import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.path.pathFitCurve
 import com.example.pencil.document.path.stringToPath
 import com.example.pencil.sharedPref
-import kotlin.math.abs
 
-class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
+class StrumentoEvidenziatore(var context: Context, var view: ImageView){
     // variabili con i valori dell'oggetto, stroke (pt) e color
     var strokeWidthStrumento = sharedPref.getFloat("strokeEvidenziatore", 2.5f)
-    var colorStrumento = sharedPref.getInt(
-        "colorEvidenziatore",
-        ResourcesCompat.getColor(view.resources, R.color.colorPaint, null)
-    )
+    var colorStrumento = sharedPref.getInt("colorEvidenziatore", ResourcesCompat.getColor(view.resources, R.color.colorPaint, null))
 
     init {
         view.setColorFilter(colorStrumento, android.graphics.PorterDuff.Mode.MULTIPLY)
@@ -40,21 +36,13 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
     /**
      * Gestione del MotionEvent
      */
-    private var startX = 0f
-    private var startY = 0f
-    private var pathTemp = ""
-    private var lineaDritta = false
-
     private var path = ""
     private var currentX = 0f
     private var currentY = 0f
-    fun gestioneMotionEvent(v: DrawView, event: MotionEvent) {
+    fun gestioneMotionEvent(v: DrawView, event: MotionEvent){
         fun touchStart(v: DrawView, event: MotionEvent) {
             path = ""
             path = path + "M " + event.x + " " + event.y + " " //.moveTo(event.x, event.y)
-
-            startX = event.x
-            startY = event.y
 
             currentX = event.x
             currentY = event.y
@@ -64,31 +52,16 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
 
             newPath(v, path, getPaint())
         }
-
         fun touchMove(v: DrawView, event: MotionEvent) {
             path = path + "L " + event.x + " " + event.y + " "
 
             currentX = event.x
             currentY = event.y
 
-            lineaDritta = false
-            if (abs((event.y - startY) / (event.x - startX)) < 0.1) {
-                pathTemp = "M " + startX + " " + startY + " L " + event.x + " " + startY
-                lineaDritta = true
-
-                // Draw the path in the extra bitmap to cache it.
-                rewritePath(v, pathTemp)
-                return
-            }
-
             // Draw the path in the extra bitmap to cache it.
             rewritePath(v, path)
         }
-
         fun touchUp(v: DrawView, event: MotionEvent) {
-            if (lineaDritta) {
-                path = pathTemp
-            }
             savePath(v, path, getPaint())
 
             // Reset the path so it doesn't get drawn again.
@@ -106,26 +79,18 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
      * Gestione dei drawEvent
      */
     fun newPath(v: DrawView, path: String, paint: Paint/*, type: String = "Penna"*/) {
-        v.lastPath = DrawView.InfPath(path, paint, v.redrawPageRect)
+        v.lastPath = DrawView.InfPath(path, paint, v.pageRect)
         v.drawLastPath = true
     }
 
     fun rewritePath(v: DrawView, path: String) {
         v.lastPath.path = path
 
-        v.draw(false, false)
+        v.invalidate()
     }
 
-    fun savePath(
-        v: DrawView,
-        path: String,
-        paint: Paint,
-        type: GestionePagina.Tracciato.TypeTracciato = GestionePagina.Tracciato.TypeTracciato.PENNA
-    ) {
-        var errorCalc = v.drawFile.body[v.pageAttuale].dimensioni.calcSpessore(
-            v.maxError.toFloat(),
-            v.redrawPageRect.width().toInt()
-        )
+    fun savePath(v: DrawView, path: String, paint: Paint, type: GestionePagina.Tracciato.TypeTracciato = GestionePagina.Tracciato.TypeTracciato.PENNA) {
+        var errorCalc = v.drawFile.body[v.pageAttuale].dimensioni.calcSpessore(v.maxError.toFloat(), v.pageRect.width().toInt())
         v.lastPath.path = pathFitCurve(path, errorCalc)
         v.lastPath.paint = paint
 
@@ -138,15 +103,23 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
         v.drawFile.body[v.pageAttuale].tracciati.last().objectToString()
 
         v.drawLastPath = false
+        var paint = Paint(v.lastPath.paint)
+        paint.strokeWidth = v.drawFile.body[v.pageAttuale].dimensioni.calcSpessore(v.lastPath.paint.strokeWidth, v.pageRect.width().toInt()).toFloat()
 
-        v.makeSingleTracciato(v.lastPath.path, v.lastPath.paint)
-        v.draw(false, false)
+        //var pathTemp = pathFitCurve(lastPath.path, maxError)
+        v.pageCanvas.drawPath(stringToPath(v.lastPath.path), paint)
+        v.invalidate()
 
         v.drawFile.writeXML()
     }
 
 
-    fun drawStrumento() {
+
+
+
+
+
+    fun drawStrumento(){
 
     }
 
@@ -180,12 +153,9 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
 
-        val coloreTrattoColorPickerView =
-            dialog.findViewById<ColorPickerView>(R.id.dialogDrawPaint_coloreTrattoColorPickerView)
-        val dimensioneTrattoSeekbar =
-            dialog.findViewById<SeekBar>(R.id.dialogDrawPaint_dimensioneTrattoSeekbar)
-        val dimensioneTrattoTextView =
-            dialog.findViewById<TextView>(R.id.dialogDrawPaint_dimensioneTrattoTextView)
+        val coloreTrattoColorPickerView = dialog.findViewById<ColorPickerView>(R.id.dialogDrawPaint_coloreTrattoColorPickerView)
+        val dimensioneTrattoSeekbar = dialog.findViewById<SeekBar>(R.id.dialogDrawPaint_dimensioneTrattoSeekbar)
+        val dimensioneTrattoTextView = dialog.findViewById<TextView>(R.id.dialogDrawPaint_dimensioneTrattoTextView)
 
         coloreTrattoColorPickerView.color = colorStrumento
         dimensioneTrattoSeekbar.progress = (strokeWidthStrumento * 10).toInt()
@@ -193,39 +163,34 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
 
         dialog.show()
 
-        dimensioneTrattoSeekbar.setOnSeekBarChangeListener(object :
-            SeekBar.OnSeekBarChangeListener {
+        dimensioneTrattoSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seek: SeekBar, progress: Int, fromUser: Boolean) {
                 var progressTemp = (progress * 0.1).toFloat()
                 strokeWidthStrumento = progressTemp
 
                 dimensioneTrattoTextView.text = (progressTemp.toString() + "pt")
 
-                with(sharedPref.edit()) {
+                with (sharedPref.edit()) {
                     putFloat("strokeEvidenziatore", strokeWidthStrumento)
                     apply()
                 }
             }
-
             override fun onStartTrackingTouch(seek: SeekBar) {}
             override fun onStopTrackingTouch(seek: SeekBar) {
-                Toast.makeText(
-                    context,
-                    "La dimesione è: " + (seek.progress * 0.1) + "pt",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(context,
+                    "La dimesione è: " + (seek.progress * 0.1 ) + "pt",
+                    Toast.LENGTH_SHORT).show()
                 //paint.strokeWidth = seek.progress.toFloat()
             }
         })
 
-        coloreTrattoColorPickerView.setOnColorChangedListener(object :
-            ColorPickerView.OnColorChangedListener {
+        coloreTrattoColorPickerView.setOnColorChangedListener(object : ColorPickerView.OnColorChangedListener{
             override fun onColorChanged(newColor: Int) {
                 //colorShowView.color = newColor
                 view.setColorFilter(newColor, android.graphics.PorterDuff.Mode.MULTIPLY)
                 colorStrumento = newColor
 
-                with(sharedPref.edit()) {
+                with (sharedPref.edit()) {
                     putInt("colorEvidenziatore", newColor)
                     apply()
                 }
