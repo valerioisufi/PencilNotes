@@ -34,7 +34,7 @@
 
     <color name="gn_background_page">#f7f7f7</color>
     <color name="gn_border_page">#d4d4d3</color>
-    <color name="gn_background_tools">#f9f9f9</color>
+    <color name="gn_background_tools">#f7f7f7</color>
     <color name="gn_border_tools">#dadbda</color>
 
     <color name="bezier_curva">#000000</color>
