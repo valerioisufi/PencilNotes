@@ -27,7 +27,14 @@ import com.example.pencil.document.tool.*
 import android.view.ViewTreeObserver
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowInsets
+import android.widget.Toast
 import kotlinx.coroutines.*
+import androidx.activity.OnBackPressedCallback
+
+import androidx.annotation.NonNull
+
+
+
 
 
 lateinit var sharedPref: SharedPreferences
@@ -94,6 +101,9 @@ class DrawActivity : AppCompatActivity() {
 //            }
 //        })
 
+        /**
+         * Rendo invisible le barre di sistema
+         */
         window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
             // Note that system bars will only be "visible" if none of the
             // LOW_PROFILE, HIDE_NAVIGATION, or FULLSCREEN flags are set.
@@ -113,6 +123,21 @@ class DrawActivity : AppCompatActivity() {
                 // other navigational controls.
             }
         }
+
+        /**
+         * Impedisco all'utente di abbandonare l'activity con il tasto back
+         */
+        val callback: OnBackPressedCallback = object : OnBackPressedCallback(
+            true // default to enabled
+        ) {
+            override fun handleOnBackPressed() {
+                Toast.makeText(this@DrawActivity, "Vuoi tornare indietro?", Toast.LENGTH_SHORT).show()
+            }
+        }
+        onBackPressedDispatcher.addCallback(
+            this,  // LifecycleOwner
+            callback
+        )
 
     }
 

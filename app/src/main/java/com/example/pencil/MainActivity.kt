@@ -26,16 +26,6 @@ open class MainActivity : AppCompatActivity() {
         fileFolder = FileFolderXml(this, "fileFolderList.xml")
         fileFolder.readXML()
 
-//        var folder = mutableMapOf<String, String>()
-//        folder["type"] = "folder"
-//        folder["nome"] = "Cartella"
-//
-//        var file = mutableMapOf<String, String>()
-//        file["type"] = "file"
-//        file["nome"] = "File"
-//
-//        fileFolder.data["/"] = mutableListOf(folder, folder, folder, folder,folder, folder, folder, folder, folder,folder, folder, folder, folder, folder,folder, folder, folder, folder, folder,folder, folder, folder, folder, folder,folder, folder, folder, folder, folder,folder, folder, folder, folder, folder,folder, folder, folder, folder, folder,folder, folder, folder, folder, folder,folder, folder, folder, folder, folder,folder, folder, folder, folder, folder,folder, folder, folder, folder, folder)
-
         /**
          * activity_home_sfoglia_rv
          */

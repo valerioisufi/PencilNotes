@@ -142,7 +142,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
          * eseguo lo scaling
          */
         if (event.pointerCount == 2){
-            drawView.scaleTranslate(event)
+            scaleTranslate(event)
 
 //            if(!drawImpostazioni.modePenna) {
 //                drawView.strumentoPenna!!.rewritePath(drawView, "")
@@ -361,7 +361,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
      */
     fun palmRejection(event: MotionEvent): Boolean{
         for (i in 0 until event.pointerCount){
-            if (event.getToolMinor(i) / event.getToolMajor(i) < 0.6){
+            if (event.getToolMinor(i) / event.getToolMajor(i) < 0.4){
                 return true
             }
         }
@@ -371,6 +371,93 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
     /**
      * funzione che si occupa dello scale e dello spostamento
      */
+    private var startMatrix = Matrix()
+    var moveMatrix = Matrix()
+
+
+    private val FIRST_POINTER_INDEX = 0
+    private val SECOND_POINTER_INDEX = 1
+
+    private var fStartPos = PointF()
+    private var sStartPos = PointF()
+
+    private var fMovePos = PointF()
+    private var sMovePos = PointF()
+
+    private var startDistance = 0f
+    private var moveDistance = 0f
+
+    private var lastTranslate = PointF(0f, 0f)
+    private var lastScaleFactor = 1f
+
+    private var scaleFactor = 1f
+    private var translate = PointF(0f, 0f)
+
+    private var startFocusPos = PointF()
+    private var moveFocusPos = PointF()
+
+
+    fun scaleTranslate(event: MotionEvent) {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                fStartPos = PointF(event.getX(FIRST_POINTER_INDEX), event.getY(FIRST_POINTER_INDEX))
+                sStartPos = PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
+
+                startDistance =
+                    sqrt((sStartPos.x - fStartPos.x).pow(2) + (sStartPos.y - fStartPos.y).pow(2))
+                startFocusPos =
+                    PointF((fStartPos.x + sStartPos.x) / 2, (fStartPos.y + sStartPos.y) / 2)
+
+                startMatrix = Matrix(moveMatrix)
+                drawView.drawLastPath = false
+            }
+            MotionEvent.ACTION_MOVE -> {
+                fMovePos = PointF(event.getX(FIRST_POINTER_INDEX), event.getY(FIRST_POINTER_INDEX))
+                sMovePos = PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
+
+                moveDistance =
+                    sqrt((sMovePos.x - fMovePos.x).pow(2) + (sMovePos.y - fMovePos.y).pow(2))
+                moveFocusPos = PointF((fMovePos.x + sMovePos.x) / 2, (fMovePos.y + sMovePos.y) / 2)
+
+                translate =
+                    PointF(moveFocusPos.x - startFocusPos.x, moveFocusPos.y - startFocusPos.y)
+                scaleFactor = (moveDistance / startDistance)
+
+
+                moveMatrix.setTranslate(translate.x, translate.y)
+                moveMatrix.preConcat(startMatrix)
+
+                val f = FloatArray(9)
+                moveMatrix.getValues(f)
+                lastScaleFactor = f[Matrix.MSCALE_X]
+
+                // scale max e scale min
+                val scaleMax = 5f
+                val scaleMin = 1f
+                if (lastScaleFactor * scaleFactor < scaleMin) {
+                    scaleFactor = scaleMin / lastScaleFactor
+                }
+                if (lastScaleFactor * scaleFactor > scaleMax) {
+                    scaleFactor = scaleMax / lastScaleFactor
+                }
+                moveMatrix.postScale(scaleFactor, scaleFactor, moveFocusPos.x, moveFocusPos.y)
+
+                moveMatrix.getValues(f)
+                lastScaleFactor = f[Matrix.MSCALE_X]
+
+
+                Log.d("Scale factor: ", f[Matrix.MSCALE_X].toString())
+
+                drawView.draw(scaling = true)
+            }
+            MotionEvent.ACTION_POINTER_UP -> {
+                lastTranslate = PointF(translate.x, translate.y)
+                //lastScaleFactor = scaleFactor
+                drawView.draw(redraw = true)
+            }
+
+        }
+    }
 
 
 
