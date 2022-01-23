@@ -1,17 +1,19 @@
 package com.example.pencil
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import com.example.pencil.file.FileFolderXml
 import android.app.Dialog
 import android.content.Intent
+import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.Button
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.recyclerview.widget.*
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.pencil.file.FileFolderXml
 import com.google.android.material.textfield.TextInputEditText
 
 
@@ -23,6 +25,31 @@ open class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
+        val callback: OnBackPressedCallback = object : OnBackPressedCallback(
+            true // default to enabled
+        ) {
+            override fun handleOnBackPressed() {
+                rootSequence.removeLast()
+                var titoloRoot = ""
+                if (rootSequence.isEmpty()) {
+                    titoloRoot = getString(R.string.activity_home_titolo)
+                } else {
+                    titoloRoot = rootSequence.last()
+                }
+                activity_home_titolo_tv.text = titoloRoot
+
+                adapter.dataSet = fileFolder.data[getRoot()]
+                activity_home_sfoglia_rv.adapter!!.notifyDataSetChanged()
+                if (rootSequence.isEmpty()) isEnabled = false
+            }
+        }
+        onBackPressedDispatcher.addCallback(
+            this,  // LifecycleOwner
+            callback
+        )
+
+        // The callback can be enabled or disabled here or in the lambda
+
         fileFolder = FileFolderXml(this, "fileFolderList.xml")
         fileFolder.readXML()
 
@@ -31,17 +58,20 @@ open class MainActivity : AppCompatActivity() {
          */
         activity_home_sfoglia_rv = findViewById(R.id.activity_home_sfoglia_rv)
 
-        var adapter  = FileFolderAdapter(this, fileFolder.data["/"])
+        adapter = FileFolderAdapter(this, fileFolder.data["/"])
         activity_home_sfoglia_rv.adapter = adapter
 
         var layoutManager = LinearLayoutManager(this)
         activity_home_sfoglia_rv.layoutManager = layoutManager
-        
-        adapter.setOnFolderClickListener(object : FileFolderAdapter.OnFolderClickListener{
+
+        adapter.setOnFolderClickListener(object : FileFolderAdapter.OnFolderClickListener {
             override fun onItemClick(position: Int) {
-                activity_home_root_tv.text = "${activity_home_root_tv.text} > ${fileFolder.data[root]!![position]["nome"]}"
-                root = root + fileFolder.data[root]!![position]["nome"] + "/"
-                adapter.dataSet = fileFolder.data[root]
+                activity_home_titolo_tv.text = fileFolder.data[getRoot()]!![position]["nome"]
+
+                callback.isEnabled = true
+                rootSequence.add(fileFolder.data[getRoot()]!![position]["nome"]!!)
+
+                adapter.dataSet = fileFolder.data[getRoot()]
                 activity_home_sfoglia_rv.adapter!!.notifyDataSetChanged()
             }
 
@@ -51,11 +81,11 @@ open class MainActivity : AppCompatActivity() {
 
         })
 
-        adapter.setOnFileClickListener(object : FileFolderAdapter.OnFileClickListener{
+        adapter.setOnFileClickListener(object : FileFolderAdapter.OnFileClickListener {
             override fun onItemClick(position: Int) {
 
                 val intent = Intent(applicationContext, DrawActivity::class.java)
-                intent.putExtra("titoloFile", fileFolder.data[root]!![position]["nome"])
+                intent.putExtra("titoloFile", fileFolder.data[getRoot()]!![position]["nome"])
                 startActivity(intent)
             }
 
@@ -69,22 +99,29 @@ open class MainActivity : AppCompatActivity() {
         /**
          * activity_home_root_tv
          */
-        activity_home_root_tv = findViewById(R.id.activity_home_root_tv)
-        activity_home_root_tv.text = ""
+        activity_home_titolo_tv = findViewById(R.id.activity_home_titolo_tv)
 
     }
 
+    private lateinit var activity_home_titolo_tv: TextView
+    private lateinit var adapter: FileFolderAdapter
     private lateinit var activity_home_sfoglia_rv: RecyclerView
-    private lateinit var activity_home_root_tv: TextView
-    lateinit var fileFolder : FileFolderXml
+    lateinit var fileFolder: FileFolderXml
 
-    var root = "/"
+    var rootSequence = mutableListOf<String>()
+    fun getRoot(): String {
+        var root = "/"
+        for(sequence in rootSequence){
+            root += "$sequence/"
+        }
+        return root
+    }
 
 
     /**
      * Dialog
      */
-    fun newFolderDialog(view: View){
+    fun newFolderDialog(view: View) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_new_folder)
 
@@ -94,25 +131,32 @@ open class MainActivity : AppCompatActivity() {
         window.attributes.windowAnimations = R.style.DialogAnimation
 
         dialog.setCancelable(true)
-        window.setLayout(resources.displayMetrics.widthPixels - dpToPx(32, resources.displayMetrics), WRAP_CONTENT)
+        window.setLayout(
+            resources.displayMetrics.widthPixels - dpToPx(
+                32,
+                resources.displayMetrics
+            ), WRAP_CONTENT
+        )
 
         dialog.show()
 
-        val dialog_new_folder_conferma_button = dialog.findViewById<Button>(R.id.dialog_new_folder_conferma_button)
+        val dialog_new_folder_conferma_button =
+            dialog.findViewById<Button>(R.id.dialog_new_folder_conferma_button)
         dialog_new_folder_conferma_button.setOnClickListener {
             dialog.dismiss()
 
-            val dialog_new_folder_nome_textInputEditText = dialog.findViewById<TextInputEditText>(R.id.dialog_new_folder_nome_textInputEditText)
+            val dialog_new_folder_nome_textInputEditText =
+                dialog.findViewById<TextInputEditText>(R.id.dialog_new_folder_nome_textInputEditText)
             var nome = dialog_new_folder_nome_textInputEditText.editableText.toString()
 
-            fileFolder.data[root]?.add(0, mutableMapOf(Pair("type", "folder"), Pair("nome", nome)))
-            fileFolder.data["$root$nome/"] = mutableListOf()
+            fileFolder.data[getRoot()]?.add(0, mutableMapOf(Pair("type", "folder"), Pair("nome", nome)))
+            fileFolder.data["${getRoot()}$nome/"] = mutableListOf()
             activity_home_sfoglia_rv.adapter!!.notifyItemInserted(0)
             fileFolder.writeXML()
         }
     }
 
-    fun newFileDialog(view: View){
+    fun newFileDialog(view: View) {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_new_file)
 
@@ -122,18 +166,25 @@ open class MainActivity : AppCompatActivity() {
         window.attributes.windowAnimations = R.style.DialogAnimation
 
         dialog.setCancelable(true)
-        window.setLayout(resources.displayMetrics.widthPixels - dpToPx(32, resources.displayMetrics), WRAP_CONTENT)
+        window.setLayout(
+            resources.displayMetrics.widthPixels - dpToPx(
+                32,
+                resources.displayMetrics
+            ), WRAP_CONTENT
+        )
 
         dialog.show()
 
-        val dialog_new_file_conferma_button = dialog.findViewById<Button>(R.id.dialog_new_file_conferma_button)
+        val dialog_new_file_conferma_button =
+            dialog.findViewById<Button>(R.id.dialog_new_file_conferma_button)
         dialog_new_file_conferma_button.setOnClickListener {
             dialog.dismiss()
 
-            val dialog_new_file_nome_textInputEditText = dialog.findViewById<TextInputEditText>(R.id.dialog_new_file_nome_textInputEditText)
+            val dialog_new_file_nome_textInputEditText =
+                dialog.findViewById<TextInputEditText>(R.id.dialog_new_file_nome_textInputEditText)
             var nome = dialog_new_file_nome_textInputEditText.editableText.toString()
 
-            fileFolder.data[root]?.add(0, mutableMapOf(Pair("type", "file"), Pair("nome", nome)))
+            fileFolder.data[getRoot()]?.add(0, mutableMapOf(Pair("type", "file"), Pair("nome", nome)))
             activity_home_sfoglia_rv.adapter!!.notifyItemInserted(0)
             fileFolder.writeXML()
         }
@@ -165,7 +216,7 @@ open class MainActivity : AppCompatActivity() {
 //        }
     }
 
-    fun dettagliFileDialog(position : Int) {
+    fun dettagliFileDialog(position: Int) {
         var dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_dettagli_file)
 
@@ -180,7 +231,7 @@ open class MainActivity : AppCompatActivity() {
         val titolo = dialog.findViewById<TextView>(R.id.titoloDialogDettagliFile)
         val sottotitolo = dialog.findViewById<TextView>(R.id.sottotitoloDialogDettagliFile)
 
-        titolo.text = fileFolder.data[root]!![position]["nome"]
+        titolo.text = fileFolder.data[getRoot()]!![position]["nome"]
 //        sottotitolo.text = data["sottotitolo"]
 
         val eliminaButton = dialog.findViewById<ConstraintLayout>(R.id.eliminaDialogDettagliFile)

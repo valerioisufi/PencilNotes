@@ -304,61 +304,13 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
         return true
     }
 
-//    /**
-//     * The scale listener, used for handling multi-finger scale gestures.
-//     */
-//    val mScaleGestureListener = object : ScaleGestureDetector.OnScaleGestureListener {
-//
-//        var beginSpan = 0f
-//        var beginFocus = PointF()
-//        override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
-//            beginSpan = detector.currentSpan
-//            beginFocus = PointF(detector.focusX, detector.focusY)
-//
-//            drawView.startMatrix = Matrix(drawView.moveMatrix)
-//
-//            return true
-//        }
-//
-//        override fun onScale(detector: ScaleGestureDetector): Boolean {
-//            var currentSpan = detector.currentSpan
-//            var currentFocus = PointF(detector.focusX, detector.focusY)
-//
-//            var translate = PointF(currentFocus.x - beginFocus.x, currentFocus.y - beginFocus.y)
-//            var scaleFactor = (currentSpan / beginSpan)
-//
-//            drawView.moveMatrix.setTranslate(translate.x, translate.y)
-//            drawView.moveMatrix.preConcat(drawView.startMatrix)
-//
-//            val f = FloatArray(9)
-//            drawView.moveMatrix.getValues(f)
-//            var tempScaleFactor = f[Matrix.MSCALE_X]
-//
-//            // scale max e scale min
-//            val scaleMax = 5f
-//            val scaleMin = 1f
-//            if (tempScaleFactor * scaleFactor < scaleMin) {
-//                scaleFactor = scaleMin / tempScaleFactor
-//            }
-//            if (tempScaleFactor * scaleFactor > scaleMax) {
-//                scaleFactor = scaleMax / tempScaleFactor
-//            }
-//            drawView.moveMatrix.postScale(scaleFactor, scaleFactor, currentFocus.x, currentFocus.y)
-//
-//            drawView.draw(redraw = false, scaling = true)
-//
-//            return true
-//        }
-//
-//        override fun onScaleEnd(detector: ScaleGestureDetector) {
-//            drawView.draw(redraw = true, scaling = false)
-//        }
-//
-//    }
 
     /**
      * funzine che restituisce TRUE quando viene appoggiato sullo schermo il palmo della mano
      */
+    // TODO: 23/01/2022 qui devo tener conto del fatto che, quando viene
+    //  rilevato il palmo, alcune azioni come oo scale siano già iniziate.
+    //  Per cui io dovrei ultimare quelle azioni
     fun palmRejection(event: MotionEvent): Boolean{
         for (i in 0 until event.pointerCount){
             if (event.getToolMinor(i) / event.getToolMajor(i) < 0.4){
@@ -371,6 +323,8 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
     /**
      * funzione che si occupa dello scale e dello spostamento
      */
+    // TODO: 23/01/2022 sarebbe il caso di avviare lo scale solo
+    //  dopo che sia stato rilevato un movimento significativo
     private var startMatrix = Matrix()
     var moveMatrix = Matrix()
 

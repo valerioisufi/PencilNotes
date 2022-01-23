@@ -2,45 +2,36 @@ package com.example.pencil
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.view.View
-import android.widget.SeekBar
-import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.*
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-
-import android.text.TextUtils.replace
-import com.google.android.material.chip.Chip
 import android.graphics.pdf.PdfRenderer
-import android.view.GestureDetector
+import android.os.Bundle
+import android.text.TextUtils.replace
+import android.view.View
+import android.widget.SeekBar
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
+import androidx.core.view.*
 import com.example.pencil.customView.ColorPickerView
 import com.example.pencil.customView.ColorShowView
-import com.example.pencil.file.FileManager
 import com.example.pencil.document.DrawView
 import com.example.pencil.document.path.DrawMotionEvent
 import com.example.pencil.document.tool.*
-import android.view.ViewTreeObserver
-import android.view.ViewTreeObserver.OnGlobalLayoutListener
-import android.view.WindowInsets
-import android.widget.Toast
+import com.example.pencil.file.FileManager
+import com.google.android.material.chip.Chip
 import kotlinx.coroutines.*
-import androidx.activity.OnBackPressedCallback
-
-import androidx.annotation.NonNull
-
-
-
 
 
 lateinit var sharedPref: SharedPreferences
 lateinit var drawImpostazioni: DrawImpostazioni
 
 private const val TAG = "DrawActivity"
+
 class DrawActivity : AppCompatActivity() {
     lateinit var contatoreTextView: TextView
     lateinit var drawView: DrawView
@@ -52,7 +43,8 @@ class DrawActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_draw)
 
-        sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+        sharedPref =
+            getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
 
         drawView = findViewById(R.id.drawView)
         drawImpostazioni = findViewById(R.id.drawImpostazioni)
@@ -75,7 +67,8 @@ class DrawActivity : AppCompatActivity() {
         contatoreTextView = findViewById(R.id.contatoreTextView)
 
         drawView.strumentoPenna = StrumentoPenna(this, findViewById(R.id.strumento_penna))
-        drawView.strumentoEvidenziatore = StrumentoEvidenziatore(this, findViewById(R.id.strumento_evidenziatore))
+        drawView.strumentoEvidenziatore =
+            StrumentoEvidenziatore(this, findViewById(R.id.strumento_evidenziatore))
         drawView.strumentoGomma = StrumentoGomma(this, findViewById(R.id.strumento_gomma))
         drawView.strumentoLazo = StrumentoLazo(this, findViewById(R.id.strumento_lazo))
         drawView.strumentoTesto = StrumentoTesto(this, findViewById(R.id.strumento_testo))
@@ -89,17 +82,6 @@ class DrawActivity : AppCompatActivity() {
 
         drawView.readFile(nomeFile, cartella)
         drawView.changePage(nPage)
-
-
-//        // 'content' is the root view of your layout xml.
-//        val rootView = findViewById<ConstraintLayout>(R.id.drawViewRoot)
-//        val treeObserver: ViewTreeObserver = rootView.viewTreeObserver
-//        treeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
-//            override fun onGlobalLayout() {
-//                rootView.viewTreeObserver.removeOnGlobalLayoutListener(this)
-//                updateGestureExclusion(this@DrawActivity)
-//            }
-//        })
 
         /**
          * Rendo invisible le barre di sistema
@@ -131,7 +113,18 @@ class DrawActivity : AppCompatActivity() {
             true // default to enabled
         ) {
             override fun handleOnBackPressed() {
-                Toast.makeText(this@DrawActivity, "Vuoi tornare indietro?", Toast.LENGTH_SHORT).show()
+                isEnabled = false
+                toast = Toast.makeText(
+                    this@DrawActivity,
+                    "Tap back button in order to exit",
+                    Toast.LENGTH_SHORT
+                )
+                toast.show()
+
+                CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
+                    delay(1500)
+                    isEnabled = true
+                }
             }
         }
         onBackPressedDispatcher.addCallback(
@@ -141,6 +134,20 @@ class DrawActivity : AppCompatActivity() {
 
     }
 
+    /**
+     * Elimino il toast visualizzato quando l'activity viene distrutta
+     */
+    lateinit var toast: Toast
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::toast.isInitialized) {
+            toast.cancel()
+        }
+    }
+
+    /**
+     * Nascondo le barre di sistema
+     */
     override fun onResume() {
         super.onResume()
 
@@ -152,21 +159,6 @@ class DrawActivity : AppCompatActivity() {
 //        // status bar is hidden, so hide that too if necessary.
 //        actionBar?.hide()
     }
-
-    var cartella = ""
-    var nomeFile = ""
-    var nPage = 0
-
-    private lateinit var textViewData: TextView
-    private lateinit var commandView: ConstraintLayout
-    private lateinit var seekBar: SeekBar
-    private lateinit var modePennaView: Chip
-    private lateinit var colorPicker: ColorPickerView
-    private lateinit var colorShowView: ColorShowView
-    private lateinit var dimensioneTrattoTextView: TextView
-    private lateinit var blurEffect: View
-
-
     private fun hideSystemUI() {
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -184,9 +176,24 @@ class DrawActivity : AppCompatActivity() {
     }
 
 
-    fun choosePennello(view: View){
+
+    var cartella = ""
+    var nomeFile = ""
+    var nPage = 0
+
+    private lateinit var textViewData: TextView
+    private lateinit var commandView: ConstraintLayout
+    private lateinit var seekBar: SeekBar
+    private lateinit var modePennaView: Chip
+    private lateinit var colorPicker: ColorPickerView
+    private lateinit var colorShowView: ColorShowView
+    private lateinit var dimensioneTrattoTextView: TextView
+    private lateinit var blurEffect: View
+
+
+    fun choosePennello(view: View) {
         var id = resources.getResourceEntryName(view.id)
-        when(id){
+        when (id) {
             "strumento_penna" -> {
                 drawView.strumentoAttivo = DrawView.Pennello.PENNA
             }
@@ -208,7 +215,7 @@ class DrawActivity : AppCompatActivity() {
 
 
     val PICK_PDF_FILE = 2
-    fun addObject(view: View){
+    fun addObject(view: View) {
         // Request code for selecting a PDF document.
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
@@ -221,12 +228,15 @@ class DrawActivity : AppCompatActivity() {
 
         ActivityCompat.startActivityForResult(this, intent, PICK_PDF_FILE, null)
     }
+
     override fun onActivityResult(
-        requestCode: Int, resultCode: Int, resultData: Intent?) {
+        requestCode: Int, resultCode: Int, resultData: Intent?
+    ) {
         super.onActivityResult(requestCode, resultCode, resultData)
 
         if (requestCode == PICK_PDF_FILE
-            && resultCode == Activity.RESULT_OK) {
+            && resultCode == Activity.RESULT_OK
+        ) {
             // The result data contains a URI for the document or directory that
             // the user selected.
             resultData?.data?.also { uri ->
@@ -239,7 +249,9 @@ class DrawActivity : AppCompatActivity() {
                 val buffer = ByteArray(1024)
                 var n = 0
                 if (inputStream != null) {
-                    while (inputStream.read(buffer).also { n = it } != -1) outputStream.write(buffer, 0, n)
+                    while (inputStream.read(buffer)
+                            .also { n = it } != -1
+                    ) outputStream.write(buffer, 0, n)
                 }
 
                 inputStream?.close()
@@ -255,7 +267,7 @@ class DrawActivity : AppCompatActivity() {
                 val pageCount = renderer.pageCount
 
                 var indexPage = nPage
-                for (indexPdf in 0 until pageCount){
+                for (indexPdf in 0 until pageCount) {
                     drawView.addBackgroundPdf(id, indexPdf, indexPage)
                     indexPage++
                 }
@@ -268,7 +280,7 @@ class DrawActivity : AppCompatActivity() {
         }
     }
 
-    fun redo(view: View){
+    fun redo(view: View) {
         nPage += 1
         drawView.changePage(nPage)
 
@@ -276,7 +288,8 @@ class DrawActivity : AppCompatActivity() {
 
         //textViewData.text = drawView.drawFile.fileManager.file.readText()
     }
-    fun undo(view: View){
+
+    fun undo(view: View) {
         if (nPage > 0) {
             nPage -= 1
             drawView.changePage(nPage)

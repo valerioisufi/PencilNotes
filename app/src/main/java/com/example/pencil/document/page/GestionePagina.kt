@@ -101,10 +101,20 @@ class GestionePagina(
 
     class Image(var type: TypeImage = TypeImage.PDF) {
         enum class TypeImage {
-            PDF, IMG
+            PDF, PNG, JPG
         }
 
         var id = ""
+
+        /**
+         * rectVisualizzazione per determinare la posizione dell'immagine
+         */
+        var rectVisualizzazione = RectF()
+        var rectRitaglio = RectF()
+
+        /**
+         * solo x Pdf
+         */
         var index = 0
 
     }
@@ -118,6 +128,7 @@ class GestionePagina(
 
     var background: Image? = null
     var tracciati = mutableListOf<Tracciato>()
+    var images = mutableListOf<Image>()
 
     fun tracciatiStringToObject() {
         for (tracciato in tracciati) {

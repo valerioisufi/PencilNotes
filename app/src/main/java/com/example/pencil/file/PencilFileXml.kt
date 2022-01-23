@@ -103,6 +103,9 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
 
             if (parser.name == "tracciati") {
                 tracciatiReader(parser)
+            } else if (parser.name == "images") {
+                imagesReader(parser)
+
             } else if (parser.name == "background") {
                 body.last().background = risorsaReader(parser)
             }
@@ -133,7 +136,7 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
                         tracciato.pathString = parser.nextText()
                     } else if (parser.name == "style") {
                         tracciato.paintString = parser.nextText()
-                    } else if (parser.name == "rect") {
+                    } else if (parser.name == "rectVisualizzazione") {
                         tracciato.rectString = parser.nextText()
                     }
                 }
@@ -143,18 +146,58 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
 
         }
     }
-
-    private fun risorsaReader(parser: XmlPullParser): GestionePagina.Image {
+    private fun imagesReader(parser: XmlPullParser) {
         val startDepht = parser.depth
-        val risorsaImage = GestionePagina.Image(GestionePagina.Image.TypeImage.PDF)
-
         while (!(parser.depth == startDepht && parser.eventType == XmlPullParser.END_TAG)) {
             parser.nextTag()
 
-            if (parser.name == "id") {
-                risorsaImage.id = parser.nextText()
-            } else if (parser.name == "index") {
-                risorsaImage.index = parser.nextText().toInt()
+            if (parser.name == "elemento") {
+                body.last().images.add(risorsaReader(parser))
+
+            }
+
+        }
+    }
+
+    private fun risorsaReader(parser: XmlPullParser): GestionePagina.Image {
+        val startDepht = parser.depth
+        val risorsaImage = GestionePagina.Image(
+            GestionePagina.Image.TypeImage.valueOf(
+                parser.getAttributeValue(
+                    null,
+                    "type"
+                )
+            )
+        )
+
+        if (risorsaImage.type == GestionePagina.Image.TypeImage.PDF) {
+            while (!(parser.depth == startDepht && parser.eventType == XmlPullParser.END_TAG)) {
+                parser.nextTag()
+
+                if (parser.name == "id") {
+                    risorsaImage.id = parser.nextText()
+                } else if (parser.name == "index") {
+                    risorsaImage.index = parser.nextText().toInt()
+                }
+            }
+
+        } else if (risorsaImage.type == GestionePagina.Image.TypeImage.JPG || risorsaImage.type == GestionePagina.Image.TypeImage.PNG){
+
+            while (!(parser.depth == startDepht && parser.eventType == XmlPullParser.END_TAG)) {
+                parser.nextTag()
+
+                if (parser.name == "id") {
+                    risorsaImage.id = parser.nextText()
+
+                } else if (parser.name == "left") {
+                    risorsaImage.rectVisualizzazione.left = parser.nextText().toFloat()
+                } else if (parser.name == "top") {
+                    risorsaImage.rectVisualizzazione.top = parser.nextText().toFloat()
+                } else if (parser.name == "right") {
+                    risorsaImage.rectVisualizzazione.right = parser.nextText().toFloat()
+                } else if (parser.name == "bottom") {
+                    risorsaImage.rectVisualizzazione.bottom = parser.nextText().toFloat()
+                }
             }
         }
 
@@ -217,6 +260,8 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
             if (page.background != null) {
                 // background
                 serializer.startTag("", "background")
+                serializer.attribute(null, "type", page.background!!.type.name)
+
                 serializer.startTag("", "id")
                 serializer.text(page.background!!.id)
                 serializer.endTag("", "id")
@@ -224,10 +269,13 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
                 serializer.startTag("", "index")
                 serializer.text(page.background!!.index.toString())
                 serializer.endTag("", "index")
+
                 serializer.endTag("", "background")
             }
 
-            // path_penna
+            /**
+             * Tracciati
+             */
             serializer.startTag("", "tracciati")
             for (elemento in page.tracciati) {
                 serializer.startTag("", "elemento")
@@ -241,14 +289,49 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
                 serializer.text(elemento.paintString)
                 serializer.endTag("", "style")
 
-                serializer.startTag("", "rect")
+                serializer.startTag("", "rectVisualizzazione")
                 serializer.text(elemento.rectString)
-                serializer.endTag("", "rect")
+                serializer.endTag("", "rectVisualizzazione")
 
                 serializer.endTag("", "elemento")
             }
             serializer.endTag("", "tracciati")
 
+            /**
+             * Images
+             */
+            serializer.startTag("", "images")
+            for (elemento in page.images) {
+                serializer.startTag("", "elemento")
+                serializer.attribute(null, "type", elemento.type.name)
+
+                serializer.startTag("", "id")
+                serializer.text(elemento.id)
+                serializer.endTag("", "id")
+
+                serializer.startTag("", "left")
+                serializer.text(elemento.rectVisualizzazione.left.toString())
+                serializer.endTag("", "left")
+
+                serializer.startTag("", "top")
+                serializer.text(elemento.rectVisualizzazione.top.toString())
+                serializer.endTag("", "top")
+
+                serializer.startTag("", "right")
+                serializer.text(elemento.rectVisualizzazione.right.toString())
+                serializer.endTag("", "right")
+
+                serializer.startTag("", "bottom")
+                serializer.text(elemento.rectVisualizzazione.bottom.toString())
+                serializer.endTag("", "bottom")
+
+                serializer.endTag("", "elemento")
+            }
+            serializer.endTag("", "images")
+
+            /**
+             * End
+             */
             serializer.endTag("", "page")
         }
 

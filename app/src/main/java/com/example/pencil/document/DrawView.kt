@@ -1,14 +1,19 @@
 package com.example.pencil.document
 
+import android.app.Activity
+import android.content.ClipData
 import android.content.Context
 import android.graphics.*
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import android.util.AttributeSet
 import android.util.Log
+import android.view.DragEvent
 import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
+import androidx.core.app.ActivityCompat.requestDragAndDropPermissions
 import androidx.core.content.res.ResourcesCompat
 import com.example.pencil.R
 import com.example.pencil.document.page.GestionePagina
@@ -16,9 +21,11 @@ import com.example.pencil.document.path.DrawMotionEvent
 import com.example.pencil.document.path.stringToPath
 import com.example.pencil.document.tool.*
 import com.example.pencil.dpToPx
+import com.example.pencil.file.FileManager
 import com.example.pencil.file.PencilFileXml
 import kotlinx.coroutines.*
 import java.io.File
+import java.util.*
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -79,7 +86,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
     }
 
-
     var maxError = 2
 
     var paint = Paint().apply {
@@ -94,8 +100,12 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
 
+    var cartellaFile = ""
+    var nomeFile = ""
     lateinit var drawFile: PencilFileXml
     fun readFile(nomeFile: String, cartellaFile: String) {
+        this.nomeFile = nomeFile
+        this.cartellaFile = cartellaFile
         drawFile = PencilFileXml(context, nomeFile, cartellaFile)
         drawFile.readXML()
     }
@@ -158,9 +168,10 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     /**
      * funzioni il cui compito è quello di disegnare il contenuto della View
      */
-    private var redrawOnDraw = true
+    private var redrawOnDraw = false
     private var scalingOnDraw = false
     private var makeCursoreOnDraw = false
+    private var dragAndDropOnDraw = false
     var drawLastPath = false
     var drawTouchAnalyzer = false
 
@@ -201,8 +212,16 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             makeCursore(canvas)
         }
 
+        if (dragAndDropOnDraw) {
+            canvas.drawARGB(50, 255, 0, 0)
+            dragAndDropOnDraw = false
+        }
 
-        val pageRect = if (scalingOnDraw) scalingPageRect else redrawPageRect
+
+        // TODO: 23/01/2022 quando lo schermo viene ruotato più volte rapidamente,
+        //  l'applicazione crasha perchè lateinit property redrawPageRect has not been initialized
+        val pageRect =
+            if (scalingOnDraw) scalingPageRect else if (::redrawPageRect.isInitialized) redrawPageRect else calcPageRect()
         if (drawLastPath) {
             drawLastPathPaint.apply {
                 color = lastPath.paint.color
@@ -233,7 +252,12 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     lateinit var jobRedraw: Job
     var scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-    fun draw(redraw: Boolean = false, scaling: Boolean = false, makeCursore: Boolean = false) {
+    fun draw(
+        redraw: Boolean = false,
+        scaling: Boolean = false,
+        makeCursore: Boolean = false,
+        dragAndDrop: Boolean = false
+    ) {
         if (!::onDrawBitmap.isInitialized) return
 
         if (redraw) {
@@ -281,6 +305,18 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             makeCursoreOnDraw = true
             invalidate()
 
+        } else if (dragAndDrop) {
+            if (::jobRedraw.isInitialized) jobRedraw.cancel()
+
+//            val canvas = Canvas(onDrawBitmap)
+//            canvas.drawARGB(50, 255, 0, 0)
+
+            redrawOnDraw = false
+            scalingOnDraw = false
+            makeCursoreOnDraw = false
+            dragAndDropOnDraw = true
+            invalidate()
+
         } else {
             redrawOnDraw = false
             scalingOnDraw = false
@@ -315,7 +351,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 rectTemp = rect
             }
             val rect = rectTemp
-            Log.d(TAG, "redraw rect 2: $rect")
+            Log.d(TAG, "redraw rectVisualizzazione 2: $rect")
 
             /**
              * make lo sfondo bianco della pagina
@@ -356,11 +392,29 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 val clipWidth: Float = rect.width()
                 val clipHeight: Float = rect.height()
 
+                var scaleX = clipWidth / pagePdf.width
+                var scaleY = clipHeight / pagePdf.height
+
+                var translateX = rect.left
+                var translateY = rect.top
+
+                if (scaleX < scaleY) {
+                    scaleY = scaleX
+
+                    var heightPage = scaleX * pagePdf.height
+                    translateY += (clipHeight - heightPage) / 2
+                } else {
+                    scaleX = scaleY
+
+                    var widthPage = scaleX * pagePdf.width
+                    translateX += (clipWidth - widthPage) / 2
+                }
+
                 renderMatrix.postScale(
-                    clipWidth / pagePdf.width,
-                    clipHeight / pagePdf.height
+                    scaleX, scaleY
                 )
-                renderMatrix.postTranslate(rect.left, rect.top)
+
+                renderMatrix.postTranslate(translateX, translateY)
                 pagePdf.render(
                     bitmap,
                     renderRect,
@@ -374,6 +428,26 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
             /**
              * make il contenuto della pagina
+             */
+
+            /**
+             * make images
+             */
+            for (image in drawFile.body[pageAttuale].images) {
+                val inputFile = FileManager(context, drawFile.head[image.id]?.get("path")!!)
+                val inputStream = inputFile.file.inputStream()
+
+                var imageBitmap = BitmapFactory.decodeStream(inputStream)
+                var imageRect =
+                    RectF(0f, 0f, imageBitmap.width.toFloat(), imageBitmap.height.toFloat())
+                var imageMatrix = Matrix().apply {
+                    setRectToRect(imageRect, rect, Matrix.ScaleToFit.CENTER)
+                }
+                canvas.drawBitmap(imageBitmap, imageMatrix, null)
+            }
+
+            /**
+             * make tracciati
              */
             // TODO: 31/12/2021 poi valuterò l'idea di utlizzare una funzione a parte che richiama i metodi make- dei singoli strumenti
             for (tracciato in drawFile.body[pageAttuale].tracciati) {
@@ -620,13 +694,15 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
      * caratteristiche della pagina
      */
     fun calcPageRect(): RectF {
-        val padding = 20f
+        val padding = dpToPx(context, 24).toFloat()
 
+        var onWidth = true
         var widthPage = widthView - padding * 2
         var heightPage = (widthPage * sqrt(2.0)).toFloat()
-        if (widthView > heightView) {
-            widthPage = (widthPage * sqrt(2.0)).toFloat()
-            heightPage = widthView - padding * 2
+        if (heightPage + padding * 2 > heightView) {
+            onWidth = false
+            heightPage = heightView - padding * 2
+            widthPage = (heightPage / sqrt(2.0)).toFloat()
         }
 
         var left = padding
@@ -634,9 +710,12 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         var right = (padding + widthPage)
         var bottom = (padding + heightPage)
 
-        if (heightPage + padding * 2 < heightView) {
+        if (onWidth) {
             top = (heightView - heightPage) / 2
             bottom = top + heightPage
+        } else {
+            left = (widthView - widthPage) / 2
+            right = left + widthPage
         }
 
         val rect = RectF(left, top, right, bottom)
@@ -689,7 +768,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 //    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
 //        super.onLayout(changed, left, top, right, bottom)
 //
-//        // Update rect bounds and the exclusionRects list
+//        // Update rectVisualizzazione bounds and the exclusionRects list
 //        exclusionRects.add(Rect().apply {
 //            this.right = right
 //            this.left = left
@@ -716,6 +795,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         onDrawBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
         windowRect = RectF(0f, 0f, width.toFloat(), height.toFloat())
+//        redrawPageRect = calcPageRect()
 
         draw(redraw = true, scaling = false)
     }
@@ -752,16 +832,102 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
 
-    /**
-     * funzione che si occupa dello scale e dello spostamento
-     */
+    override fun onDragEvent(event: DragEvent): Boolean {
+        when (event.action) {
+            DragEvent.ACTION_DRAG_STARTED -> {
+                // Determines if this View can accept the dragged data.
 
+                // Returns true to indicate that the View can accept the dragged data.
+                // Returns false to indicate that, during the current drag and drop operation,
+                // this View will not receive events again until ACTION_DRAG_ENDED is sent.
+                return event.clipDescription.hasMimeType("image/jpeg") || event.clipDescription.hasMimeType(
+                    "image/png"
+                )
+            }
 
-//    // funzione che riporta moveMatrix in una condizione normale
-//    fun scaleTranslateAnimation(startMatrix: Matrix, finalMatrix: Matrix) {
-//        val durata = 1f
-//
-//    }
+            DragEvent.ACTION_DRAG_ENTERED -> {
+                draw(dragAndDrop = true)
 
+                // Returns true; the value is ignored.
+                return true
+            }
+            DragEvent.ACTION_DRAG_LOCATION -> {
+                draw(dragAndDrop = true)
 
+                // Ignore the event.
+                return true
+            }
+            DragEvent.ACTION_DRAG_EXITED -> {
+                draw()
+
+                // Returns true; the value is ignored.
+                return true
+            }
+
+            DragEvent.ACTION_DROP -> {
+                val imageItem: ClipData.Item = event.clipData.getItemAt(0)
+                val uri = imageItem.uri
+
+                // Request permission to access the image data being dragged into
+                // the target activity's ImageView element.
+                val dropPermissions = requestDragAndDropPermissions(context as Activity, event)
+
+                var estensione =
+                    if (event.clipDescription.hasMimeType("image/jpeg")) "jpg" else
+                        if (event.clipDescription.hasMimeType("image/png")) "png" else ""
+                val id = addRisorsa(cartellaFile, ".$estensione")
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val outputFile = FileManager(context, "$id.$estensione", cartellaFile)
+                val outputStream = outputFile.file.outputStream()
+
+                val buffer = ByteArray(1024)
+                var n = 0
+                if (inputStream != null) {
+                    while (inputStream.read(buffer)
+                            .also { n = it } != -1
+                    ) outputStream.write(buffer, 0, n)
+                }
+
+                inputStream?.close()
+                outputStream.close()
+
+                drawFile.body[pageAttuale].images.add(
+                    GestionePagina.Image(
+                        GestionePagina.Image.TypeImage.valueOf(estensione.uppercase())
+                    ).apply {
+                        this.id = id
+                    }
+                )
+
+                // Release the permission immediately afterwards because it's
+                // no longer needed.
+                dropPermissions!!.release()
+
+                draw(redraw = true)
+                drawFile.writeXML()
+
+                // Returns true. DragEvent.getResult() will return true.
+                return true
+            }
+
+            DragEvent.ACTION_DRAG_ENDED -> {
+                // Does a getResult(), and displays what happened.
+                when (event.result) {
+                    true ->
+                        Toast.makeText(context, "The drop was handled.", Toast.LENGTH_LONG)
+                    else ->
+                        Toast.makeText(context, "The drop didn't work.", Toast.LENGTH_LONG)
+                }.show()
+
+                draw()
+                // Returns true; the value is ignored.
+                return true
+            }
+            else -> {
+                // An unknown action type was received.
+                Log.e("DragDrop Example", "Unknown action type received by View.OnDragListener.")
+                return false
+            }
+        }
+    }
 }
