@@ -313,7 +313,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
     //  Per cui io dovrei ultimare quelle azioni
     fun palmRejection(event: MotionEvent): Boolean{
         for (i in 0 until event.pointerCount){
-            if (event.getToolMinor(i) / event.getToolMajor(i) < 0.4){
+            if (event.getToolMinor(i) / event.getToolMajor(i) < 0.5){
                 return true
             }
         }

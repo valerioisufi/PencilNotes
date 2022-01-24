@@ -94,6 +94,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         isAntiAlias = true
         // Dithering affects how colors with higher-precision than the device are down-sampled.
         isDither = true
+        isFilterBitmap = true
         strokeJoin = Paint.Join.ROUND // default: MITER
         strokeCap = Paint.Cap.ROUND // default: BUTT
         strokeWidth = 3f // default: Hairline-width (really thin)
@@ -186,7 +187,30 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             canvas.drawBitmap(onDrawBitmap, 0f, 0f, null)
 
         } else if (scalingOnDraw) {
-            // trasformo e disegno la pagina intera memorizzata nella cache
+            /**
+             * make il colore di fondo della view
+             */
+            makePageBackground(canvas, scalingPageRect)
+
+            /**
+             * make lo sfondo bianco della pagina
+             */
+            // TODO: 31/12/2021 in seguito implementerò anche la possibilità di scegliere tra diversi tipi di pagine
+            val paintSfondoPaginaBianco = Paint().apply {
+                color = ResourcesCompat.getColor(resources, R.color.white, null)
+                style = Paint.Style.FILL
+                setShadowLayer(
+                    24f,
+                    0f,
+                    8f,
+                    ResourcesCompat.getColor(resources, R.color.shadow, null)
+                )
+            }
+            canvas.drawRect(scalingPageRect, paintSfondoPaginaBianco)
+
+            /**
+             * trasformo e disegno la pagina intera memorizzata nella cache
+             */
             canvas.drawBitmap(
                 drawFile.body[pageAttuale].bitmapPage,
                 null,
@@ -222,6 +246,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         //  l'applicazione crasha perchè lateinit property redrawPageRect has not been initialized
         val pageRect =
             if (scalingOnDraw) scalingPageRect else if (::redrawPageRect.isInitialized) redrawPageRect else calcPageRect()
+
+        canvas.clipRect(pageRect)
         if (drawLastPath) {
             drawLastPathPaint.apply {
                 color = lastPath.paint.color
@@ -235,7 +261,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             canvas.drawPath(stringToPath(lastPath.path), drawLastPathPaint)
         }
 
-        makePageBackground(canvas, pageRect)
 
 //        if(drawTouchAnalyzer){
 //            makeTouchAnalyzer(canvas)
@@ -353,6 +378,12 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             val rect = rectTemp
             Log.d(TAG, "redraw rectVisualizzazione 2: $rect")
 
+
+            /**
+             * make il colore di fondo della view
+             */
+            makePageBackground(canvas, rect)
+
             /**
              * make lo sfondo bianco della pagina
              */
@@ -360,6 +391,12 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             val paintSfondoPaginaBianco = Paint().apply {
                 color = ResourcesCompat.getColor(resources, R.color.white, null)
                 style = Paint.Style.FILL
+                setShadowLayer(
+                    24f,
+                    0f,
+                    8f,
+                    ResourcesCompat.getColor(resources, R.color.shadow, null)
+                )
             }
             canvas.drawRect(rect, paintSfondoPaginaBianco)
 
@@ -437,7 +474,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 val inputFile = FileManager(context, drawFile.head[image.id]?.get("path")!!)
                 val inputStream = inputFile.file.inputStream()
 
-                var imageBitmap = BitmapFactory.decodeStream(inputStream)
+                var imageBitmap = BitmapFactory.decodeStream(inputStream, )
                 var imageRect =
                     RectF(0f, 0f, imageBitmap.width.toFloat(), imageBitmap.height.toFloat())
                 var imageMatrix = Matrix().apply {
@@ -449,6 +486,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             /**
              * make tracciati
              */
+            canvas.clipRect(rect)
             // TODO: 31/12/2021 poi valuterò l'idea di utlizzare una funzione a parte che richiama i metodi make- dei singoli strumenti
             for (tracciato in drawFile.body[pageAttuale].tracciati) {
                 val pathTracciato: Path = stringToPath(tracciato.pathString)
@@ -471,12 +509,16 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             /**
              * make il bordo della pagina
              */
-            val paintBordoPagina = Paint().apply {
-                color = ResourcesCompat.getColor(resources, R.color.gn_border_page, null)
-                style = Paint.Style.STROKE
-                strokeWidth = 3f
-            }
-            canvas.drawRect(rect, paintBordoPagina)
+            // TODO: 24/01/2022 non necessario
+//            val paintBordoPagina = Paint().apply {
+//                color = ResourcesCompat.getColor(resources, R.color.gn_border_page, null)
+//                style = Paint.Style.STROKE
+//                strokeWidth = drawFile.body[pageAttuale].dimensioni.calcSpessore(
+//                    (dpToPx(context, 1)).toFloat(),
+//                    rect.width().toInt()
+//                ).toFloat()
+//            }
+//            canvas.drawRect(rect, paintBordoPagina)
 
             return@withContext bitmap
         }
@@ -505,6 +547,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         val pathObject = stringToPath(pathString)
 
         val onDrawCanvas = Canvas(onDrawBitmap)
+        onDrawCanvas.clipRect(redrawPageRect)
         onDrawCanvas.drawPath(pathObject, Paint(paintObject).apply {
             strokeWidth = drawFile.body[pageAttuale].dimensioni.calcSpessore(
                 paintObject.strokeWidth,

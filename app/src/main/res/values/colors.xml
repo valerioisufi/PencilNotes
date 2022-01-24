@@ -40,4 +40,6 @@
     <color name="bezier_curva">#000000</color>
     <color name="bezier_punto_controlo">#BEFF4444</color>
     <color name="bezier_linea_controlo">#8000DDFF</color>
+
+    <color name="shadow">#BF959DA5</color>
 </resources>
