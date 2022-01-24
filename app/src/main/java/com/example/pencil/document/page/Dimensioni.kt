@@ -30,6 +30,36 @@ class Dimensioni(widthTemp: Float, heightTemp: Float) {
         }
     }
 
+    /**
+     * Formati Pagina prestabiliti
+     */
+    companion object{
+        enum class Orientamento{
+            VERTICALE, ORIZZONTALE
+        }
+
+        fun A3(orientamento: Orientamento = Orientamento.VERTICALE): Dimensioni{
+            return if (orientamento == Orientamento.VERTICALE)
+                Dimensioni(297f, 420f)
+            else
+                Dimensioni(420f, 297f)
+        }
+
+        fun A4(orientamento: Orientamento = Orientamento.VERTICALE): Dimensioni{
+            return if (orientamento == Orientamento.VERTICALE)
+                Dimensioni(210f, 297f)
+            else
+                Dimensioni(297f, 210f)
+        }
+
+        fun A5(orientamento: Orientamento = Orientamento.VERTICALE): Dimensioni{
+            return if (orientamento == Orientamento.VERTICALE)
+                Dimensioni(148f, 210f)
+            else
+                Dimensioni(210f, 148f)
+        }
+    }
+
     var width = Misura(widthTemp, Misura.Unit.MM)
     var height = Misura(heightTemp, Misura.Unit.MM)
     //var rapportoDimensioni = width.mm / height.mm
@@ -65,9 +95,10 @@ class Dimensioni(widthTemp: Float, heightTemp: Float) {
      * Funzioni per il calcolo della dimensione del tratto
      * basate sulla dimensione in pt (dots) e su un fattore di scala
      */
-    fun calcSpessore(dimPt: Float, widthPx: Int): Int {
-        val dimPx = (dimPt / width.pt) * widthPx
-        return dimPx.toInt()
-
+    fun calcPxFromPt(dimPt: Float, widthPx: Int): Float {
+        return (dimPt / width.pt) * widthPx
+    }
+    fun calcPxFromMm(dimMm: Float, widthPx: Int): Float {
+        return (dimMm / width.mm) * widthPx
     }
 }

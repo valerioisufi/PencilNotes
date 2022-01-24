@@ -42,4 +42,7 @@
     <color name="bezier_linea_controlo">#8000DDFF</color>
 
     <color name="shadow">#BF959DA5</color>
+
+    <color name="riga">#4E4E4E</color>
+    <color name="margine">#78000F</color>
 </resources>

@@ -16,7 +16,6 @@ import com.example.pencil.customView.ColorPickerView
 import com.example.pencil.document.DrawView
 import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.path.pathFitCurve
-import com.example.pencil.document.path.stringToPath
 import com.example.pencil.sharedPref
 
 class StrumentoPenna(var context: Context, var view: ImageView){
@@ -90,8 +89,8 @@ class StrumentoPenna(var context: Context, var view: ImageView){
     }
 
     fun savePath(v: DrawView, path: String, paint: Paint, type: GestionePagina.Tracciato.TypeTracciato = GestionePagina.Tracciato.TypeTracciato.PENNA) {
-        var errorCalc = v.drawFile.body[v.pageAttuale].dimensioni.calcSpessore(v.maxError.toFloat(), v.redrawPageRect.width().toInt())
-        v.lastPath.path = pathFitCurve(path, errorCalc)
+        var errorCalc = v.drawFile.body[v.pageAttuale].dimensioni.calcPxFromPt(v.maxError.toFloat(), v.redrawPageRect.width().toInt())
+        v.lastPath.path = pathFitCurve(path, errorCalc.toInt())
         v.lastPath.paint = paint
 
         var tracciato = GestionePagina.Tracciato(type).apply {

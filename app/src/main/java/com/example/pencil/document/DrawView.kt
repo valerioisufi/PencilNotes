@@ -17,6 +17,7 @@ import androidx.core.app.ActivityCompat.requestDragAndDropPermissions
 import androidx.core.content.res.ResourcesCompat
 import com.example.pencil.R
 import com.example.pencil.document.page.GestionePagina
+import com.example.pencil.document.page.RigaturaQuadrettatura
 import com.example.pencil.document.path.DrawMotionEvent
 import com.example.pencil.document.path.stringToPath
 import com.example.pencil.document.tool.*
@@ -252,10 +253,10 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             drawLastPathPaint.apply {
                 color = lastPath.paint.color
 
-                strokeWidth = drawFile.body[pageAttuale].dimensioni.calcSpessore(
+                strokeWidth = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
                     lastPath.paint.strokeWidth,
                     pageRect.width().toInt()
-                ).toFloat()
+                )
             }
 
             canvas.drawPath(stringToPath(lastPath.path), drawLastPathPaint)
@@ -333,9 +334,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         } else if (dragAndDrop) {
             if (::jobRedraw.isInitialized) jobRedraw.cancel()
 
-//            val canvas = Canvas(onDrawBitmap)
-//            canvas.drawARGB(50, 255, 0, 0)
-
             redrawOnDraw = false
             scalingOnDraw = false
             makeCursoreOnDraw = false
@@ -385,7 +383,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             makePageBackground(canvas, rect)
 
             /**
-             * make lo sfondo bianco della pagina
+             * make lo sfondo bianco della pagina e ShadowLayer
              */
             // TODO: 31/12/2021 in seguito implementerò anche la possibilità di scegliere tra diversi tipi di pagine
             val paintSfondoPaginaBianco = Paint().apply {
@@ -399,6 +397,17 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 )
             }
             canvas.drawRect(rect, paintSfondoPaginaBianco)
+
+            /**
+             * make la rigatura o la quadrettatura
+             */
+            val rigaturaQuadrettatura =
+                RigaturaQuadrettatura(context, RigaturaQuadrettatura.Type.Rigatura1R)
+            rigaturaQuadrettatura.makeRigaturaQuadrettatura(
+                canvas,
+                drawFile.body[pageAttuale].dimensioni,
+                rect
+            )
 
             /**
              * make il PDF che farà da sfondo alla pagina
@@ -474,7 +483,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 val inputFile = FileManager(context, drawFile.head[image.id]?.get("path")!!)
                 val inputStream = inputFile.file.inputStream()
 
-                var imageBitmap = BitmapFactory.decodeStream(inputStream, )
+                var imageBitmap = BitmapFactory.decodeStream(inputStream)
                 var imageRect =
                     RectF(0f, 0f, imageBitmap.width.toFloat(), imageBitmap.height.toFloat())
                 var imageMatrix = Matrix().apply {
@@ -491,7 +500,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             for (tracciato in drawFile.body[pageAttuale].tracciati) {
                 val pathTracciato: Path = stringToPath(tracciato.pathString)
                 val paintTracciato: Paint = Paint(tracciato.paintObject!!).apply {
-                    strokeWidth = drawFile.body[pageAttuale].dimensioni.calcSpessore(
+                    strokeWidth = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
                         strokeWidth,
                         rect.width().toInt()
                     ).toFloat()
@@ -513,7 +522,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 //            val paintBordoPagina = Paint().apply {
 //                color = ResourcesCompat.getColor(resources, R.color.gn_border_page, null)
 //                style = Paint.Style.STROKE
-//                strokeWidth = drawFile.body[pageAttuale].dimensioni.calcSpessore(
+//                strokeWidth = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
 //                    (dpToPx(context, 1)).toFloat(),
 //                    rect.width().toInt()
 //                ).toFloat()
@@ -549,7 +558,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         val onDrawCanvas = Canvas(onDrawBitmap)
         onDrawCanvas.clipRect(redrawPageRect)
         onDrawCanvas.drawPath(pathObject, Paint(paintObject).apply {
-            strokeWidth = drawFile.body[pageAttuale].dimensioni.calcSpessore(
+            strokeWidth = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
                 paintObject.strokeWidth,
                 redrawPageRect.width().toInt()
             ).toFloat()
@@ -567,7 +576,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
         pathObject.transform(pathTracciatoMatrix)
         onScalingCanvas.drawPath(pathObject, Paint(paintObject).apply {
-            strokeWidth = drawFile.body[pageAttuale].dimensioni.calcSpessore(
+            strokeWidth = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
                 paintObject.strokeWidth,
                 drawFile.body[pageAttuale].bitmapPage.width
             ).toFloat()
@@ -804,24 +813,6 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         var distance: Float? = null // non funziona con M-Pencil di Huawei
     }
 
-//    /**
-//     * onLayout
-//     */
-//    var exclusionRects = mutableListOf<Rect>()
-//    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-//        super.onLayout(changed, left, top, right, bottom)
-//
-//        // Update rectVisualizzazione bounds and the exclusionRects list
-//        exclusionRects.add(Rect().apply {
-//            this.right = right
-//            this.left = left
-//            this.bottom = bottom
-//            this.top = bottom - dpToPx(context, 200)
-//
-//        })
-//        systemGestureExclusionRects = exclusionRects
-//    }
-
     /**
      * onSizeChanged
      */
@@ -875,6 +866,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
 
+    /**
+     * gestione del Drag and Drop
+     */
     override fun onDragEvent(event: DragEvent): Boolean {
         when (event.action) {
             DragEvent.ACTION_DRAG_STARTED -> {
