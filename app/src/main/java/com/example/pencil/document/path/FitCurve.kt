@@ -5,7 +5,7 @@ import kotlin.math.floor
 import kotlin.math.hypot
 
 
-fun pathFitCurve(pathString: String, maxError: Int): String {
+fun pathFitCurve(pathString: String, maxError: Float): String {
     var pointsList : MutableList<MutableList<Double>> = mutableListOf()
     var pathList = TextUtils.split(pathString, " ")
 
@@ -60,7 +60,7 @@ fun pathFitCurve(pathString: String, maxError: Int): String {
  * @param {Number} maxError - Tolerance, squared error between points and fitted curve
  * @returns {Array<Array<Array<Number>>>} Array of Bezier curves, where each element is [first-point, control-point-1, control-point-2, second-point] and points are [x, y]
  */
-fun fitCurve(points: MutableList<MutableList<Double>>, maxError: Int): MutableList<MutableList<MutableList<Double>>> {
+fun fitCurve(points: MutableList<MutableList<Double>>, maxError: Float): MutableList<MutableList<MutableList<Double>>> {
     // Remove duplicate points
     var points = points.filterIndexed{ i, point ->
         i == 0 || points[i] != points[i-1]
@@ -86,7 +86,7 @@ fun fitCurve(points: MutableList<MutableList<Double>>, maxError: Int): MutableLi
  * @param {Number} error - Tolerance, squared error between points and fitted curve
  * @returns {Array<Array<Array<Number>>>} Array of Bezier curves, where each element is [first-point, control-point-1, control-point-2, second-point] and points are [x, y]
  */
-fun fitCubic(points: MutableList<MutableList<Double>>, leftTangent: MutableList<Double>, rightTangent: MutableList<Double>, error: Int): MutableList<MutableList<MutableList<Double>>> {
+fun fitCubic(points: MutableList<MutableList<Double>>, leftTangent: MutableList<Double>, rightTangent: MutableList<Double>, error: Float): MutableList<MutableList<MutableList<Double>>> {
     val MaxIterations = 20  //Max times to try iterating (to find an acceptable curve)
 
     //Control points of fitted Bezier curve

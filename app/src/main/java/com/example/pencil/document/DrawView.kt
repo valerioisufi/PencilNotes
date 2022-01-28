@@ -19,6 +19,7 @@ import com.example.pencil.R
 import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.page.RigaturaQuadrettatura
 import com.example.pencil.document.drawEvent.DrawMotionEvent
+import com.example.pencil.document.path.pathFitCurve
 import com.example.pencil.document.path.stringToPath
 import com.example.pencil.document.tool.*
 import com.example.pencil.dpToPx
@@ -87,7 +88,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
     }
 
-    var maxError = 2
+    var maxError = 0.3
 
     var paint = Paint().apply {
         color = ResourcesCompat.getColor(resources, R.color.colorPaint, null)
@@ -242,9 +243,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             dragAndDropOnDraw = false
         }
 
-
-        // TODO: 23/01/2022 quando lo schermo viene ruotato più volte rapidamente,
-        //  l'applicazione crasha perchè lateinit property redrawPageRect has not been initialized
+        /**
+         * make lastPath
+         */
         val pageRect =
             if (scalingOnDraw) scalingPageRect else if (::redrawPageRect.isInitialized) redrawPageRect else calcPageRect()
 
@@ -260,6 +261,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             }
 
             canvas.drawPath(stringToPath(lastPath.path), drawLastPathPaint)
+//            val errorCalc = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(0.01f, redrawPageRect.width().toInt())
+//            canvas.drawPath(
+//                stringToPath(pathFitCurve(lastPath.path, errorCalc)),
+//                drawLastPathPaint
+//            )
         }
 
 

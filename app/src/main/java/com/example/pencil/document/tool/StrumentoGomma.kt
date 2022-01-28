@@ -115,7 +115,7 @@ class StrumentoGomma(var context: Context, var view: ImageView) {
 
     fun savePath(v: DrawView, path: String, paint: Paint, type: GestionePagina.Tracciato.TypeTracciato = GestionePagina.Tracciato.TypeTracciato.PENNA) {
         var errorCalc = v.drawFile.body[v.pageAttuale].dimensioni.calcPxFromPt(v.maxError.toFloat(), v.redrawPageRect.width().toInt())
-        v.lastPath.path = pathFitCurve(path, errorCalc.toInt())
+        v.lastPath.path = pathFitCurve(path, errorCalc)
         v.lastPath.paint = paint
 
         var tracciato = GestionePagina.Tracciato(type).apply {

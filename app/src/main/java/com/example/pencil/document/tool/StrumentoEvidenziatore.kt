@@ -50,7 +50,7 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
     fun gestioneMotionEvent(v: DrawView, event: MotionEvent) {
         fun touchStart(v: DrawView, event: MotionEvent) {
             path = ""
-            path = path + "M " + event.x + " " + event.y + " " //.moveTo(event.x, event.y)
+            path += "M ${event.x} ${event.y} "
 
             startX = event.x
             startY = event.y
@@ -65,7 +65,7 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
         }
 
         fun touchMove(v: DrawView, event: MotionEvent) {
-            path = path + "L " + event.x + " " + event.y + " "
+            path += "L ${event.x} ${event.y} "
 
             currentX = event.x
             currentY = event.y
@@ -125,7 +125,7 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
             v.maxError.toFloat(),
             v.redrawPageRect.width().toInt()
         )
-        v.lastPath.path = pathFitCurve(path, errorCalc.toInt())
+        v.lastPath.path = pathFitCurve(path, errorCalc)
         v.lastPath.paint = paint
 
         var tracciato = GestionePagina.Tracciato(type).apply {

@@ -1,5 +1,7 @@
 package com.example.pencil.document.page
 
+import android.graphics.RectF
+
 /**
  * Classe per le funzioni che controllano le dimensioni della pagina
  */
@@ -100,5 +102,28 @@ class Dimensioni(widthTemp: Float, heightTemp: Float) {
     }
     fun calcPxFromMm(dimMm: Float, widthPx: Int): Float {
         return (dimMm / width.mm) * widthPx
+    }
+
+
+    /**
+     * Conversione da px (gradezza dipendente dallo schermo)
+     * a pt (dots, grandezza indipendente dal dispositivo)
+     */
+    fun calcPtFromPx(dimPx: Float, widthPx: Int): Float {
+        return width.pt * dimPx / widthPx
+    }
+
+    fun calcXPt(xPx: Float, rectPage: RectF): Float{
+        return (xPx - rectPage.left) * width.pt / rectPage.width()
+    }
+    fun calcYPt(yPx: Float, rectPage: RectF): Float{
+        return (yPx - rectPage.top) * height.pt / rectPage.height()
+    }
+
+    fun calcXPx(xPt: Float, rectPage: RectF): Float{
+        return (xPt * rectPage.width() / width.pt) + rectPage.left
+    }
+    fun calcYPx(yPt: Float, rectPage: RectF): Float{
+        return (yPt * rectPage.height() / height.pt) + rectPage.top
     }
 }
