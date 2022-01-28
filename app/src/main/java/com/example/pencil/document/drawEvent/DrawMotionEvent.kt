@@ -1,4 +1,4 @@
-package com.example.pencil.document.path
+package com.example.pencil.document.drawEvent
 
 import android.content.Context
 import android.content.res.Resources
@@ -149,36 +149,6 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
 //            }
 //            continueScaleTranslate = true
         }
-
-
-
-
-//
-//        if (!drawImpostazioni.modePenna && event.pointerCount == 1 && event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER){
-//            if(!continueScaleTranslate) {
-//                when(drawView.strumentoAttivo){
-//                    DrawView.Pennello.PENNA -> drawView.strumentoPenna?.gestioneMotionEvent(drawView, event)
-//                    DrawView.Pennello.EVIDENZIATORE -> drawView.strumentoEvidenziatore?.gestioneMotionEvent(drawView, event)
-//                    DrawView.Pennello.GOMMA -> drawView.strumentoGomma?.gestioneMotionEvent(drawView, event)
-//                }
-//            } else {
-//                when (event.action) {
-//                    MotionEvent.ACTION_UP -> continueScaleTranslate = false
-//                    // TODO: 04/12/2021 MotionEvent.ACTION_CANCEL
-//                }
-//            }
-//        }
-//
-//        if (drawImpostazioni.modePenna && event.pointerCount == 1 && event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER){
-//            drawView.scrollChangePagina(event)
-//        }
-//        if (event.pointerCount == 2){
-////            drawView.scaleTranslate(event)
-//            if(!drawImpostazioni.modePenna) {
-//                drawView.strumentoPenna!!.rewritePath(drawView, "")
-//            }
-//            continueScaleTranslate = true
-//        }
     }
 
     fun onHoverView(event: MotionEvent){

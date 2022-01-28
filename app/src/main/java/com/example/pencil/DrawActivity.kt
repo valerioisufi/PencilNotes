@@ -20,7 +20,7 @@ import androidx.core.view.*
 import com.example.pencil.customView.ColorPickerView
 import com.example.pencil.customView.ColorShowView
 import com.example.pencil.document.DrawView
-import com.example.pencil.document.path.DrawMotionEvent
+import com.example.pencil.document.drawEvent.DrawMotionEvent
 import com.example.pencil.document.tool.*
 import com.example.pencil.file.FileManager
 import com.google.android.material.chip.Chip

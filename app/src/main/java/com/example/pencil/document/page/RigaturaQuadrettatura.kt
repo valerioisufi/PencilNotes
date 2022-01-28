@@ -9,9 +9,9 @@ import androidx.core.content.res.ResourcesCompat
 import com.example.pencil.R
 import com.example.pencil.dpToPx
 
-class RigaturaQuadrettatura(val context: Context, var type: Type = Type.Rigatura1R) {
+class RigaturaQuadrettatura(val context: Context, var type: Type = Type.Bianco) {
     enum class Type{
-        Rigatura1R
+        Bianco, Rigatura1R
     }
 
     fun makeRigaturaQuadrettatura(canvas: Canvas, dimensioni: Dimensioni, rect: RectF){
@@ -27,6 +27,7 @@ class RigaturaQuadrettatura(val context: Context, var type: Type = Type.Rigatura
         var padding = dimensioni.calcPxFromMm(12f, rect.width().toInt())
 
         when(type){
+            Type.Bianco -> {}
             Type.Rigatura1R -> {
                 var pointLeft = PointF(
                     rect.left + padding,

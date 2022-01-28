@@ -18,7 +18,7 @@ import androidx.core.content.res.ResourcesCompat
 import com.example.pencil.R
 import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.page.RigaturaQuadrettatura
-import com.example.pencil.document.path.DrawMotionEvent
+import com.example.pencil.document.drawEvent.DrawMotionEvent
 import com.example.pencil.document.path.stringToPath
 import com.example.pencil.document.tool.*
 import com.example.pencil.dpToPx
@@ -503,7 +503,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                     strokeWidth = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
                         strokeWidth,
                         rect.width().toInt()
-                    ).toFloat()
+                    )
                 }
                 val rectTracciato: RectF = tracciato.rectObject!!
 

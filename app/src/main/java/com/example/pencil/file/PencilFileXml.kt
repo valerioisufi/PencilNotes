@@ -189,14 +189,12 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
                 if (parser.name == "id") {
                     risorsaImage.id = parser.nextText()
 
-                } else if (parser.name == "left") {
-                    risorsaImage.rectVisualizzazione.left = parser.nextText().toFloat()
-                } else if (parser.name == "top") {
-                    risorsaImage.rectVisualizzazione.top = parser.nextText().toFloat()
-                } else if (parser.name == "right") {
-                    risorsaImage.rectVisualizzazione.right = parser.nextText().toFloat()
-                } else if (parser.name == "bottom") {
-                    risorsaImage.rectVisualizzazione.bottom = parser.nextText().toFloat()
+                } else if (parser.name == "rectVisualizzazione") {
+                    risorsaImage.rectVisualizzazione = readRectXML(parser)
+
+                } else if (parser.name == "rectRitaglio") {
+                    risorsaImage.rectRitaglio = readRectXML(parser)
+
                 }
             }
         }
@@ -309,21 +307,13 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
                 serializer.text(elemento.id)
                 serializer.endTag("", "id")
 
-                serializer.startTag("", "left")
-                serializer.text(elemento.rectVisualizzazione.left.toString())
-                serializer.endTag("", "left")
+                serializer.startTag("", "rectVisualizzazione")
+                writeRectXML(serializer, elemento.rectVisualizzazione)
+                serializer.endTag("", "rectVisualizzazione")
 
-                serializer.startTag("", "top")
-                serializer.text(elemento.rectVisualizzazione.top.toString())
-                serializer.endTag("", "top")
-
-                serializer.startTag("", "right")
-                serializer.text(elemento.rectVisualizzazione.right.toString())
-                serializer.endTag("", "right")
-
-                serializer.startTag("", "bottom")
-                serializer.text(elemento.rectVisualizzazione.bottom.toString())
-                serializer.endTag("", "bottom")
+                serializer.startTag("", "rectRitaglio")
+                writeRectXML(serializer, elemento.rectRitaglio)
+                serializer.endTag("", "rectRitaglio")
 
                 serializer.endTag("", "elemento")
             }
