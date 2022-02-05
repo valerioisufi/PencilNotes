@@ -5,10 +5,12 @@ import android.content.res.Resources
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PointF
+import android.graphics.RectF
 import android.os.SystemClock
 import android.util.Log
 import android.view.*
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.transform
 import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.MotionEventCompat
 import androidx.core.view.ScaleGestureDetectorCompat
@@ -355,7 +357,9 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
                 moveMatrix.getValues(f)
                 lastScaleFactor = f[Matrix.MSCALE_X]
 
-                // scale max e scale min
+                /**
+                 * scale max e scale min
+                 */
                 val scaleMax = 5f
                 val scaleMin = 1f
                 if (lastScaleFactor * scaleFactor < scaleMin) {
@@ -366,10 +370,31 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
                 }
                 moveMatrix.postScale(scaleFactor, scaleFactor, moveFocusPos.x, moveFocusPos.y)
 
+//                /**
+//                 * translate max/min
+//                 */
+//                val tempRectPage = RectF(drawView.redrawPageRect).apply {
+//                    transform(moveMatrix)
+//                }
+//                moveMatrix.getValues(f)
+//                var initialRectPage = drawView.windowRect
+//                if (tempRectPage.left > initialRectPage.left){
+//                    f[Matrix.MTRANS_X] = initialRectPage.left
+//                }
+//                if (tempRectPage.top > initialRectPage.top){
+//                    f[Matrix.MTRANS_Y] = initialRectPage.top
+//                }
+//                if (tempRectPage.right < initialRectPage.right){
+//                    f[Matrix.MTRANS_X] += initialRectPage.right - tempRectPage.right
+//                }
+//                if (tempRectPage.bottom < initialRectPage.bottom){
+//                    f[Matrix.MTRANS_Y] += initialRectPage.bottom - tempRectPage.bottom
+//                }
+//
+//                moveMatrix.setValues(f)
+
                 moveMatrix.getValues(f)
                 lastScaleFactor = f[Matrix.MSCALE_X]
-
-
                 Log.d("Scale factor: ", f[Matrix.MSCALE_X].toString())
 
                 drawView.draw(scaling = true)

@@ -12,9 +12,11 @@ import android.view.DragEvent
 import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat.requestDragAndDropPermissions
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.transform
 import com.example.pencil.R
 import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.page.RigaturaQuadrettatura
@@ -117,6 +119,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     fun changePage(index: Int) {
         if (index < 0) return
         pageAttuale = drawFile.getPageIndex(index)
+
+        val activity = context as Activity
+        activity.findViewById<TextView>(R.id.contatoreTextView).text = "n.$pageAttuale"
 
         drawLastPath = false
         draw(redraw = true, scaling = false)
@@ -481,6 +486,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             /**
              * make il contenuto della pagina
              */
+            canvas.clipRect(rect)
 
             /**
              * make images
@@ -489,19 +495,26 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 val inputFile = FileManager(context, drawFile.head[image.id]?.get("path")!!)
                 val inputStream = inputFile.file.inputStream()
 
-                var imageBitmap = BitmapFactory.decodeStream(inputStream)
-                var imageRect =
-                    RectF(0f, 0f, imageBitmap.width.toFloat(), imageBitmap.height.toFloat())
-                var imageMatrix = Matrix().apply {
-                    setRectToRect(imageRect, rect, Matrix.ScaleToFit.CENTER)
+                val imageBitmap = BitmapFactory.decodeStream(inputStream)
+
+                val pageMatrix = Matrix().apply {
+                    setRectToRect(image.rectPage, rect, Matrix.ScaleToFit.CENTER)
                 }
+                val rectVisualizzazione = RectF(image.rectVisualizzazione).apply {
+                    transform(pageMatrix)
+                }
+                val imageRect =
+                    RectF(0f, 0f, imageBitmap.width.toFloat(), imageBitmap.height.toFloat())
+                val imageMatrix = Matrix().apply {
+                    setRectToRect(imageRect, rectVisualizzazione, Matrix.ScaleToFit.CENTER)
+                }
+
                 canvas.drawBitmap(imageBitmap, imageMatrix, null)
             }
 
             /**
              * make tracciati
              */
-            canvas.clipRect(rect)
             // TODO: 31/12/2021 poi valuterò l'idea di utlizzare una funzione a parte che richiama i metodi make- dei singoli strumenti
             for (tracciato in drawFile.body[pageAttuale].tracciati) {
                 val pathTracciato: Path = stringToPath(tracciato.pathString)
@@ -567,7 +580,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             strokeWidth = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
                 paintObject.strokeWidth,
                 redrawPageRect.width().toInt()
-            ).toFloat()
+            )
         })
 
         val onScalingCanvas = Canvas(drawFile.body[pageAttuale].bitmapPage)
@@ -585,7 +598,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             strokeWidth = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
                 paintObject.strokeWidth,
                 drawFile.body[pageAttuale].bitmapPage.width
-            ).toFloat()
+            )
         })
     }
 
@@ -939,6 +952,13 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                         GestionePagina.Image.TypeImage.valueOf(estensione.uppercase())
                     ).apply {
                         this.id = id
+                        this.rectPage = redrawPageRect
+                        this.rectVisualizzazione = RectF().apply {
+                            left = event.x - 200
+                            top = event.y - 200
+                            right = event.x + 200
+                            bottom = event.y + 200
+                        }
                     }
                 )
 

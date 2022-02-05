@@ -189,6 +189,9 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
                 if (parser.name == "id") {
                     risorsaImage.id = parser.nextText()
 
+                } else if (parser.name == "rectPage") {
+                    risorsaImage.rectPage = readRectXML(parser)
+
                 } else if (parser.name == "rectVisualizzazione") {
                     risorsaImage.rectVisualizzazione = readRectXML(parser)
 
@@ -306,6 +309,10 @@ class PencilFileXml(context: Context, nomeFile: String, cartellaFile: String = "
                 serializer.startTag("", "id")
                 serializer.text(elemento.id)
                 serializer.endTag("", "id")
+
+                serializer.startTag("", "rectPage")
+                writeRectXML(serializer, elemento.rectPage)
+                serializer.endTag("", "rectPage")
 
                 serializer.startTag("", "rectVisualizzazione")
                 writeRectXML(serializer, elemento.rectVisualizzazione)

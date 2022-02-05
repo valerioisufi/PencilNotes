@@ -109,6 +109,8 @@ class GestionePagina(
         /**
          * rectVisualizzazione per determinare la posizione dell'immagine
          */
+        var rectPage = RectF()
+
         var rectVisualizzazione = RectF()
         var rectRitaglio = RectF()
 

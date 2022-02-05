@@ -81,7 +81,7 @@ class DrawActivity : AppCompatActivity() {
         nomeFile += ".xml"
 
         drawView.readFile(nomeFile, cartella)
-        drawView.changePage(nPage)
+        drawView.changePage(drawView.pageAttuale)
 
         /**
          * Rendo invisible le barre di sistema
@@ -179,7 +179,6 @@ class DrawActivity : AppCompatActivity() {
 
     var cartella = ""
     var nomeFile = ""
-    var nPage = 0
 
     private lateinit var textViewData: TextView
     private lateinit var commandView: ConstraintLayout
@@ -266,7 +265,7 @@ class DrawActivity : AppCompatActivity() {
                 // let us just render all pages
                 val pageCount = renderer.pageCount
 
-                var indexPage = nPage
+                var indexPage = drawView.pageAttuale
                 for (indexPdf in 0 until pageCount) {
                     drawView.addBackgroundPdf(id, indexPdf, indexPage)
                     indexPage++
@@ -281,20 +280,10 @@ class DrawActivity : AppCompatActivity() {
     }
 
     fun redo(view: View) {
-        nPage += 1
-        drawView.changePage(nPage)
-
-        contatoreTextView.text = ("n." + nPage)
-
-        //textViewData.text = drawView.drawFile.fileManager.file.readText()
+        drawView.changePage(drawView.pageAttuale + 1)
     }
 
     fun undo(view: View) {
-        if (nPage > 0) {
-            nPage -= 1
-            drawView.changePage(nPage)
-
-            contatoreTextView.text = ("n." + nPage)
-        }
+        drawView.changePage(drawView.pageAttuale - 1)
     }
 }
