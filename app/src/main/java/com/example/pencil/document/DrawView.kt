@@ -492,10 +492,12 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
              * make images
              */
             for (image in drawFile.body[pageAttuale].images) {
-                val inputFile = FileManager(context, drawFile.head[image.id]?.get("path")!!)
-                val inputStream = inputFile.file.inputStream()
+                if (image.bitmap == null){
+                    val inputFile = FileManager(context, drawFile.head[image.id]?.get("path")!!)
+                    val inputStream = inputFile.file.inputStream()
 
-                val imageBitmap = BitmapFactory.decodeStream(inputStream)
+                    image.bitmap = BitmapFactory.decodeStream(inputStream)
+                }
 
                 val pageMatrix = Matrix().apply {
                     setRectToRect(image.rectPage, rect, Matrix.ScaleToFit.CENTER)
@@ -504,12 +506,12 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                     transform(pageMatrix)
                 }
                 val imageRect =
-                    RectF(0f, 0f, imageBitmap.width.toFloat(), imageBitmap.height.toFloat())
+                    RectF(0f, 0f, image.bitmap!!.width.toFloat(), image.bitmap!!.height.toFloat())
                 val imageMatrix = Matrix().apply {
                     setRectToRect(imageRect, rectVisualizzazione, Matrix.ScaleToFit.CENTER)
                 }
 
-                canvas.drawBitmap(imageBitmap, imageMatrix, null)
+                canvas.drawBitmap(image.bitmap!!, imageMatrix, null)
             }
 
             /**
@@ -764,7 +766,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
      * e il loro scopo è quello di determinare alcune
      * caratteristiche della pagina
      */
-    fun calcPageRect(): RectF {
+    fun calcPageRect(matrix: Matrix = drawMotion.moveMatrix): RectF {
         val padding = dpToPx(context, 24).toFloat()
 
         var onWidth = true
@@ -790,7 +792,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
 
         val rect = RectF(left, top, right, bottom)
-        drawMotion.moveMatrix.mapRect(rect)
+        matrix.mapRect(rect)
 
         return rect
     }

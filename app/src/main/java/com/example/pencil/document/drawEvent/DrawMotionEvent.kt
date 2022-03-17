@@ -1,36 +1,28 @@
 package com.example.pencil.document.drawEvent
 
 import android.content.Context
-import android.content.res.Resources
 import android.graphics.Matrix
-import android.graphics.Paint
 import android.graphics.PointF
-import android.graphics.RectF
-import android.os.SystemClock
 import android.util.Log
-import android.view.*
-import androidx.core.content.res.ResourcesCompat
-import androidx.core.graphics.transform
-import androidx.core.view.GestureDetectorCompat
-import androidx.core.view.MotionEventCompat
-import androidx.core.view.ScaleGestureDetectorCompat
-import com.example.pencil.DrawActivity
-import com.example.pencil.R
+import android.view.GestureDetector
+import android.view.InputDevice
+import android.view.MotionEvent
 import com.example.pencil.document.DrawView
 import com.example.pencil.drawImpostazioni
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 private const val TAG = "DrawView"
-class DrawMotionEvent(var context: Context, var drawView: DrawView):
+
+class DrawMotionEvent(var context: Context, var drawView: DrawView) :
     GestureDetector.OnGestureListener,
-    GestureDetector.OnDoubleTapListener
-{
+    GestureDetector.OnDoubleTapListener {
     var listDevices = mutableMapOf<String, InputDevice>()
     var listMotionRanges = mutableMapOf<String, MutableList<InputDevice.MotionRange>>()
+
     init {
         val deviceIds = InputDevice.getDeviceIds()
-        for (deviceId in deviceIds){
+        for (deviceId in deviceIds) {
             val inputDevice = InputDevice.getDevice(deviceId)
             val descriptor = inputDevice.descriptor
             val motionRanges = inputDevice.motionRanges
@@ -41,11 +33,11 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
     }
 
 
-    private var path : String = ""
+    private var path: String = ""
     private var continueScaleTranslate = false
 
 
-//    lateinit var mDetector: GestureDetectorCompat
+    //    lateinit var mDetector: GestureDetectorCompat
 //    lateinit var mScaleDetector: ScaleGestureDetector
     fun onTouchView(event: MotionEvent) {
         drawView.mEvent = MotionEvent.obtain(event)
@@ -59,12 +51,17 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
         /**
          * gestione degli input provenienti da TOOL_TYPE_STYLUS
          */
-        if(event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS){
+        if (event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
             var descriptorInputDevice = event.device.descriptor
 
-            when(event.action){
+            when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    drawView.listTracciati.add(DrawView.Tracciato(MotionEvent.TOOL_TYPE_STYLUS, descriptorInputDevice))
+                    drawView.listTracciati.add(
+                        DrawView.Tracciato(
+                            MotionEvent.TOOL_TYPE_STYLUS,
+                            descriptorInputDevice
+                        )
+                    )
                     drawView.listTracciati.last().downTime = event.downTime
                     drawView.listTracciati.last().listPoint.add(
                         DrawView.Punto(event.x, event.y).apply {
@@ -78,14 +75,26 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
                 }
 
                 MotionEvent.ACTION_MOVE -> {
-                    for(historyIndex in 1 until event.historySize){
+                    for (historyIndex in 1 until event.historySize) {
                         drawView.listTracciati.last().listPoint.add(
-                            DrawView.Punto(event.getHistoricalX(historyIndex), event.getHistoricalY(historyIndex)).apply {
+                            DrawView.Punto(
+                                event.getHistoricalX(historyIndex),
+                                event.getHistoricalY(historyIndex)
+                            ).apply {
                                 eventTime = event.getHistoricalEventTime(historyIndex)
 
-                                pressure = event.getHistoricalAxisValue(MotionEvent.AXIS_PRESSURE, historyIndex)
-                                orientation = event.getHistoricalAxisValue(MotionEvent.AXIS_ORIENTATION, historyIndex)
-                                tilt = event.getHistoricalAxisValue(MotionEvent.AXIS_TILT, historyIndex)
+                                pressure = event.getHistoricalAxisValue(
+                                    MotionEvent.AXIS_PRESSURE,
+                                    historyIndex
+                                )
+                                orientation = event.getHistoricalAxisValue(
+                                    MotionEvent.AXIS_ORIENTATION,
+                                    historyIndex
+                                )
+                                tilt = event.getHistoricalAxisValue(
+                                    MotionEvent.AXIS_TILT,
+                                    historyIndex
+                                )
                             }
                         )
                     }
@@ -110,7 +119,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
             val tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
             val orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
 
-            if(event.action == MotionEvent.ACTION_DOWN) {
+            if (event.action == MotionEvent.ACTION_DOWN) {
                 if (tilt > 0.8f && orientation > -0.3f && orientation < 0.5f) {
                     drawView.strumentoAttivo = DrawView.Pennello.EVIDENZIATORE
                 } else if (tilt > 0.2f && (orientation > 2.5f || orientation < -2.3f)) {
@@ -118,10 +127,19 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
                 }
             }
 
-            when(drawView.strumentoAttivo){
-                DrawView.Pennello.PENNA -> drawView.strumentoPenna?.gestioneMotionEvent(drawView, event)
-                DrawView.Pennello.EVIDENZIATORE -> drawView.strumentoEvidenziatore?.gestioneMotionEvent(drawView, event)
-                DrawView.Pennello.GOMMA -> drawView.strumentoGomma?.gestioneMotionEvent(drawView, event)
+            when (drawView.strumentoAttivo) {
+                DrawView.Pennello.PENNA -> drawView.strumentoPenna?.gestioneMotionEvent(
+                    drawView,
+                    event
+                )
+                DrawView.Pennello.EVIDENZIATORE -> drawView.strumentoEvidenziatore?.gestioneMotionEvent(
+                    drawView,
+                    event
+                )
+                DrawView.Pennello.GOMMA -> drawView.strumentoGomma?.gestioneMotionEvent(
+                    drawView,
+                    event
+                )
             }
 
         }
@@ -129,21 +147,21 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
         /**
          * controllo il palmRejection
          */
-        if (palmRejection(event)){
+        if (palmRejection(event)) {
             return
         }
 
         /**
          * gesture per il cambio della pagina
          */
-        if (drawImpostazioni.modePenna && event.pointerCount == 1 && event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER){
+        if (drawImpostazioni.modePenna && event.pointerCount == 1 && event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
             drawView.scrollChangePagina(event)
         }
 
         /**
          * eseguo lo scaling
          */
-        if (event.pointerCount == 2){
+        if (event.pointerCount == 2) {
             scaleTranslate(event)
 
 //            if(!drawImpostazioni.modePenna) {
@@ -151,9 +169,27 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
 //            }
 //            continueScaleTranslate = true
         }
+
+        if(drawView.strumentoAttivo == DrawView.Pennello.LAZO){
+            for (image in drawView.drawFile.body[drawView.pageAttuale].images){
+
+                if(image.rectVisualizzazione.contains(event.x, event.y)){
+                    image.rectVisualizzazione.apply {
+                        left -= 10f
+                        top -= 10f
+                        right += 10f
+                        bottom += 10f
+                    }
+                    drawView.draw(redraw = true)
+                    drawView.drawFile.writeXML()
+                    break
+                }
+
+            }
+        }
     }
 
-    fun onHoverView(event: MotionEvent){
+    fun onHoverView(event: MotionEvent) {
         drawView.mEvent = MotionEvent.obtain(event)
         drawView.draw(makeCursore = true)
 
@@ -165,9 +201,6 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
 //            MotionEvent.ACTION_HOVER_EXIT -> hoverUp(drawView, event)
 //        }
     }
-
-
-
 
 
     private fun hoverMove(v: DrawView, event: MotionEvent) {
@@ -283,9 +316,9 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
     // TODO: 23/01/2022 qui devo tener conto del fatto che, quando viene
     //  rilevato il palmo, alcune azioni come oo scale siano già iniziate.
     //  Per cui io dovrei ultimare quelle azioni
-    fun palmRejection(event: MotionEvent): Boolean{
-        for (i in 0 until event.pointerCount){
-            if (event.getToolMinor(i) / event.getToolMajor(i) < 0.5){
+    fun palmRejection(event: MotionEvent): Boolean {
+        for (i in 0 until event.pointerCount) {
+            if (event.getToolMinor(i) / event.getToolMajor(i) < 0.5) {
                 return true
             }
         }
@@ -324,10 +357,16 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
 
 
     fun scaleTranslate(event: MotionEvent) {
+        /**
+         * Matrix()
+         * https://i-rant.arnaudbos.com/matrices-for-developers/
+         * https://i-rant.arnaudbos.com/2d-transformations-android-java/
+         */
         when (event.actionMasked) {
             MotionEvent.ACTION_POINTER_DOWN -> {
                 fStartPos = PointF(event.getX(FIRST_POINTER_INDEX), event.getY(FIRST_POINTER_INDEX))
-                sStartPos = PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
+                sStartPos =
+                    PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
 
                 startDistance =
                     sqrt((sStartPos.x - fStartPos.x).pow(2) + (sStartPos.y - fStartPos.y).pow(2))
@@ -339,7 +378,8 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
             }
             MotionEvent.ACTION_MOVE -> {
                 fMovePos = PointF(event.getX(FIRST_POINTER_INDEX), event.getY(FIRST_POINTER_INDEX))
-                sMovePos = PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
+                sMovePos =
+                    PointF(event.getX(SECOND_POINTER_INDEX), event.getY(SECOND_POINTER_INDEX))
 
                 moveDistance =
                     sqrt((sMovePos.x - fMovePos.x).pow(2) + (sMovePos.y - fMovePos.y).pow(2))
@@ -373,29 +413,29 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
 //                /**
 //                 * translate max/min
 //                 */
-//                val tempRectPage = RectF(drawView.redrawPageRect).apply {
-//                    transform(moveMatrix)
-//                }
+//                val tempRectPage = drawView.calcPageRect(moveMatrix)
+//                val initialWindowRect = drawView.calcPageRect(Matrix())
 //                moveMatrix.getValues(f)
-//                var initialRectPage = drawView.windowRect
-//                if (tempRectPage.left > initialRectPage.left){
-//                    f[Matrix.MTRANS_X] = initialRectPage.left
+//
+//                if (tempRectPage.left >= initialWindowRect.left) {
+//                    f[Matrix.MTRANS_X] = initialWindowRect.left
 //                }
-//                if (tempRectPage.top > initialRectPage.top){
-//                    f[Matrix.MTRANS_Y] = initialRectPage.top
+//                if (tempRectPage.top >= initialWindowRect.top) {
+//                    f[Matrix.MTRANS_Y] = initialWindowRect.top
 //                }
-//                if (tempRectPage.right < initialRectPage.right){
-//                    f[Matrix.MTRANS_X] += initialRectPage.right - tempRectPage.right
+//                if (tempRectPage.right <= initialWindowRect.right) {
+//                    f[Matrix.MTRANS_X] += initialWindowRect.right - tempRectPage.right
 //                }
-//                if (tempRectPage.bottom < initialRectPage.bottom){
-//                    f[Matrix.MTRANS_Y] += initialRectPage.bottom - tempRectPage.bottom
+//                if (tempRectPage.bottom <= initialWindowRect.bottom) {
+//                    f[Matrix.MTRANS_Y] += initialWindowRect.bottom - tempRectPage.bottom
 //                }
 //
 //                moveMatrix.setValues(f)
 
+
                 moveMatrix.getValues(f)
                 lastScaleFactor = f[Matrix.MSCALE_X]
-                Log.d("Scale factor: ", f[Matrix.MSCALE_X].toString())
+//                Log.d("Scale factor: ", f[Matrix.MSCALE_X].toString())
 
                 drawView.draw(scaling = true)
             }
@@ -407,7 +447,6 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView):
 
         }
     }
-
 
 
 }

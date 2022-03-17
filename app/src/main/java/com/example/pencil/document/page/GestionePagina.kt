@@ -106,6 +106,8 @@ class GestionePagina(
 
         var id = ""
 
+        var bitmap: Bitmap? = null
+
         /**
          * rectVisualizzazione per determinare la posizione dell'immagine
          */
