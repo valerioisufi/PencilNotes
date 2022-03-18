@@ -18,10 +18,9 @@ import androidx.core.app.ActivityCompat.requestDragAndDropPermissions
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.transform
 import com.example.pencil.R
+import com.example.pencil.document.drawEvent.DrawMotionEvent
 import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.page.RigaturaQuadrettatura
-import com.example.pencil.document.drawEvent.DrawMotionEvent
-import com.example.pencil.document.path.pathFitCurve
 import com.example.pencil.document.path.stringToPath
 import com.example.pencil.document.tool.*
 import com.example.pencil.dpToPx
@@ -29,7 +28,6 @@ import com.example.pencil.file.FileManager
 import com.example.pencil.file.PencilFileXml
 import kotlinx.coroutines.*
 import java.io.File
-import java.util.*
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -492,7 +490,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
              * make images
              */
             for (image in drawFile.body[pageAttuale].images) {
-                if (image.bitmap == null){
+                if (image.bitmap == null) {
                     val inputFile = FileManager(context, drawFile.head[image.id]?.get("path")!!)
                     val inputStream = inputFile.file.inputStream()
 
@@ -766,8 +764,8 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
      * e il loro scopo è quello di determinare alcune
      * caratteristiche della pagina
      */
-    fun calcPageRect(matrix: Matrix = drawMotion.moveMatrix): RectF {
-        val padding = dpToPx(context, 24).toFloat()
+    fun calcPageRect(matrix: Matrix = drawFile.body[pageAttuale].matrixPage, paddingDp: Int = 8): RectF {
+        val padding = dpToPx(context, paddingDp).toFloat()
 
         var onWidth = true
         var widthPage = widthView - padding * 2

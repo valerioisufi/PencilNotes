@@ -105,7 +105,6 @@ class GestionePagina(
         }
 
         var id = ""
-
         var bitmap: Bitmap? = null
 
         /**
@@ -150,7 +149,7 @@ class GestionePagina(
      * pagina nel drawView
      */
     var rectPage: RectF? = null
-    var matrixPage: Matrix? = null
+    var matrixPage: Matrix = Matrix()
 
     /**
      * bitmapPage e canvasPage servono solo come cache da
