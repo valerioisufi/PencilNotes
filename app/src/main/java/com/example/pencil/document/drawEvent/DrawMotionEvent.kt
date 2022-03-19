@@ -149,20 +149,13 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
         /**
          * eseguo lo scaling
          */
-//        if (event.pointerCount == 1 && event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
-//            matrixTranslate(event, drawView)
-//
-//        }
-//        if (event.pointerCount == 2) {
-//            matrixScaleTranslate(event, drawView)
-//
-////            if(!drawImpostazioni.modePenna) {
-////                drawView.strumentoPenna!!.rewritePath(drawView, "")
-////            }
-////            continueScaleTranslate = true
-//        }
         if(event.pointerCount == 1 || event.pointerCount == 2){
             matrixTransformation(event, drawView)
+
+//            if(!drawImpostazioni.modePenna) {
+//                drawView.strumentoPenna!!.rewritePath(drawView, "")
+//            }
+//            continueScaleTranslate = true
         }
 
 
