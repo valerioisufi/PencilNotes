@@ -109,7 +109,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
 
             if (event.action == MotionEvent.ACTION_DOWN) {
                 if (tilt > 0.8f && orientation > -0.3f && orientation < 0.5f) {
-                    drawView.strumentoAttivo = DrawView.Pennello.EVIDENZIATORE
+//                    drawView.strumentoAttivo = DrawView.Pennello.EVIDENZIATORE
                 } else if (tilt > 0.2f && (orientation > 2.5f || orientation < -2.3f)) {
 //                    drawView.strumentoAttivo = DrawView.Pennello.LAZO
                 }
@@ -130,6 +130,8 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
                 )
             }
 
+            return
+
         }
 
         /**
@@ -149,7 +151,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
         /**
          * eseguo lo scaling
          */
-        if(event.pointerCount == 1 || event.pointerCount == 2){
+        if((event.pointerCount == 1 || event.pointerCount == 2) && event.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS){
             matrixTransformation(event, drawView)
 
 //            if(!drawImpostazioni.modePenna) {

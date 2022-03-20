@@ -612,6 +612,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     fun makeCursore(canvas: Canvas) {
         if (mEvent.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
+            val pageRect =
+                if (scalingOnDraw) scalingPageRect else if (::redrawPageRect.isInitialized) redrawPageRect else calcPageRect()
+
             if (mEvent.action == MotionEvent.ACTION_MOVE) {
                 canvas.drawPoint(mEvent.x, mEvent.y, cursorePaint.apply {
                     color = ResourcesCompat.getColor(resources, R.color.purple_200, null)
@@ -619,12 +622,25 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
             } else if (mEvent.action == MotionEvent.ACTION_HOVER_MOVE) {
                 canvas.drawPoint(mEvent.x, mEvent.y, cursorePaint.apply {
-                    color = ResourcesCompat.getColor(resources, R.color.purple_500, null)
+                    color = when(strumentoAttivo){
+                        Pennello.PENNA -> strumentoPenna!!.colorStrumento
+                        else -> strumentoEvidenziatore!!.colorStrumento
+                    }
+                    strokeWidth = when(strumentoAttivo) {
+                        Pennello.PENNA -> drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
+                            strumentoPenna!!.strokeWidthStrumento,
+                            pageRect.width().toInt()
+                        )
+                        else -> drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
+                            strumentoEvidenziatore!!.strokeWidthStrumento,
+                            pageRect.width().toInt()
+                        )
+                    }
                 })
 
             }
 
-            mEvent.recycle()
+//            mEvent.recycle()
 
         }
     }

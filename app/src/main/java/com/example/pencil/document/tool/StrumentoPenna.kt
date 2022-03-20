@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
 import com.example.pencil.R
 import com.example.pencil.customView.ColorPickerView
+import com.example.pencil.customView.ColorWheel
 import com.example.pencil.document.DrawView
 import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.path.pathFitCurve
@@ -145,7 +146,7 @@ class StrumentoPenna(var context: Context, var view: ImageView){
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
 
-        val coloreTrattoColorPickerView = dialog.findViewById<ColorPickerView>(R.id.dialogDrawPaint_coloreTrattoColorPickerView)
+        val coloreTrattoColorPickerView = dialog.findViewById<ColorWheel>(R.id.dialogDrawPaint_coloreTrattoColorPickerView)
         val dimensioneTrattoSeekbar = dialog.findViewById<SeekBar>(R.id.dialogDrawPaint_dimensioneTrattoSeekbar)
         val dimensioneTrattoTextView = dialog.findViewById<TextView>(R.id.dialogDrawPaint_dimensioneTrattoTextView)
 
@@ -176,7 +177,7 @@ class StrumentoPenna(var context: Context, var view: ImageView){
             }
         })
 
-        coloreTrattoColorPickerView.setOnColorChangedListener(object : ColorPickerView.OnColorChangedListener{
+        coloreTrattoColorPickerView.setOnColorChangedListener(object : ColorWheel.OnColorChangedListener{
             override fun onColorChanged(newColor: Int) {
                 //colorShowView.color = newColor
                 view.setColorFilter(newColor, android.graphics.PorterDuff.Mode.MULTIPLY)

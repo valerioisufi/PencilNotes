@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="350dp"
     android:layout_height="wrap_content"
-    android:background="@drawable/shape_dialog_center">
+    android:background="@drawable/shape_dialog_draw_paint">
 
     <TextView
         android:id="@+id/textView4"
@@ -16,12 +16,13 @@
         android:layout_marginEnd="16dp"
         android:fontFamily="@font/major_mono_display"
         android:text="Colore"
+        android:textColor="@color/black"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.example.pencil.customView.ColorPickerView
+    <com.example.pencil.customView.ColorWheel
         android:id="@+id/dialogDrawPaint_coloreTrattoColorPickerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -39,7 +40,9 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="24dp"
         android:layout_marginEnd="16dp"
+        android:fontFamily="@font/major_mono_display"
         android:text="Dimensione Tratto"
+        android:textColor="@color/black"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -69,6 +72,7 @@
         android:layout_marginEnd="24dp"
         android:fontFamily="@font/roboto"
         android:text="0pt"
+        android:textColor="@color/black"
         app:layout_constraintBottom_toBottomOf="@+id/dialogDrawPaint_dimensioneTrattoSeekbar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/dialogDrawPaint_dimensioneTrattoSeekbar" />
