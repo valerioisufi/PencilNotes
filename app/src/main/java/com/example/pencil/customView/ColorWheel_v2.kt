@@ -4,18 +4,18 @@ import android.R.attr.*
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.util.Log
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
-import androidx.core.content.res.ResourcesCompat
-import com.example.pencil.R
+import com.example.pencil.document.tool.TAG
 import kotlin.math.*
 
 
 /**
  * TODO: document your custom view class.
  */
-class ColorWheel(context: Context, attrs: AttributeSet) : View(context, attrs) {
+class ColorWheel_v2(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     /**
      * Utilities
@@ -161,10 +161,6 @@ class ColorWheel(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     }
 
-    val mascheraColorWheel = BitmapFactory.decodeResource(
-        context.resources,
-        R.drawable.maschera_color_wheel
-    )
     private fun drawSatValPanel(canvas: Canvas) {
         val rect = satValRect
 
@@ -172,56 +168,43 @@ class ColorWheel(context: Context, attrs: AttributeSet) : View(context, attrs) {
         val centerY = (rect.height() / 2).toFloat()
         val raggio = (rect.width() / 2).toFloat()
 
-//        if (satValBackgroundBitmap == null || satValBackgroundBitmap!!.value != hue) {
-//            if (satValBackgroundBitmap == null) {
-//                satValBackgroundBitmap = BitmapCache()
-//                satValBackgroundBitmap!!.bitmap =
-//                    Bitmap.createBitmap(rect.width(), rect.height(), Bitmap.Config.ARGB_8888)
-//                satValBackgroundBitmap!!.canvas = Canvas(satValBackgroundBitmap!!.bitmap)
-//            }
-//
-//            val rgb = Color.HSVToColor(floatArrayOf(hue, 1f, 1f))
-//            val sweepShader: Shader = SweepGradient(
-//                centerX, centerY, intArrayOf(
-//                    rgb, Color.WHITE, Color.BLACK, rgb
-//                ), floatArrayOf(
-//                    0.000f, 0.333f, 0.666f, 0.999f
-//                )
-//            )
-//            satValPaint.shader = sweepShader
-//            satValBackgroundBitmap!!.canvas.drawCircle(centerX, centerY, raggio, satValPaint)
-//
-//            //We set the hue value in our cache to which hue it was drawn with,
-//            //then we know that if it hasn't changed we can reuse our cached bitmap.
-//            satValBackgroundBitmap!!.value = hue
-//        }
+        if (satValBackgroundBitmap == null || satValBackgroundBitmap!!.value != hue) {
+            if (satValBackgroundBitmap == null) {
+                satValBackgroundBitmap = BitmapCache()
+                satValBackgroundBitmap!!.bitmap =
+                    Bitmap.createBitmap(rect.width(), rect.height(), Bitmap.Config.ARGB_8888)
+                satValBackgroundBitmap!!.canvas = Canvas(satValBackgroundBitmap!!.bitmap)
+            }
+
+            val rgb = Color.HSVToColor(floatArrayOf(hue, 1f, 1f))
+            val sweepShader: Shader = SweepGradient(
+                centerX, centerY, intArrayOf(
+                    rgb, Color.WHITE, Color.BLACK, rgb
+                ), floatArrayOf(
+                    0.000f, 0.333f, 0.666f, 0.999f
+                )
+            )
+            satValPaint.shader = sweepShader
+            satValBackgroundBitmap!!.canvas.drawCircle(centerX, centerY, raggio, satValPaint)
+
+            //We set the hue value in our cache to which hue it was drawn with,
+            //then we know that if it hasn't changed we can reuse our cached bitmap.
+            satValBackgroundBitmap!!.value = hue
+        }
 
         // We draw our bitmap from the cached, if the hue has changed
         // then it was just recreated otherwise the old one will be used.
-//        canvas.drawBitmap(satValBackgroundBitmap!!.bitmap, null, rect, null)
+        canvas.drawBitmap(satValBackgroundBitmap!!.bitmap, null, rect, null)
 
-//        val paintWhite = Paint(paintBase).apply {
-//            color = Color.WHITE
-//        }
-//        canvas.drawCircle(
-//            centro.x,
-//            centro.y,
-//            raggio * (1 - hueWidthRingPercentuale),
-//            paintWhite
-//        )
-
-        val rgb = Color.HSVToColor(floatArrayOf(hue, 1f, 1f))
-        val paintHue = Paint(paintBase).apply {
-            color = rgb
+        val paintWhite = Paint(paintBase).apply {
+            color = Color.WHITE
         }
         canvas.drawCircle(
             centro.x,
             centro.y,
-            raggio-1,
-            paintHue
+            raggio * (1 - hueWidthRingPercentuale),
+            paintWhite
         )
-
-        canvas.drawBitmap(mascheraColorWheel, null, rect, paintBase)
 
 
         // Tracker
@@ -257,49 +240,39 @@ class ColorWheel(context: Context, attrs: AttributeSet) : View(context, attrs) {
         /**
          * val e sat
          */
-//        val rect = satValRect
-//        val centro = Point(rect.width() / 2 + rect.left, rect.height() / 2 + rect.top)
-//        var raggio = rect.width() / 2 - satWidthRingPx / 2
-//        val angoloRad = hue * 3.14f / 180
-//
-//        val p = PointF()
-//        p.x = (centro.x + cos(angoloRad) * raggio)
-//        p.y = (centro.y - sin(angoloRad) * raggio)
-//        return p
-
         val rect = satValRect
+        val centro = Point(rect.width() / 2 + rect.left, rect.height() / 2 + rect.top)
+        var raggio = rect.width() / 2 - satWidthRingPx / 2
+        val angoloRad = hue * 3.14f / 180
 
-        val height = rect.height().toFloat()
-        val width = rect.width().toFloat()
         val p = PointF()
-        p.x = (sat * width + rect.left)
-        p.y = ((1f - `val`) * height + rect.top)
+        p.x = (centro.x + cos(angoloRad) * raggio)
+        p.y = (centro.y - sin(angoloRad) * raggio)
         return p
     }
 
-    private fun pointToSatVal(point: PointF): FloatArray {
-        var x = point.x + satRaggio
-        var y = point.y + satRaggio
+    private fun pointToSatVal(point: Point): FloatArray {
         val result = FloatArray(2)
-        val width = satValRect.width().toFloat()
-        val height = satValRect.height().toFloat()
 
-        x = if (x < 0) {
-            0f
-        } else if (x > width) {
-            width
-        } else {
-            x
-        }
-        y = if (y < 0) {
-            0f
-        } else if (y > height) {
-            height
-        } else {
-            y
-        }
-        result[0] = 1f / width * x
-        result[1] = 1f / height * y
+//        val deltaX = satPointA.x - satPointB.x
+//        val deltaY = satPointC.y - satPointB.y
+//
+//        result[0] = if (point.x < satPointB.x) {
+//            0f
+//        } else if (point.x > satPointA.x) {
+//            1f
+//        } else {
+//            (point.x - satPointB.x) / deltaX
+//        }
+//
+//        result[1] = if (point.y < satPointB.y) {
+//            1f
+//        } else if (point.y > satPointC.y) {
+//            0f
+//        } else {
+//            (satPointC.y - point.y) / deltaY
+//        }
+
         return result
     }
 
@@ -359,8 +332,8 @@ class ColorWheel(context: Context, attrs: AttributeSet) : View(context, attrs) {
             hue = pointToHue(Point(pointEvento.x.toInt(), pointEvento.y.toInt()))
             update = true
 
-        } else if (pointCentro.x.pow(2) + pointCentro.y.pow(2) < (satValRect.width() / 2).toFloat().pow(2)) {
-            val result = pointToSatVal(PointF(pointEvento.x, pointEvento.y))
+        } else if (pointCentro.x.pow(2) + pointCentro.y.pow(2) < (satValRect.width() / 2).toFloat().pow(2) && pointCentro.x.pow(2) + pointCentro.y.pow(2) > (satValRect.width() / 2 * (1-hueWidthRingPercentuale) ).toFloat().pow(2)) {
+            val result = pointToSatVal(Point(pointEvento.x.toInt(), pointEvento.y.toInt()))
             sat = result[0]
             `val` = result[1]
             update = true

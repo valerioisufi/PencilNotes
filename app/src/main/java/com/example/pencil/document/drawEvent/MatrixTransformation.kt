@@ -13,8 +13,9 @@ import kotlin.math.sqrt
  */
 // TODO: 23/01/2022 sarebbe il caso di avviare lo scale solo
 //  dopo che sia stato rilevato un movimento significativo
-private var startMatrix = Matrix()
-private var moveMatrix = Matrix()
+var windowMatrix = Matrix()
+var startMatrix = Matrix()
+var moveMatrix = Matrix()
 
 private class MatrixTransformation() {
     var pointers = mutableListOf<PointF>()

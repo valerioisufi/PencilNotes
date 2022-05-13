@@ -19,6 +19,9 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.transform
 import com.example.pencil.R
 import com.example.pencil.document.drawEvent.DrawMotionEvent
+import com.example.pencil.document.drawEvent.moveMatrix
+import com.example.pencil.document.drawEvent.startMatrix
+import com.example.pencil.document.drawEvent.windowMatrix
 import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.page.RigaturaQuadrettatura
 import com.example.pencil.document.path.stringToPath
@@ -223,14 +226,15 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 null
             )
 
+            // TODO: non utilizzare onDrawBitmap ma una copia 
             // trasformo e disegno l'area di disegno già pronta
-//            val startRect = RectF(windowRect).apply { transform(startMatrix) }
-//            val endRect = RectF(windowRect).apply { transform(moveMatrix) }
-//
-//            val windowMatrixTransform = Matrix().apply {
-//                setRectToRect(startRect, endRect, Matrix.ScaleToFit.CENTER)
-//            }
-//            canvas.drawBitmap(onDrawBitmap, windowMatrixTransform, null)
+            val startRect = RectF(windowRect).apply { transform(windowMatrix) }
+            val endRect = RectF(windowRect).apply { transform(moveMatrix) }
+
+            val windowMatrixTransform = Matrix().apply {
+                setRectToRect(startRect, endRect, Matrix.ScaleToFit.CENTER)
+            }
+            canvas.drawBitmap(onDrawBitmap, windowMatrixTransform, null)
 
         } else {
             canvas.drawBitmap(onDrawBitmap, 0f, 0f, null)
@@ -308,6 +312,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                     onDrawBitmap,
                     redrawPageRect
                 )
+                windowMatrix = Matrix(drawFile.body[pageAttuale].matrixPage)
 
                 redrawOnDraw = true
                 scalingOnDraw = false
