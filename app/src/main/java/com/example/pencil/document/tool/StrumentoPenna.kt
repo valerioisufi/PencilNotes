@@ -22,7 +22,7 @@ import com.example.pencil.sharedPref
 class StrumentoPenna(var context: Context, var view: ImageView){
     // variabili con i valori dell'oggetto, stroke (pt) e color
     var strokeWidthStrumento = sharedPref.getFloat("strokePenna", 2.5f)
-    var colorStrumento = sharedPref.getInt("colorPenna", ResourcesCompat.getColor(view.resources, R.color.colorPaint, null))
+    var colorStrumento = sharedPref.getInt("colorPenna", ResourcesCompat.getColor(view.resources, R.color.strumento_penna, null))
 
     init {
         view.setColorFilter(colorStrumento, android.graphics.PorterDuff.Mode.MULTIPLY)
@@ -170,10 +170,6 @@ class StrumentoPenna(var context: Context, var view: ImageView){
             }
             override fun onStartTrackingTouch(seek: SeekBar) {}
             override fun onStopTrackingTouch(seek: SeekBar) {
-                Toast.makeText(context,
-                    "La dimesione è: " + (seek.progress * 0.1 ) + "pt",
-                    Toast.LENGTH_SHORT).show()
-                //paint.strokeWidth = seek.progress.toFloat()
             }
         })
 

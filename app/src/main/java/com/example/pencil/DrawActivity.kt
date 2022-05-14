@@ -8,6 +8,7 @@ import android.content.SharedPreferences
 import android.graphics.pdf.PdfRenderer
 import android.os.Bundle
 import android.text.TextUtils.replace
+import android.util.Log
 import android.view.View
 import android.widget.SeekBar
 import android.widget.TextView
@@ -74,11 +75,14 @@ class DrawActivity : AppCompatActivity() {
         drawView.strumentoTesto = StrumentoTesto(this, findViewById(R.id.strumento_testo))
 
 
-        var intent = intent
+        val intent = intent
         val titoloFile = intent.getStringExtra("titoloFile")
-        nomeFile = replace(titoloFile, arrayOf(" "), arrayOf("_")).toString()
-        cartella = nomeFile
-        nomeFile += ".xml"
+        val cartellaFile = intent.getStringExtra("cartellaFile")
+//        nomeFile = replace(titoloFile, arrayOf(" "), arrayOf("_")).toString() + ".xml"
+        nomeFile = "$titoloFile.xml"
+        cartella = "$cartellaFile$titoloFile"
+
+        Log.d(TAG, "onCreate: cartella: $cartella, nomeFile: $nomeFile")
 
         drawView.readFile(nomeFile, cartella)
         drawView.changePage(drawView.pageAttuale)

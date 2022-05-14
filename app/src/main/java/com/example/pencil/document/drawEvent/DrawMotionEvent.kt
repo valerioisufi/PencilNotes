@@ -9,6 +9,7 @@ import android.view.InputDevice
 import android.view.MotionEvent
 import com.example.pencil.document.DrawView
 import com.example.pencil.drawImpostazioni
+import com.example.pencil.sharedPref
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -33,13 +34,16 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
 
     private var path: String = ""
     private var continueScaleTranslate = false
+
     fun onTouchView(event: MotionEvent) {
         drawView.mEvent = MotionEvent.obtain(event)
+
+        if (event.action == MotionEvent.ACTION_DOWN) continueScaleTranslate = false
 
         /**
          * gestione degli input provenienti da TOOL_TYPE_STYLUS
          */
-        if (event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
+        if (event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS || (event.pointerCount == 1 && !drawImpostazioni.modePenna && !continueScaleTranslate)) {
             var descriptorInputDevice = event.device.descriptor
 
             when (event.action) {
@@ -154,10 +158,10 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
         if((event.pointerCount == 1 || event.pointerCount == 2) && event.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS){
             matrixTransformation(event, drawView)
 
-//            if(!drawImpostazioni.modePenna) {
-//                drawView.strumentoPenna!!.rewritePath(drawView, "")
-//            }
-//            continueScaleTranslate = true
+            if(!drawImpostazioni.modePenna) {
+                drawView.drawLastPath = false
+            }
+            continueScaleTranslate = true
         }
 
 

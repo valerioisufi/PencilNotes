@@ -17,6 +17,7 @@ import com.example.pencil.customView.ColorWheel
 import com.example.pencil.document.DrawView
 import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.path.pathFitCurve
+import com.example.pencil.dpToPx
 import com.example.pencil.sharedPref
 import kotlin.math.abs
 
@@ -25,7 +26,7 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
     var strokeWidthStrumento = sharedPref.getFloat("strokeEvidenziatore", 2.5f)
     var colorStrumento = sharedPref.getInt(
         "colorEvidenziatore",
-        ResourcesCompat.getColor(view.resources, R.color.colorPaint, null)
+        ResourcesCompat.getColor(view.resources, R.color.strumento_evidenziatore, null)
     )
 
     init {
@@ -53,6 +54,8 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
             path = ""
             path += "M ${event.x} ${event.y} "
 
+            lineaDritta = true
+
             startX = event.x
             startY = event.y
 
@@ -71,15 +74,13 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
             currentX = event.x
             currentY = event.y
 
-            lineaDritta = false
-            if (abs((event.y - startY) / (event.x - startX)) < 0.1) {
+            if (abs(event.y - startY) < dpToPx(context, 32) && lineaDritta) {
                 pathTemp = "M " + startX + " " + startY + " L " + event.x + " " + startY
-                lineaDritta = true
 
                 // Draw the path in the extra bitmap to cache it.
                 rewritePath(v, pathTemp)
                 return
-            }
+            } else lineaDritta = false
 
             // Draw the path in the extra bitmap to cache it.
             rewritePath(v, path)
@@ -209,12 +210,6 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
 
             override fun onStartTrackingTouch(seek: SeekBar) {}
             override fun onStopTrackingTouch(seek: SeekBar) {
-                Toast.makeText(
-                    context,
-                    "La dimesione è: " + (seek.progress * 0.1) + "pt",
-                    Toast.LENGTH_SHORT
-                ).show()
-                //paint.strokeWidth = seek.progress.toFloat()
             }
         })
 

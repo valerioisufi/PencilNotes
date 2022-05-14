@@ -4,7 +4,9 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/app_name.xml" value="0.26614583333333336" />
+        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/border_shadow.xml" value="0.1985" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/color_picker.xml" value="0.176" />
+        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/custom_thumb.xml" value="0.1985" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/gradient.xml" value="0.202734375" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/home_folder_background_active_shape.xml" value="0.26614583333333336" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/home_folder_background_shape.xml" value="0.26614583333333336" />
@@ -41,6 +43,8 @@
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ripple_on_dark.xml" value="0.26614583333333336" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ripple_on_draw_strumento.xml" value="0.37864583333333335" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/ripple_on_light.xml" value="0.14375" />
+        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/seekbar_progress.xml" value="0.1985" />
+        <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/seekbar_stylw.xml" value="0.1985" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/shape_action_button.xml" value="0.26614583333333336" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/shape_bg_mask.xml" value="0.26614583333333336" />
         <entry key="..\:/Users/valer/Documents/File/File_Android_Studio/Pencil/app/src/main/res/drawable/shape_bottom_sheet.xml" value="0.26614583333333336" />

@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.pencil.file.FileFolderXml
 import com.google.android.material.textfield.TextInputEditText
+import java.io.File
 
 
 private const val TAG = "MainActivity"
@@ -86,6 +87,7 @@ open class MainActivity : AppCompatActivity() {
 
                 val intent = Intent(applicationContext, DrawActivity::class.java)
                 intent.putExtra("titoloFile", fileFolder.data[getRoot()]!![position]["nome"])
+                intent.putExtra("cartellaFile", "documenti${getRoot()}")
                 startActivity(intent)
             }
 
@@ -239,13 +241,21 @@ open class MainActivity : AppCompatActivity() {
         val spostaButton = dialog.findViewById<ConstraintLayout>(R.id.spostaDialogDettagliFile)
         val modificaButton = dialog.findViewById<ConstraintLayout>(R.id.modificaDialogDettagliFile)
 
-//        eliminaButton.setOnClickListener {
-//            recentiData.removeAt(position)
-//            recyclerHome.adapter!!.notifyItemRemoved(position)
-//
-//            recentiFile.removeLine(data["titolo"]!! + ";" + data["sottotitolo"]!! + ";" + data["data"]!!)
-//            dialog.dismiss()
-//        }
+        eliminaButton.setOnClickListener {
+            val nomeFile = "${fileFolder.data[getRoot()]!![position]["nome"]}.xml"
+            val cartellaFile = "documenti${getRoot()}${fileFolder.data[getRoot()]!![position]["nome"]}"
+
+            val file = File(this.filesDir, "$cartellaFile/$nomeFile")
+            val cartella = File(this.filesDir, cartellaFile)
+
+            if(file.delete() && cartella.delete()){
+                fileFolder.data[getRoot()]?.removeAt(position)
+                activity_home_sfoglia_rv.adapter!!.notifyItemRemoved(position)
+                fileFolder.writeXML()
+            }
+
+            dialog.dismiss()
+        }
 
         dialog.show()
     }

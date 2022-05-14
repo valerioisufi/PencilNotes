@@ -126,7 +126,7 @@
                 android:onClick="choosePennello"
                 android:padding="12dp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/strumento_testo"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/strumento_evidenziatore"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_strumento_lazo" />
@@ -137,11 +137,11 @@
                 android:background="@drawable/ripple_on_draw_strumento"
                 android:onClick="choosePennello"
                 android:padding="12dp"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/strumento_lazo"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_strumento_testo" />
+                app:srcCompat="@drawable/ic_strumento_testo"
+                tools:layout_editor_absoluteX="192dp" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -52,14 +52,19 @@
         android:id="@+id/dialogDrawPaint_dimensioneTrattoSeekbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+
         android:layout_marginStart="24dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="50dp"
+
         android:layout_marginBottom="24dp"
         android:max="500"
         android:min="5"
+        android:progressDrawable="@drawable/seekbar_style"
+        android:splitTrack="false"
+        android:thumb="@drawable/custom_thumb"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/dialogDrawPaint_dimensioneTrattoTextView"
+        app:layout_constraintEnd_toEndOf="@+id/dialogDrawPaint_dimensioneTrattoTextView"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView13" />

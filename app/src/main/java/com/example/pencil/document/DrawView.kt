@@ -109,11 +109,27 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     var cartellaFile = ""
     var nomeFile = ""
     lateinit var drawFile: PencilFileXml
+
+    lateinit var jobPrepareBitmapPage: Job
     fun readFile(nomeFile: String, cartellaFile: String) {
         this.nomeFile = nomeFile
         this.cartellaFile = cartellaFile
         drawFile = PencilFileXml(context, nomeFile, cartellaFile)
         drawFile.readXML()
+
+        jobPrepareBitmapPage = scope.launch {
+            for (pagina in drawFile.body){
+                /**
+                 * aggiorno la cache
+                 */
+                pagina.bitmapPage = makePage(
+                    pagina.bitmapPage,
+                    null,
+                    pagina.index
+                )
+            }
+        }
+
     }
 
     var pageAttuale = 0
@@ -125,7 +141,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         activity.findViewById<TextView>(R.id.contatoreTextView).text = "n.$pageAttuale"
 
         drawLastPath = false
-        draw(redraw = true, scaling = false)
+        draw(changePage = true)
     }
 
 
@@ -168,7 +184,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             }
 
         if (indexPage == pageAttuale) {
-            draw(redraw = true, scaling = false)
+            draw(redraw = true)
         }
         drawFile.writeXML()
     }
@@ -179,6 +195,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
      */
     private var redrawOnDraw = false
     private var scalingOnDraw = false
+    private var changePageOnDraw = false
     private var makeCursoreOnDraw = false
     private var dragAndDropOnDraw = false
     var drawLastPath = false
@@ -235,6 +252,40 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 setRectToRect(startRect, endRect, Matrix.ScaleToFit.CENTER)
             }
             canvas.drawBitmap(onDrawBitmap, windowMatrixTransform, null)
+
+        } else if (changePageOnDraw){
+            scalingPageRect = calcPageRect()
+
+            /**
+             * make il colore di fondo della view
+             */
+            makePageBackground(canvas, scalingPageRect)
+
+            /**
+             * make lo sfondo bianco della pagina
+             */
+            // TODO: 31/12/2021 in seguito implementerò anche la possibilità di scegliere tra diversi tipi di pagine
+            val paintSfondoPaginaBianco = Paint().apply {
+                color = ResourcesCompat.getColor(resources, R.color.white, null)
+                style = Paint.Style.FILL
+                setShadowLayer(
+                    24f,
+                    0f,
+                    8f,
+                    ResourcesCompat.getColor(resources, R.color.shadow, null)
+                )
+            }
+            canvas.drawRect(scalingPageRect, paintSfondoPaginaBianco)
+
+            /**
+             * trasformo e disegno la pagina intera memorizzata nella cache
+             */
+            canvas.drawBitmap(
+                drawFile.body[pageAttuale].bitmapPage,
+                null,
+                scalingPageRect,
+                null
+            )
 
         } else {
             canvas.drawBitmap(onDrawBitmap, 0f, 0f, null)
@@ -294,6 +345,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
     fun draw(
         redraw: Boolean = false,
         scaling: Boolean = false,
+        changePage: Boolean = false,
         makeCursore: Boolean = false,
         dragAndDrop: Boolean = false
     ) {
@@ -316,6 +368,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
                 redrawOnDraw = true
                 scalingOnDraw = false
+                changePageOnDraw = false
                 makeCursoreOnDraw = false
                 invalidate()
 
@@ -326,6 +379,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                     drawFile.body[pageAttuale].bitmapPage,
                     null
                 )
+
             }
         } else if (scaling) {
             if (::jobRedraw.isInitialized) jobRedraw.cancel()
@@ -334,14 +388,27 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
             redrawOnDraw = false
             scalingOnDraw = true
+            changePageOnDraw = false
             makeCursoreOnDraw = false
             invalidate()
+
+        } else if (changePage) {
+            if (::jobRedraw.isInitialized) jobRedraw.cancel()
+
+            redrawOnDraw = false
+            scalingOnDraw = false
+            changePageOnDraw = true
+            makeCursoreOnDraw = false
+            invalidate()
+
+            draw(redraw = true)
 
         } else if (makeCursore) {
             if (::jobRedraw.isInitialized) jobRedraw.cancel()
 
             redrawOnDraw = false
             scalingOnDraw = false
+            changePageOnDraw = false
             makeCursoreOnDraw = true
             invalidate()
 
@@ -350,6 +417,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
             redrawOnDraw = false
             scalingOnDraw = false
+            changePageOnDraw = false
             makeCursoreOnDraw = false
             dragAndDropOnDraw = true
             invalidate()
@@ -367,7 +435,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
      * prefisso make- semplicemente per distinguerle
      * dalle funzioni draw-
      */
-    suspend fun makePage(bitmapSource: Bitmap, rect: RectF? = null): Bitmap =
+    suspend fun makePage(bitmapSource: Bitmap, rect: RectF? = null, pageIndex: Int = pageAttuale): Bitmap =
         withContext(Dispatchers.Default) {
             val bitmap = Bitmap.createBitmap(bitmapSource)
             val canvas = Canvas(bitmap)
@@ -386,15 +454,14 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 }
             } else {
                 rectTemp = rect
+
+                /**
+                 * make il colore di fondo della view, se serve
+                 */
+                makePageBackground(canvas, rectTemp)
             }
             val rect = rectTemp
-            Log.d(TAG, "redraw rectVisualizzazione 2: $rect")
 
-
-            /**
-             * make il colore di fondo della view
-             */
-            makePageBackground(canvas, rect)
 
             /**
              * make lo sfondo bianco della pagina e ShadowLayer
@@ -419,7 +486,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 RigaturaQuadrettatura(context, RigaturaQuadrettatura.Type.Rigatura1R)
             rigaturaQuadrettatura.makeRigaturaQuadrettatura(
                 canvas,
-                drawFile.body[pageAttuale].dimensioni,
+                drawFile.body[pageIndex].dimensioni,
                 rect
             )
 
@@ -427,9 +494,9 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
              * make il PDF che farà da sfondo alla pagina
              */
             // TODO: 31/12/2021 in seguito implementerò anche la possibilità di utilizzare un'immagine come sfondo
-            if (drawFile.body[pageAttuale].background != null) {
-                val id = drawFile.body[pageAttuale].background!!.id
-                val indexPdf = drawFile.body[pageAttuale].background!!.index
+            if (drawFile.body[pageIndex].background != null) {
+                val id = drawFile.body[pageIndex].background!!.id
+                val indexPdf = drawFile.body[pageIndex].background!!.index
 
                 val fileTemp = File(context.filesDir, drawFile.head[id]?.get("path")!!)
                 val renderer = PdfRenderer(
@@ -494,7 +561,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             /**
              * make images
              */
-            for (image in drawFile.body[pageAttuale].images) {
+            for (image in drawFile.body[pageIndex].images) {
                 if (image.bitmap == null) {
                     val inputFile = FileManager(context, drawFile.head[image.id]?.get("path")!!)
                     val inputStream = inputFile.file.inputStream()
@@ -521,10 +588,11 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
              * make tracciati
              */
             // TODO: 31/12/2021 poi valuterò l'idea di utlizzare una funzione a parte che richiama i metodi make- dei singoli strumenti
-            for (tracciato in drawFile.body[pageAttuale].tracciati) {
+            drawFile.preparePageIndex(pageIndex)
+            for (tracciato in drawFile.body[pageIndex].tracciati) {
                 val pathTracciato: Path = stringToPath(tracciato.pathString)
                 val paintTracciato: Paint = Paint(tracciato.paintObject!!).apply {
-                    strokeWidth = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
+                    strokeWidth = drawFile.body[pageIndex].dimensioni.calcPxFromPt(
                         strokeWidth,
                         rect.width().toInt()
                     )
