@@ -48,6 +48,9 @@ fun pathFitCurve(pathString: String, maxError: Float): String {
                 bezierCurve[3][0].toFloat(), bezierCurve[3][1].toFloat()
             )*/
         }
+    } else if (bezierCurveList[0].size == 1){
+        pathTemp += "L " +
+                bezierCurveList[0][0][0].toFloat() + " " + bezierCurveList[0][0][1].toFloat() + " "
     }
 
     return pathTemp
@@ -66,7 +69,7 @@ fun fitCurve(points: MutableList<MutableList<Double>>, maxError: Float): Mutable
         i == 0 || points[i] != points[i-1]
     }.toMutableList()
     if(points.size < 2){
-        return mutableListOf(mutableListOf(mutableListOf(points[0][1], points[0][1])))
+        return mutableListOf(mutableListOf(mutableListOf(points[0][0], points[0][1])))
     }
 
     val len = points.size

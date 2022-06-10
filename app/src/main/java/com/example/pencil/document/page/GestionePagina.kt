@@ -15,7 +15,7 @@ class GestionePagina(
 ) {
     class Tracciato(var type: TypeTracciato = TypeTracciato.PENNA) {
         enum class TypeTracciato {
-            PENNA, EVIDENZIATORE
+            PENNA, EVIDENZIATORE, GOMMA
         }
 
         var pathString = ""

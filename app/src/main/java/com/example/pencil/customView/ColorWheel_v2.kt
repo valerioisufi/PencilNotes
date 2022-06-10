@@ -1,14 +1,11 @@
 package com.example.pencil.customView
 
-import android.R.attr.*
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
-import android.util.Log
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
-import com.example.pencil.document.tool.TAG
 import kotlin.math.*
 
 
@@ -279,9 +276,9 @@ class ColorWheel_v2(context: Context, attrs: AttributeSet) : View(context, attrs
     private fun pointToHue(point: Point): Float {
 
         val angoloRad: Float = atan2(point.y.toDouble(), point.x.toDouble()).toFloat()
-        return if (angoloRad > 0){
+        return if (angoloRad > 0) {
             angoloRad * 180 / 3.14f
-        } else{
+        } else {
             angoloRad * 180 / 3.14f + 360f
         }
 
@@ -326,13 +323,22 @@ class ColorWheel_v2(context: Context, attrs: AttributeSet) : View(context, attrs
 
         val maxRaggioHue = (hueRect.width() / 2).toFloat()
         val minRaggioHue = maxRaggioHue - hueWidthRingPx
-        var pointCentro = PointF(startTouchPoint!!.x.toFloat() - centro.x, -(startTouchPoint!!.y.toFloat() - centro.y))
+        var pointCentro = PointF(
+            startTouchPoint!!.x.toFloat() - centro.x,
+            -(startTouchPoint!!.y.toFloat() - centro.y)
+        )
 
-        if(pointCentro.x.pow(2) + pointCentro.y.pow(2) < maxRaggioHue.pow(2) && pointCentro.x.pow(2) + pointCentro.y.pow(2) > minRaggioHue.pow(2)){
+        if (pointCentro.x.pow(2) + pointCentro.y.pow(2) < maxRaggioHue.pow(2) && pointCentro.x.pow(2) + pointCentro.y.pow(
+                2
+            ) > minRaggioHue.pow(2)
+        ) {
             hue = pointToHue(Point(pointEvento.x.toInt(), pointEvento.y.toInt()))
             update = true
 
-        } else if (pointCentro.x.pow(2) + pointCentro.y.pow(2) < (satValRect.width() / 2).toFloat().pow(2) && pointCentro.x.pow(2) + pointCentro.y.pow(2) > (satValRect.width() / 2 * (1-hueWidthRingPercentuale) ).toFloat().pow(2)) {
+        } else if (pointCentro.x.pow(2) + pointCentro.y.pow(2) < (satValRect.width() / 2).toFloat()
+                .pow(2) && pointCentro.x.pow(2) + pointCentro.y.pow(2) > (satValRect.width() / 2 * (1 - hueWidthRingPercentuale)).toFloat()
+                .pow(2)
+        ) {
             val result = pointToSatVal(Point(pointEvento.x.toInt(), pointEvento.y.toInt()))
             sat = result[0]
             `val` = result[1]
@@ -370,7 +376,10 @@ class ColorWheel_v2(context: Context, attrs: AttributeSet) : View(context, attrs
         //satValBackgroundCache = null
         //hueBackgroundCache = null
 
-        centro = PointF(drawingRect.width() / 2f + drawingRect.left, drawingRect.height() / 2f + drawingRect.top)
+        centro = PointF(
+            drawingRect.width() / 2f + drawingRect.left,
+            drawingRect.height() / 2f + drawingRect.top
+        )
 
         setUpHueRect()
         setUpSatValRect()

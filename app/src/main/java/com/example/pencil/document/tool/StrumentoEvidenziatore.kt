@@ -23,7 +23,7 @@ import kotlin.math.abs
 
 class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
     // variabili con i valori dell'oggetto, stroke (pt) e color
-    var strokeWidthStrumento = sharedPref.getFloat("strokeEvidenziatore", 2.5f)
+    var strokeWidthStrumento = sharedPref.getFloat("strokeEvidenziatore", 10f)
     var colorStrumento = sharedPref.getInt(
         "colorEvidenziatore",
         ResourcesCompat.getColor(view.resources, R.color.strumento_evidenziatore, null)
@@ -121,7 +121,7 @@ class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
         v: DrawView,
         path: String,
         paint: Paint,
-        type: GestionePagina.Tracciato.TypeTracciato = GestionePagina.Tracciato.TypeTracciato.PENNA
+        type: GestionePagina.Tracciato.TypeTracciato = GestionePagina.Tracciato.TypeTracciato.EVIDENZIATORE
     ) {
         var errorCalc = v.drawFile.body[v.pageAttuale].dimensioni.calcPxFromPt(
             v.maxError.toFloat(),

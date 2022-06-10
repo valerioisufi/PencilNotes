@@ -9,52 +9,42 @@ import com.example.pencil.R
 import com.example.pencil.document.DrawView
 import com.example.pencil.document.page.GestionePagina
 import com.example.pencil.document.path.pathFitCurve
-import com.example.pencil.document.path.polygonClippingAlgorithm
+import com.example.pencil.dpToPx
 import com.example.pencil.sharedPref
-
-const val TAG = "StrumentoGomma"
+import kotlin.math.abs
 
 class StrumentoGomma(var context: Context, var view: ImageView) {
     // variabili con i valori dell'oggetto, stroke (pt) e color
-    var strokeWidth = sharedPref.getFloat("strokeGomma", 10f)
-    var color = ResourcesCompat.getColor(view.resources, R.color.white, null)
+    var strokeWidthStrumento = sharedPref.getFloat("strokeGomma", 10f)
+    var colorStrumento = sharedPref.getInt(
+        "colorGomma",
+        ResourcesCompat.getColor(view.resources, R.color.white, null)
+    )
 
     init {
-        view.setColorFilter(color, android.graphics.PorterDuff.Mode.MULTIPLY)
+        view.setColorFilter(colorStrumento, android.graphics.PorterDuff.Mode.MULTIPLY)
     }
 
-
-    var polygonA = mutableListOf<MutableList<Double>>()
-    var polygonB = mutableListOf<MutableList<Double>>()
-    var isPolygonA = true
     /**
      * Gestione del MotionEvent
      */
+
     private var path = ""
     private var currentX = 0f
     private var currentY = 0f
-
-    fun gestioneMotionEvent(v: DrawView, event: MotionEvent){
+    fun gestioneMotionEvent(v: DrawView, event: MotionEvent) {
         fun touchStart(v: DrawView, event: MotionEvent) {
             path = ""
-            path = path + "M " + event.x + " " + event.y + " " //.moveTo(event.x, event.y)
-
-            if(isPolygonA) polygonA.add(mutableListOf(event.x.toDouble(), event.y.toDouble()))
-            else polygonB.add(mutableListOf(event.x.toDouble(), event.y.toDouble()))
-
-            currentX = event.x
-            currentY = event.y
+            path += "M ${event.x} ${event.y} "
 
             var tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
             var orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
 
             newPath(v, path, getPaint())
         }
-        fun touchMove(v: DrawView, event: MotionEvent) {
-            path = path + "L " + event.x + " " + event.y + " "
 
-            if(isPolygonA) polygonA.add(mutableListOf(event.x.toDouble(), event.y.toDouble()))
-            else polygonB.add(mutableListOf(event.x.toDouble(), event.y.toDouble()))
+        fun touchMove(v: DrawView, event: MotionEvent) {
+            path += "L ${event.x} ${event.y} "
 
             currentX = event.x
             currentY = event.y
@@ -62,34 +52,12 @@ class StrumentoGomma(var context: Context, var view: ImageView) {
             // Draw the path in the extra bitmap to cache it.
             rewritePath(v, path)
         }
+
         fun touchUp(v: DrawView, event: MotionEvent) {
-            path += "Z"
-
-            if(isPolygonA)polygonA.add(mutableListOf(polygonA[0][0], polygonA[0][1]))
-            else {
-                polygonB.add(mutableListOf(polygonB[0][0], polygonB[0][1]))
-
-                var polygonList = polygonClippingAlgorithm(polygonA, polygonB, false, true)
-                var path = ""
-                for (polygon in polygonList){
-                    var firstPoint = true
-                    for (point in polygon) {
-                        if (firstPoint) {
-                            path = "M " + point[0] + " " + point[1] + " "
-                            firstPoint = false
-                        }else{
-                            path = path + "L " + point[0] + " " + point[1] + " "
-                        }
-                    }
-                    path += "Z"
-                    savePath(v, path, getPaint())
-                }
-            }
+            savePath(v, path, getPaint())
 
             // Reset the path so it doesn't get drawn again.
             path = ""
-
-            isPolygonA = false
         }
 
         when (event.action) {
@@ -110,11 +78,19 @@ class StrumentoGomma(var context: Context, var view: ImageView) {
     fun rewritePath(v: DrawView, path: String) {
         v.lastPath.path = path
 
-        v.draw(true, false)
+        v.draw(false, false)
     }
 
-    fun savePath(v: DrawView, path: String, paint: Paint, type: GestionePagina.Tracciato.TypeTracciato = GestionePagina.Tracciato.TypeTracciato.PENNA) {
-        var errorCalc = v.drawFile.body[v.pageAttuale].dimensioni.calcPxFromPt(v.maxError.toFloat(), v.redrawPageRect.width().toInt())
+    fun savePath(
+        v: DrawView,
+        path: String,
+        paint: Paint,
+        type: GestionePagina.Tracciato.TypeTracciato = GestionePagina.Tracciato.TypeTracciato.GOMMA
+    ) {
+        var errorCalc = v.drawFile.body[v.pageAttuale].dimensioni.calcPxFromPt(
+            v.maxError.toFloat(),
+            v.redrawPageRect.width().toInt()
+        )
         v.lastPath.path = pathFitCurve(path, errorCalc)
         v.lastPath.paint = paint
 
@@ -129,22 +105,27 @@ class StrumentoGomma(var context: Context, var view: ImageView) {
         v.drawLastPath = false
 
         v.makeSingleTracciato(v.lastPath.path, v.lastPath.paint)
-        v.draw(true, false)
+        v.draw(false, false)
 
         v.drawFile.writeXML()
     }
 
 
+    fun drawStrumento() {
+
+    }
+
     fun getPaint(): Paint {
         val paintTemp = Paint().apply {
-            color = ResourcesCompat.getColor(view.resources, R.color.colorEvidenziatore, null)
+            color = colorStrumento
             // Smooths out edges of what is drawn without affecting shape.
             isAntiAlias = true
             // Dithering affects how colors with higher-precision than the device are down-sampled.
             isDither = true
-            style = Paint.Style.FILL // default: FILL
+            style = Paint.Style.STROKE // default: FILL
             strokeJoin = Paint.Join.ROUND // default: MITER
             strokeCap = Paint.Cap.ROUND // default: BUTT
+            strokeWidth = strokeWidthStrumento
         }
         return paintTemp
     }
