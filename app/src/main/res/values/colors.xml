@@ -32,9 +32,9 @@
 
     <color name="color_text_secondary">#919191</color>
 
-    <color name="gn_background_page">#f7f7f7</color>
+    <color name="gn_background_page">#FFFFFF</color>
     <color name="gn_border_page">#d4d4d3</color>
-    <color name="gn_background_tools">#f7f7f7</color>
+    <color name="gn_background_tools">#FFF6F0</color>
     <color name="gn_border_tools">#dadbda</color>
 
     <color name="bezier_curva">#000000</color>
@@ -48,4 +48,9 @@
 
     <color name="riga">#4E4E4E</color>
     <color name="margine">#78000F</color>
+
+    <color name="dialog_background_color">#F3F3F3</color>
+    <color name="white_black">#FFF</color>
+    <color name="black_white">#000</color>
+
 </resources>

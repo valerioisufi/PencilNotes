@@ -4,7 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/shape_dialog_bottom">
+    android:layout_gravity="center_horizontal"
+    android:layout_margin="4dp"
+    android:background="@drawable/shape_dialog_bottom"
+    android:maxWidth="350dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/spostaDialogDettagliFile"
@@ -33,6 +36,7 @@
             style="@style/IconImageButton"
             android:layout_marginStart="16dp"
             android:clickable="false"
+            android:tint="@color/black_white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -68,6 +72,7 @@
             style="@style/IconImageButton"
             android:layout_marginStart="16dp"
             android:clickable="false"
+            android:tint="@color/black_white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -104,6 +109,7 @@
             style="@style/IconImageButton"
             android:layout_marginStart="16dp"
             android:clickable="false"
+            android:tint="@color/black_white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -128,6 +134,7 @@
             style="@style/IconImageButton"
             android:layout_marginStart="16dp"
             android:clickable="false"
+            android:tint="@color/black_white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -170,12 +177,12 @@
 
     <TextView
         android:id="@+id/titoloDialogDettagliFile"
+        style="@style/BodyTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:fontFamily="@font/roboto"
         android:text="TextView"
-        android:textColor="@color/white"
         android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/sottotitoloDialogDettagliFile"
         app:layout_constraintEnd_toEndOf="@+id/sottotitoloDialogDettagliFile"
@@ -185,6 +192,7 @@
 
     <TextView
         android:id="@+id/sottotitoloDialogDettagliFile"
+        style="@style/BodyTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"

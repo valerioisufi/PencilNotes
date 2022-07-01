@@ -73,6 +73,7 @@
         android:background="@drawable/ripple_on_dark"
         android:padding="8dp"
         android:scaleType="center"
+        android:tint="@color/black_white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
