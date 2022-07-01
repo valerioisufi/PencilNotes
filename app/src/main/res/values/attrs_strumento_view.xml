@@ -1,0 +1,16 @@
+<resources>
+
+    <declare-styleable name="StrumentoView">
+        <attr name="typeStrumento" format="enum">
+            <enum name="Penna" value="0" />
+            <enum name="Gomma" value="1" />
+            <enum name="Evidenziatore" value="2" />
+            <enum name="Lazo" value="3" />
+            <enum name="Testo" value="4" />
+        </attr>
+        <!--<attr name="exampleString" format="string" />
+        <attr name="exampleDimension" format="dimension" />
+        <attr name="exampleColor" format="color" />
+        <attr name="exampleDrawable" format="color|reference" />-->
+    </declare-styleable>
+</resources>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="light_blue_400">#FF29B6F6</color>
+    <color name="light_blue_600">#FF039BE5</color>
+    <color name="gray_400">#FFBDBDBD</color>
+    <color name="gray_600">#FF757575</color>
+
+    <color name="colorBackground">#C5FFF8</color>
+    <color name="colorPaint">#3F51B5</color>
+    <color name="colorEvidenziatore">#65FFEB3B</color>
+
+    <color name="colorAreaSelezione">#3200BCD4</color>
+    <color name="colorAreaDefinitiva">#FFFFFF</color>
+
+    <color name="dark_elevation_00dp">#121212</color>
+    <color name="dark_elevation_01dp">#1e1e1e</color>
+    <color name="dark_elevation_02dp">#222222</color>
+    <color name="dark_elevation_03dp">#242424</color>
+    <color name="dark_elevation_04dp">#272727</color>
+    <color name="dark_elevation_06dp">#2c2c2c</color>
+    <color name="dark_elevation_08dp">#2d2d2d</color>
+    <color name="dark_elevation_12dp">#333333</color>
+    <color name="dark_elevation_16dp">#353535</color>
+    <color name="dark_elevation_24dp">#383838</color>
+
+    <color name="color_text_secondary">#919191</color>
+
+    <color name="gn_background_page">#FFFFFF</color>
+    <color name="gn_border_page">#d4d4d3</color>
+    <color name="gn_background_tools">#FFF6F0</color>
+    <color name="gn_border_tools">#dadbda</color>
+
+    <color name="bezier_curva">#000000</color>
+    <color name="bezier_punto_controlo">#BEFF4444</color>
+    <color name="bezier_linea_controlo">#8000DDFF</color>
+
+    <color name="strumento_penna">#002042</color>
+    <color name="strumento_evidenziatore">#40FFE500</color>
+
+    <color name="shadow">#BF959DA5</color>
+
+    <color name="riga">#4E4E4E</color>
+    <color name="margine">#78000F</color>
+
+    <color name="dialog_background_color">#F3F3F3</color>
+    <color name="white_black">#FFF</color>
+    <color name="black_white">#000</color>
+
+</resources>

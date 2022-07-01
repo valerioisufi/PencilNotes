@@ -1,0 +1,4 @@
+<resources>
+    <declare-styleable name="ColorPickerView">
+    </declare-styleable>
+</resources>
