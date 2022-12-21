@@ -225,7 +225,10 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 color = ResourcesCompat.getColor(resources, R.color.white, null)
                 style = Paint.Style.FILL
                 setShadowLayer(
-                    24f,
+                    drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
+                        24f,
+                        scalingPageRect.width().toInt()
+                    ),
                     0f,
                     8f,
                     ResourcesCompat.getColor(resources, R.color.shadow, null)
@@ -269,7 +272,10 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 color = ResourcesCompat.getColor(resources, R.color.white, null)
                 style = Paint.Style.FILL
                 setShadowLayer(
-                    24f,
+                    drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
+                        24f,
+                        scalingPageRect.width().toInt()
+                    ),
                     0f,
                     8f,
                     ResourcesCompat.getColor(resources, R.color.shadow, null)
@@ -471,7 +477,10 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 color = ResourcesCompat.getColor(resources, R.color.white, null)
                 style = Paint.Style.FILL
                 setShadowLayer(
-                    24f,
+                    drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
+                        24f,
+                        rect.width().toInt()
+                    ),
                     0f,
                     8f,
                     ResourcesCompat.getColor(resources, R.color.shadow, null)
