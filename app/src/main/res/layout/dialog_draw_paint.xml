@@ -22,7 +22,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.studiomath.innernotes.customView.ColorWheel
+    <com.studiomath.pencilnotes.customView.ColorWheel
         android:id="@+id/dialogDrawPaint_coloreTrattoColorPickerView"
         android:layout_width="0dp"
         android:layout_height="0dp"

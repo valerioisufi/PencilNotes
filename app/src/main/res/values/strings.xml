@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">InnerNotes</string>
+    <string name="app_name">PencilNotes</string>
 
     <string name="preference_file_key">preference_file_key</string>
     <string name="mode_penna">mode_penna</string>

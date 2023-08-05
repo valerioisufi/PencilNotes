@@ -46,7 +46,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_add_circle_outline" />
 
-            <com.studiomath.innernotes.document.tool.DrawImpostazioni
+            <com.studiomath.pencilnotes.document.tool.DrawImpostazioni
                 android:id="@+id/drawImpostazioni"
                 style="@style/IconImageButton"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -75,7 +75,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.studiomath.innernotes.document.DrawView
+    <com.studiomath.pencilnotes.document.DrawView
         android:id="@+id/drawView"
         android:layout_width="0dp"
         android:layout_height="0dp"
