@@ -255,49 +255,50 @@ class ColorWheel(context: Context, attrs: AttributeSet) : View(context, attrs) {
         /**
          * val e sat
          */
-//        val rect = satValRect
-//        val centro = Point(rect.width() / 2 + rect.left, rect.height() / 2 + rect.top)
-//        var raggio = rect.width() / 2 - satWidthRingPx / 2
-//        val angoloRad = hue * 3.14f / 180
-//
-//        val p = PointF()
-//        p.x = (centro.x + cos(angoloRad) * raggio)
-//        p.y = (centro.y - sin(angoloRad) * raggio)
-//        return p
+
+        /**
+         * (u,v) are circular coordinates in the domain {(u,v) | u² + v² ≤ 1}
+         * (x,y) are square coordinates in the range [-1,1] x [-1,1]
+         */
 
         val rect = satValRect
+
+        val x = sat*2 -1
+        val y = `val`*2 -1
+
+        val u = (x * sqrt(1 - 0.5 * y.pow(2))).toFloat()
+        val v = (y * sqrt(1 - 0.5 * x.pow(2))).toFloat()
 
         val height = rect.height().toFloat()
         val width = rect.width().toFloat()
         val p = PointF()
-        p.x = (sat * width + rect.left)
-        p.y = ((1f - `val`) * height + rect.top)
+        p.x = (u * width/2 + rect.left +width/2)
+        p.y = ((-1* v) * height/2 + rect.top +height/2)
         return p
     }
 
     private fun pointToSatVal(point: PointF): FloatArray {
-        var x = point.x + satRaggio
-        var y = point.y + satRaggio
-        val result = FloatArray(2)
-        val width = satValRect.width().toFloat()
-        val height = satValRect.height().toFloat()
+        val angoloRad: Float = atan2(point.y.toDouble(), point.x.toDouble()).toFloat()
 
-        x = if (x < 0) {
-            0f
-        } else if (x > width) {
-            width
-        } else {
-            x
+        val rect = satValRect
+        val height = rect.height().toFloat()
+        val width = rect.width().toFloat()
+
+        var u = (point.x)/width*2
+        var v = (point.y)/height*2
+
+        if (u.pow(2)+v.pow(2)> 1){
+            u = cos(angoloRad)
+            v = sin(angoloRad)
+
         }
-        y = if (y < 0) {
-            0f
-        } else if (y > height) {
-            height
-        } else {
-            y
-        }
-        result[0] = 1f / width * x
-        result[1] = 1f / height * y
+
+        val x = (0.5*sqrt(2+2*u*sqrt(2.0)+u.pow(2)-v.pow(2)) - 0.5*sqrt(2-2*u*sqrt(2.0)+u.pow(2)-v.pow(2))).toFloat()
+        val y = (0.5*sqrt(2+2*v*sqrt(2.0)-u.pow(2)+v.pow(2)) - 0.5*sqrt(2-2*v*sqrt(2.0)-u.pow(2)+v.pow(2))).toFloat()
+
+        val result = FloatArray(2)
+        result[0] = (x+1)/2
+        result[1] = (y+1)/2
         return result
     }
 
