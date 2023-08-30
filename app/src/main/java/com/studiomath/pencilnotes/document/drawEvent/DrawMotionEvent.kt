@@ -101,7 +101,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
             /**
              * gestisco il motionEvent in modo differente per ogni strumento
              */
-            val tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
+            /*val tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
             val orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
 
             if (event.action == MotionEvent.ACTION_DOWN) {
@@ -110,7 +110,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
                 } else if (tilt > 0.2f && (orientation > 2.5f || orientation < -2.3f)) {
 //                    drawView.strumentoAttivo = DrawView.Pennello.LAZO
                 }
-            }
+            }*/
 
             when (drawView.strumentoAttivo) {
                 DrawView.Pennello.PENNA -> drawView.strumentoPenna?.gestioneMotionEvent(
@@ -122,6 +122,10 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
                     event
                 )
                 DrawView.Pennello.GOMMA -> drawView.strumentoGomma?.gestioneMotionEvent(
+                    drawView,
+                    event
+                )
+                DrawView.Pennello.LAZO -> drawView.strumentoLazo?.gestioneMotionEvent(
                     drawView,
                     event
                 )
@@ -159,7 +163,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
         }
 
 
-        if(drawView.strumentoAttivo == DrawView.Pennello.LAZO){
+        /*if(drawView.strumentoAttivo == DrawView.Pennello.LAZO){
             for (image in drawView.drawFile.body[drawView.pageAttuale].images){
 
                 if(image.rectVisualizzazione.contains(event.x, event.y)){
@@ -175,7 +179,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
                 }
 
             }
-        }
+        }*/
     }
 
     fun onHoverView(event: MotionEvent) {

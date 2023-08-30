@@ -9,7 +9,6 @@ import android.os.ParcelFileDescriptor
 import android.util.AttributeSet
 import android.util.Log
 import android.view.DragEvent
-import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
@@ -64,7 +63,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
      * Funzioni per impostare il DrawView
      */
     lateinit var drawMotion: DrawMotionEvent
-    fun setDrawMotioEvent(drawMotionEvent: DrawMotionEvent) {
+    fun setDrawMotionEvent(drawMotionEvent: DrawMotionEvent) {
         drawMotion = drawMotionEvent
 
         // Instantiate the gesture detector with the
@@ -726,135 +725,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
     }
 
-    /**
-     * funzioni di debug
-     */
-    fun makeTouchAnalyzer(canvas: Canvas) {
-        var xPrecision = mEvent.xPrecision
-        var yPrecision = mEvent.yPrecision
 
-        var downTime = mEvent.downTime
-        var eventTime = mEvent.eventTime
-
-        var inputDevice = mEvent.device
-        var inputSource = mEvent.source
-
-        for (i in 0 until mEvent.pointerCount) {
-            var toolType = mEvent.getToolType(i)
-            var pointerId = mEvent.getPointerId(i)
-
-            /**
-             * toolMajor e touchMajor (così come toolMinor e touchMinor)
-             * hanno lo stesso valore quando toolType = TOOL_TYPE_FINGER
-             * e hanno valore nullo quando toolType = TOOL_TYPE_STYLUS
-             */
-            var toolMajor = mEvent.getToolMajor(i)
-            var toolMinor = mEvent.getToolMinor(i)
-
-            var touchMajor = mEvent.getTouchMajor(i)
-            var touchMinor = mEvent.getTouchMinor(i)
-
-            var size = mEvent.getSize(i)
-
-            /**
-             * Axis Values
-             */
-            var pressure = mEvent.getAxisValue(MotionEvent.AXIS_PRESSURE, i)
-            var orientation = mEvent.getAxisValue(MotionEvent.AXIS_ORIENTATION, i)
-            var tilt = mEvent.getAxisValue(MotionEvent.AXIS_TILT, i)
-            var distance = mEvent.getAxisValue(
-                MotionEvent.AXIS_DISTANCE,
-                i
-            ) // non funziona con M-Pencil di Huawei
-
-            var x = mEvent.getX(i)
-            var y = mEvent.getY(i)
-
-
-            var toolRect = RectF(
-                x - toolMinor / 2,
-                y - toolMajor / 2,
-                x + toolMinor / 2,
-                y + toolMajor / 2
-            )
-            var toolPath = Path().apply {
-                addOval(toolRect, Path.Direction.CW)
-                transform(Matrix().apply {
-                    setRotate((orientation * 180 / 3.14).toFloat(), x, y)
-                })
-            }
-
-            canvas.drawPath(toolPath, Paint(paint).apply {
-                color = ResourcesCompat.getColor(resources, R.color.light_blue_600, null)
-                style = Paint.Style.STROKE
-                strokeWidth = 10f
-            })
-
-            if (toolType == MotionEvent.TOOL_TYPE_STYLUS) {
-                var stylusPath = Path().apply {
-                    addCircle(x, y, dpToPx(context, 30) * pressure, Path.Direction.CW)
-                }
-
-                canvas.drawPath(stylusPath, Paint(paint).apply {
-                    color = ResourcesCompat.getColor(resources, R.color.purple_200, null)
-                    style = Paint.Style.STROKE
-                    strokeWidth = 10f
-                })
-            }
-//            canvas.drawText(
-//                "inputSource: $inputSource",
-//                x + 150f, y,
-//                Paint(paint).apply {
-//                    textSize = 30f
-//                    color = ResourcesCompat.getColor(resources, R.color.black, null)
-//                }
-//            )
-            for (historyIndex in 1 until mEvent.historySize) {
-                /**
-                 * toolMajor e touchMajor (così come toolMinor e touchMinor)
-                 * hanno lo stesso valore quando toolType = TOOL_TYPE_FINGER
-                 * e hanno valore nullo quando toolType = TOOL_TYPE_STYLUS
-                 */
-                var toolMajorHistorical = mEvent.getHistoricalToolMajor(i, historyIndex)
-                var toolMinorHistorical = mEvent.getHistoricalToolMinor(i, historyIndex)
-
-                var touchMajorHistorical = mEvent.getHistoricalTouchMajor(i, historyIndex)
-                var touchMinorHistorical = mEvent.getHistoricalTouchMinor(i, historyIndex)
-
-                var sizeHistorical = mEvent.getHistoricalSize(i, historyIndex)
-
-                /**
-                 * Axis Values
-                 */
-                var pressureHistorical =
-                    mEvent.getHistoricalAxisValue(MotionEvent.AXIS_PRESSURE, i, historyIndex)
-                var orientationHistorical =
-                    mEvent.getHistoricalAxisValue(MotionEvent.AXIS_ORIENTATION, i, historyIndex)
-                var tiltHistorical =
-                    mEvent.getHistoricalAxisValue(MotionEvent.AXIS_TILT, i, historyIndex)
-                var distanceHistorical = mEvent.getHistoricalAxisValue(
-                    MotionEvent.AXIS_DISTANCE,
-                    i,
-                    historyIndex
-                ) // non funziona con M-Pencil di Huawei
-
-                var xHistorical = mEvent.getHistoricalX(i, historyIndex)
-                var yHistorical = mEvent.getHistoricalY(i, historyIndex)
-            }
-
-        }
-    }
-
-    fun makeInputDeviceAnalyzer(canvas: Canvas) {
-        var deviceIds = InputDevice.getDeviceIds()
-
-        for (deviceId in deviceIds) {
-            var inputDevice = InputDevice.getDevice(deviceId)
-            var descriptor = inputDevice.descriptor
-            var motionRanges = inputDevice.motionRanges
-
-        }
-    }
 
     /**
      * le funzioni seguenti avranno il prefisso calc-

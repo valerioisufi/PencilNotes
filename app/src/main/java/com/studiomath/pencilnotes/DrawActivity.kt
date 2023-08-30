@@ -50,7 +50,7 @@ class DrawActivity : AppCompatActivity() {
         drawImpostazioni = findViewById(R.id.drawImpostazioni)
 
         val drawMotionEvent = DrawMotionEvent(this, drawView)
-        drawView.setDrawMotioEvent(drawMotionEvent)
+        drawView.setDrawMotionEvent(drawMotionEvent)
 
 
         /*textViewData = findViewById(R.id.textViewData)

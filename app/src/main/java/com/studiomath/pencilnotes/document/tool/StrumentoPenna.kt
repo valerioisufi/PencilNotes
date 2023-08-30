@@ -31,6 +31,88 @@ class StrumentoPenna(var context: Context, var view: ImageView){
         }
     }
 
+
+    fun getPaint(): Paint {
+        val paintTemp = Paint().apply {
+            color = colorStrumento
+            // Smooths out edges of what is drawn without affecting shape.
+            isAntiAlias = true
+            // Dithering affects how colors with higher-precision than the device are down-sampled.
+            isDither = true
+            style = Paint.Style.STROKE // default: FILL
+            strokeJoin = Paint.Join.ROUND // default: MITER
+            strokeCap = Paint.Cap.ROUND // default: BUTT
+            strokeWidth = strokeWidthStrumento
+        }
+        return paintTemp
+    }
+
+    fun strumentiDialog() {
+        var dialog = Dialog(context)
+        dialog.setContentView(R.layout.dialog_draw_paint)
+
+        var window = dialog.window!!
+        window.setBackgroundDrawableResource(android.R.color.transparent)
+        window.setGravity(Gravity.CENTER)
+        window.attributes.windowAnimations = R.style.DialogAnimation
+
+        dialog.setCancelable(true)
+        window.setLayout(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        val coloreTrattoColorPickerView = dialog.findViewById<ColorWheel>(R.id.dialogDrawPaint_coloreTrattoColorPickerView)
+        val dimensioneTrattoSeekbar = dialog.findViewById<SeekBar>(R.id.dialogDrawPaint_dimensioneTrattoSeekbar)
+        val dimensioneTrattoTextView = dialog.findViewById<TextView>(R.id.dialogDrawPaint_dimensioneTrattoTextView)
+
+        coloreTrattoColorPickerView.color = colorStrumento
+        dimensioneTrattoSeekbar.progress = (strokeWidthStrumento * 10).toInt()
+        dimensioneTrattoTextView.text = (strokeWidthStrumento.toString() + "pt")
+
+        dialog.show()
+
+        dimensioneTrattoSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seek: SeekBar, progress: Int, fromUser: Boolean) {
+                var progressTemp = (progress * 0.1).toFloat()
+                strokeWidthStrumento = progressTemp
+
+                dimensioneTrattoTextView.text = (progressTemp.toString() + "pt")
+
+                with (sharedPref.edit()) {
+                    putFloat("strokePenna", strokeWidthStrumento)
+                    apply()
+                }
+            }
+            override fun onStartTrackingTouch(seek: SeekBar) {}
+            override fun onStopTrackingTouch(seek: SeekBar) {
+            }
+        })
+
+        coloreTrattoColorPickerView.setOnColorChangedListener(object : ColorWheel.OnColorChangedListener{
+            override fun onColorChanged(newColor: Int) {
+                //colorShowView.color = newColor
+                view.setColorFilter(newColor, android.graphics.PorterDuff.Mode.MULTIPLY)
+                colorStrumento = newColor
+
+                with (sharedPref.edit()) {
+                    putInt("colorPenna", newColor)
+                    apply()
+                }
+            }
+        })
+    }
+
+
+    /**
+     * Funzionalità penna
+     */
+
+    fun drawMotionTracciato(v: DrawView){
+
+    }
+
+
     /**
      * Gestione del MotionEvent
      */
@@ -107,81 +189,5 @@ class StrumentoPenna(var context: Context, var view: ImageView){
         v.draw(false, false)
 
         v.drawFile.writeXML()
-    }
-
-
-
-
-
-
-    fun getPaint(): Paint {
-        val paintTemp = Paint().apply {
-            color = colorStrumento
-            // Smooths out edges of what is drawn without affecting shape.
-            isAntiAlias = true
-            // Dithering affects how colors with higher-precision than the device are down-sampled.
-            isDither = true
-            style = Paint.Style.STROKE // default: FILL
-            strokeJoin = Paint.Join.ROUND // default: MITER
-            strokeCap = Paint.Cap.ROUND // default: BUTT
-            strokeWidth = strokeWidthStrumento
-        }
-        return paintTemp
-    }
-
-    fun strumentiDialog() {
-        var dialog = Dialog(context)
-        dialog.setContentView(R.layout.dialog_draw_paint)
-
-        var window = dialog.window!!
-        window.setBackgroundDrawableResource(android.R.color.transparent)
-        window.setGravity(Gravity.CENTER)
-        window.attributes.windowAnimations = R.style.DialogAnimation
-
-        dialog.setCancelable(true)
-        window.setLayout(
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-
-        val coloreTrattoColorPickerView = dialog.findViewById<ColorWheel>(R.id.dialogDrawPaint_coloreTrattoColorPickerView)
-        val dimensioneTrattoSeekbar = dialog.findViewById<SeekBar>(R.id.dialogDrawPaint_dimensioneTrattoSeekbar)
-        val dimensioneTrattoTextView = dialog.findViewById<TextView>(R.id.dialogDrawPaint_dimensioneTrattoTextView)
-
-        coloreTrattoColorPickerView.color = colorStrumento
-        dimensioneTrattoSeekbar.progress = (strokeWidthStrumento * 10).toInt()
-        dimensioneTrattoTextView.text = (strokeWidthStrumento.toString() + "pt")
-
-        dialog.show()
-
-        dimensioneTrattoSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seek: SeekBar, progress: Int, fromUser: Boolean) {
-                var progressTemp = (progress * 0.1).toFloat()
-                strokeWidthStrumento = progressTemp
-
-                dimensioneTrattoTextView.text = (progressTemp.toString() + "pt")
-
-                with (sharedPref.edit()) {
-                    putFloat("strokePenna", strokeWidthStrumento)
-                    apply()
-                }
-            }
-            override fun onStartTrackingTouch(seek: SeekBar) {}
-            override fun onStopTrackingTouch(seek: SeekBar) {
-            }
-        })
-
-        coloreTrattoColorPickerView.setOnColorChangedListener(object : ColorWheel.OnColorChangedListener{
-            override fun onColorChanged(newColor: Int) {
-                //colorShowView.color = newColor
-                view.setColorFilter(newColor, android.graphics.PorterDuff.Mode.MULTIPLY)
-                colorStrumento = newColor
-
-                with (sharedPref.edit()) {
-                    putInt("colorPenna", newColor)
-                    apply()
-                }
-            }
-        })
     }
 }
