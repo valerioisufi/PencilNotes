@@ -8,10 +8,10 @@ import android.util.Xml
 import java.io.StringWriter
 
 
-class FileManager(context: Context, nomeFile: String, cartellaFile: String = "") {
+class FileManager(filesDir: File, nomeFile: String, cartellaFile: String = "") {
     // creo l'oggetto File(), lo apro e lo leggo
-    var cartella: File = File(context.filesDir, cartellaFile)
-    var file: File = File(context.filesDir, "$cartellaFile/$nomeFile")
+    var cartella: File = File(filesDir, cartellaFile)
+    var file: File = File(filesDir, "$cartellaFile/$nomeFile")
     var justCreated = false
 
     // variabili che ospitano il testo contenuto nel file

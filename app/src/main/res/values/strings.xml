@@ -1,8 +1,4 @@
 <resources>
     <string name="app_name">PencilNotes</string>
-
-    <string name="preference_file_key">preference_file_key</string>
-    <string name="mode_penna">mode_penna</string>
-
-    <string name="activity_home_titolo">Documenti</string>
+    <string name="title_activity_draw">DrawActivity</string>
 </resources>
