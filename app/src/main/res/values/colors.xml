@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="gn_background_page">#FFFFFF</color>
+    <color name="gn_border_page">#d4d4d3</color>
+    <color name="gn_background_tools">#FFF6F0</color>
+    <color name="gn_border_tools">#dadbda</color>
+
+    <color name="bezier_curva">#000000</color>
+    <color name="bezier_punto_controlo">#BEFF4444</color>
+    <color name="bezier_linea_controlo">#8000DDFF</color>
+
+    <color name="strumento_penna">#002042</color>
+    <color name="strumento_evidenziatore">#40FFE500</color>
+
+    <color name="shadow">#BF959DA5</color>
+
+    <color name="riga">#4E4E4E</color>
+    <color name="margine">#78000F</color>
+
+    <color name="dialog_background_color">#F3F3F3</color>
+    <color name="white_black">#FFF</color>
+    <color name="black_white">#000</color>
+</resources>
