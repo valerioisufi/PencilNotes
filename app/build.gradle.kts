@@ -61,6 +61,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
 
+    implementation("androidx.graphics:graphics-core:1.0.0-alpha05")
     implementation("androidx.input:input-motionprediction:1.0.0-beta02")
 
     implementation("androidx.core:core-ktx:1.12.0")

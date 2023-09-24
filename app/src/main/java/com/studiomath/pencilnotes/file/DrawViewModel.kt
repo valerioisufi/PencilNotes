@@ -141,6 +141,10 @@ class DrawViewModel(
     }
 
     var pageIndexNow by mutableIntStateOf(0)
+    val pageNow: Page
+        get() {
+            return document.pages[pageIndexNow]
+        }
 
     init {
         fileManager = FileManager(filesDir, filePath)
@@ -156,7 +160,7 @@ class DrawViewModel(
             )
         }
         document = Json.decodeFromString(fileManager.text)
-        preparePage(pageIndexNow)
+//        preparePage(pageIndexNow)
     }
 
 
