@@ -16,7 +16,7 @@ class OnTouch(
     private var isStylusActive = true
 
     @SuppressLint("ClickableViewAccessibility")
-    val onTouchListener = View.OnTouchListener { view, event ->
+    val onTouchListener = View.OnTouchListener { _, event ->
 
         motionEventPredictor?.record(event)
 
@@ -88,6 +88,11 @@ class OnTouch(
                     drawViewModel.fastRenderer.frontBufferRenderer?.renderFrontBufferedLayer(Unit)
 
                 }
+
+                MotionEvent.ACTION_UP -> {
+                    drawViewModel.draw(redraw = true)
+
+                }
             }
 
             return@OnTouchListener true
@@ -105,6 +110,7 @@ class OnTouch(
          * eseguo lo scaling
          */
         if ((event.pointerCount == 1 || event.pointerCount == 2) && event.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS) {
+            drawViewModel.onScaleTranslate.onScaleTranslate(event)
 
         }
 

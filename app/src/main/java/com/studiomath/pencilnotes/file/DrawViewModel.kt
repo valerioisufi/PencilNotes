@@ -11,7 +11,11 @@ import android.util.DisplayMetrics
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.transform
 import androidx.lifecycle.ViewModel
+import com.studiomath.pencilnotes.R
+import com.studiomath.pencilnotes.document.DrawView
 import com.studiomath.pencilnotes.document.FastRenderer
 import com.studiomath.pencilnotes.document.page.Dimension
 import com.studiomath.pencilnotes.document.page.mm
@@ -43,10 +47,11 @@ class DrawViewModel(
     /**
      * invalidate drawView when onDrawBitmap change
      */
-    var onDrawBitmapChange: (() -> Unit)? = null
+    var onDrawBitmapChanged: (() -> Unit)? = null
 
-    private fun onDrawBitmapChanged() {
-        onDrawBitmapChange?.let { it() } // Raise the event here; any subscriber will receive this.
+    private fun updateDrawView() {
+        drawViewBitmap = Bitmap.createBitmap(onDrawBitmap)
+        onDrawBitmapChanged?.let { it() } // Raise the event here; any subscriber will receive this.
     }
 
     /**
@@ -256,6 +261,210 @@ class DrawViewModel(
     }
 
 
+
+
+
+    /**
+     * funzioni il cui compito è quello di disegnare il contenuto della View
+     */
+
+    var maxError = 0.3
+
+    var paint = Paint().apply {
+        color = Color.parseColor("#3F51B5")
+        // Smooths out edges of what is drawn without affecting shape.
+        isAntiAlias = true
+        // Dithering affects how colors with higher-precision than the device are down-sampled.
+        isDither = true
+        isFilterBitmap = true
+        strokeJoin = Paint.Join.ROUND // default: MITER
+        strokeCap = Paint.Cap.ROUND // default: BUTT
+        strokeWidth = 3f // default: Hairline-width (really thin)
+    }
+
+
+    var drawLastPathPaint = Paint(paint).apply {
+        style = Paint.Style.STROKE
+    }
+    lateinit var scalingPageRect: RectF
+
+
+    /**
+     * drawViewBitmap = ciò che viene mostrato a schermo
+     */
+    lateinit var drawViewBitmap: Bitmap
+
+    lateinit var onDrawBitmap: Bitmap
+    lateinit var redrawPageRect: RectF
+
+
+    lateinit var jobRedraw: Job
+//    var scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    fun draw(
+        redraw: Boolean = false,
+        scaling: Boolean = false,
+        changePage: Boolean = false,
+        makeCursore: Boolean = false,
+        dragAndDrop: Boolean = false
+    ) {
+        if (!::onDrawBitmap.isInitialized) return
+
+        if (redraw) {
+            if (::jobRedraw.isInitialized) jobRedraw.cancel()
+
+            jobRedraw = scope.launch {
+                redrawPageRect = calcPageRect()
+
+                /**
+                 * disegno la pagina sulla Bitmap
+                 */
+                onDrawBitmap = makePage(
+                    onDrawBitmap,
+                    redrawPageRect
+                )
+                windowMatrix =
+                    Matrix(document.pages[pageIndexNow].matrix)
+
+                updateDrawView()
+
+                /**
+                 * aggiorno la cache
+                 */
+                document.pages[pageIndexNow].bitmapPage =
+                    makePage(
+                        document.pages[pageIndexNow].bitmapPage!!,
+                        null
+                    )
+
+            }
+        } else if (scaling) {
+            if (::jobRedraw.isInitialized) jobRedraw.cancel()
+
+            scalingPageRect = calcPageRect()
+            val canvas = Canvas(onDrawBitmap)
+            canvas.drawColor(Color.WHITE)
+
+            /**
+             * make il colore di fondo della view
+             */
+            makePageBackground(canvas, scalingPageRect)
+
+            /**
+             * make lo sfondo bianco della pagina
+             */
+            // TODO: 31/12/2021 in seguito implementerò anche la possibilità di scegliere tra diversi tipi di pagine
+            val paintSfondoPaginaBianco = Paint().apply {
+                color = Color.WHITE
+                style = Paint.Style.FILL
+                setShadowLayer(
+                    document.pages[pageIndexNow].dimension!!.calcPxFromPt(
+                        24f,
+                        scalingPageRect.width().toInt()
+                    ),
+                    0f,
+                    8f,
+                    Color.parseColor("#BF959DA5")
+                )
+            }
+            canvas.drawRect(scalingPageRect, paintSfondoPaginaBianco)
+
+            /**
+             * trasformo e disegno la pagina intera memorizzata nella cache
+             */
+            canvas.drawBitmap(
+                document.pages[pageIndexNow].bitmapPage!!,
+                null,
+                scalingPageRect,
+                null
+            )
+
+            // TODO: non utilizzare onDrawBitmap ma una copia
+            // trasformo e disegno l'area di disegno già pronta
+            val startRect =
+                RectF(windowRect).apply { transform(windowMatrix) }
+            val endRect =
+                RectF(windowRect).apply { transform(moveMatrix) }
+
+            val windowMatrixTransform = Matrix().apply {
+                setRectToRect(startRect, endRect, Matrix.ScaleToFit.CENTER)
+            }
+//            canvas.drawBitmap(drawViewBitmap, windowMatrixTransform, null)
+
+            updateDrawView()
+
+        } else if (changePage) {
+            if (::jobRedraw.isInitialized) jobRedraw.cancel()
+
+            scalingPageRect = calcPageRect()
+            val canvas = Canvas(onDrawBitmap)
+
+            /**
+             * make il colore di fondo della view
+             */
+            makePageBackground(canvas, scalingPageRect)
+
+            /**
+             * make lo sfondo bianco della pagina
+             */
+            // TODO: 31/12/2021 in seguito implementerò anche la possibilità di scegliere tra diversi tipi di pagine
+            val paintSfondoPaginaBianco = Paint().apply {
+                color = Color.WHITE
+                style = Paint.Style.FILL
+                setShadowLayer(
+                    document.pages[pageIndexNow].dimension!!.calcPxFromPt(
+                        24f,
+                        scalingPageRect.width().toInt()
+                    ),
+                    0f,
+                    8f,
+                    Color.parseColor("#BF959DA5")
+                )
+            }
+            canvas.drawRect(scalingPageRect, paintSfondoPaginaBianco)
+
+            /**
+             * trasformo e disegno la pagina intera memorizzata nella cache
+             */
+            canvas.drawBitmap(
+                document.pages[pageIndexNow].bitmapPage!!,
+                null,
+                scalingPageRect,
+                null
+            )
+
+            updateDrawView()
+
+            draw(redraw = true)
+
+//        } else if (makeCursore) {
+//            if (::jobRedraw.isInitialized) jobRedraw.cancel()
+//
+//            redrawOnDraw = false
+//            scalingOnDraw = false
+//            changePageOnDraw = false
+//            makeCursoreOnDraw = true
+//            invalidate()
+//
+//        } else if (dragAndDrop) {
+//            if (::jobRedraw.isInitialized) jobRedraw.cancel()
+//
+//            redrawOnDraw = false
+//            scalingOnDraw = false
+//            changePageOnDraw = false
+//            makeCursoreOnDraw = false
+//            dragAndDropOnDraw = true
+//            invalidate()
+//
+//        } else {
+//            redrawOnDraw = false
+//            scalingOnDraw = false
+//            makeCursoreOnDraw = false
+//            invalidate()
+        }
+    }
+
+
     var activeTool = Stroke.StrokeType.PENNA
 
 
@@ -303,17 +512,17 @@ class DrawViewModel(
              */
             // TODO: 31/12/2021 in seguito implementerò anche la possibilità di scegliere tra diversi tipi di pagine
             val paintSfondoPaginaBianco = Paint().apply {
-                color = Color.parseColor("#FFFFFF")
+                color = Color.WHITE
                 style = Paint.Style.FILL
-//                setShadowLayer(
-//                    document.pages[pageIndex].dimension!!.calcPxFromPt(
-//                        24f,
-//                        rect.width().toInt()
-//                    ),
-//                    0f,
-//                    8f,
-//                    Color.parseColor("#BF959DA5")
-//                )
+                setShadowLayer(
+                    document.pages[pageIndex].dimension!!.calcPxFromPt(
+                        24f,
+                        rect.width().toInt()
+                    ),
+                    0f,
+                    8f,
+                    Color.parseColor("#BF959DA5")
+                )
             }
             canvas.drawRect(rect, paintSfondoPaginaBianco)
 
@@ -557,9 +766,29 @@ class DrawViewModel(
 //        }
 //    }
 
-
+    /**
+     * onSizeChanged
+     */
     private var widthView: Int = 0
     private var heightView: Int = 0
+
+    fun onSizeChanged(width: Int, height: Int) {
+
+        widthView = width
+        heightView = height
+
+        if (::drawViewBitmap.isInitialized) drawViewBitmap.recycle()
+        drawViewBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
+        if (::onDrawBitmap.isInitialized) onDrawBitmap.recycle()
+        onDrawBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
+        windowRect = RectF(0f, 0f, width.toFloat(), height.toFloat())
+//        redrawPageRect = calcPageRect()
+
+
+        draw(redraw = true, scaling = false)
+    }
 
     /**
      * le funzioni seguenti avranno il prefisso calc-

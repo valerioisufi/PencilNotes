@@ -64,7 +64,7 @@ class OnScaleTranslate(
     var isScaling = false
     var continueScaleTranslate = false
 
-    fun onScaleTranslate(event: MotionEvent, drawViewModel: DrawViewModel) {
+    fun onScaleTranslate(event: MotionEvent) {
         /**
          * funzione che si occupa dello scale e dello spostamento
          */
@@ -173,8 +173,8 @@ class OnScaleTranslate(
                 /**
                  * translate max/min
                  */
-                val pageRectNow = calcPageRect(matrix = drawViewModel.moveMatrix)
-                val pageRectModel = calcPageRect(matrix = Matrix())
+                val pageRectNow = drawViewModel.calcPageRect(matrix = drawViewModel.moveMatrix)
+                val pageRectModel = drawViewModel.calcPageRect(matrix = Matrix())
 
                 if (pageRectNow.left + translate.x >= pageRectModel.left) {
                     translate.x = pageRectModel.left - pageRectNow.left
@@ -196,7 +196,8 @@ class OnScaleTranslate(
 
                 drawViewModel.document.pages[drawViewModel.pageIndexNow].matrix =
                     Matrix(drawViewModel.moveMatrix)
-//                    draw(scaling = true)
+
+                drawViewModel.draw(scaling = true)
 
             }
 
@@ -224,7 +225,7 @@ class OnScaleTranslate(
             }
 
             MotionEvent.ACTION_UP -> {
-//                    draw(redraw = true)
+                drawViewModel.draw(redraw = true)
 
             }
         }

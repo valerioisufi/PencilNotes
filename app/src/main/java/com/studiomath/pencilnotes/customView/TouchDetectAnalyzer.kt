@@ -117,7 +117,7 @@ class TouchDetectAnalyzer(context: Context, attrs: AttributeSet) : View(context,
 
             if (toolType == MotionEvent.TOOL_TYPE_STYLUS) {
                 var stylusPath = Path().apply {
-                    addCircle(x, y, dpToPx(context, 30) * pressure, Path.Direction.CW)
+                    addCircle(x, y, dpToPx(30f, resources.displayMetrics) * pressure, Path.Direction.CW)
                 }
 
                 canvas.drawPath(stylusPath, Paint(paint).apply {
