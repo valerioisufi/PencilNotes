@@ -11,11 +11,8 @@ import android.util.DisplayMetrics
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.transform
 import androidx.lifecycle.ViewModel
-import com.studiomath.pencilnotes.R
-import com.studiomath.pencilnotes.document.DrawView
 import com.studiomath.pencilnotes.document.FastRenderer
 import com.studiomath.pencilnotes.document.page.Dimension
 import com.studiomath.pencilnotes.document.page.mm
@@ -49,7 +46,7 @@ class DrawViewModel(
      */
     var onDrawBitmapChanged: (() -> Unit)? = null
 
-    private fun updateDrawView() {
+    fun updateDrawView() {
         drawViewBitmap = Bitmap.createBitmap(onDrawBitmap)
         onDrawBitmapChanged?.let { it() } // Raise the event here; any subscriber will receive this.
     }
@@ -80,6 +77,8 @@ class DrawViewModel(
         data class Point(
             var x: Float = 0f, var y: Float = 0f
         ) {
+            var size: Float = 8f
+
             var pressure: Float? = null
             var tilt: Float? = null
             var orientation: Float? = null
@@ -259,9 +258,6 @@ class DrawViewModel(
         return if (document.resources[resourceId.toInt()].type == Resource.ResourceType.COLOR)
             document.resources[resourceId.toInt()].content.toInt() else 0xFFFFFF
     }
-
-
-
 
 
     /**

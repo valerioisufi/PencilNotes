@@ -40,14 +40,14 @@ class FastRenderer(
         bufferHeight: Int,
         param: Unit
     ) {
-        paint.apply {
+//        paint.apply {
 //            color = lastPath.paint.color
 
 //            strokeWidth = drawViewModel.pageNow.dimension!!.calcPxFromPt(
 //                8f,
 //                pageRect.width().toInt()
 //            )
-        }
+//        }
 
 //        canvas.drawPath(stringToPath(lastPath.path), drawLastPathPaint)
 
@@ -56,9 +56,11 @@ class FastRenderer(
 //            stringToPath(pathFitCurve(lastPath.path, errorCalc)),
 //            drawLastPathPaint
 //        )
+//
+//        val path = drawViewModel.computePath()
+//        canvas.drawPath(path, paint)
 
-        val path = drawViewModel.computePath()
-        canvas.drawPath(path, paint)
+
     }
 
     override fun onDrawMultiBufferedLayer(

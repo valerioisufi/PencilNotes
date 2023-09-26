@@ -1,10 +1,12 @@
 package com.studiomath.pencilnotes.document.touch
 
 import android.annotation.SuppressLint
+import android.graphics.Canvas
 import android.view.MotionEvent
 import android.view.View
 import androidx.input.motionprediction.MotionEventPredictor
 import com.studiomath.pencilnotes.document.FastRenderer
+import com.studiomath.pencilnotes.document.stroke.StrokeRenderer
 import com.studiomath.pencilnotes.file.DrawViewModel
 
 class OnTouch(
@@ -12,12 +14,12 @@ class OnTouch(
 ) {
 
     var motionEventPredictor: MotionEventPredictor? = null
-
     private var isStylusActive = true
+
+    private var strokeRenderer : StrokeRenderer? = null
 
     @SuppressLint("ClickableViewAccessibility")
     val onTouchListener = View.OnTouchListener { _, event ->
-
         motionEventPredictor?.record(event)
 
         if (event.action == MotionEvent.ACTION_DOWN) drawViewModel.onScaleTranslate.continueScaleTranslate = false
@@ -44,6 +46,22 @@ class OnTouch(
                             tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
                         }
                     )
+
+                    /**
+                     * strokeRenderer
+                     */
+                    val point = DrawViewModel.Stroke.Point(
+                        event.x, event.y
+                    ).apply {
+                        pressure = event.getAxisValue(MotionEvent.AXIS_PRESSURE)
+                        orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
+                        tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
+                    }
+                    strokeRenderer = StrokeRenderer(10, DrawViewModel.Stroke.StrokeType.PENNA)
+
+                    strokeRenderer!!.addPointInternal(point)
+                    strokeRenderer!!.renderPoints(Canvas(drawViewModel.onDrawBitmap), drawViewModel.paint)
+                    drawViewModel.updateDrawView()
                 }
 
                 MotionEvent.ACTION_MOVE -> {
@@ -82,6 +100,21 @@ class OnTouch(
                             tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
                         }
                     )
+
+                    /**
+                     * strokeRenderer
+                     */
+                    val point = DrawViewModel.Stroke.Point(
+                        event.x, event.y
+                    ).apply {
+                        pressure = event.getAxisValue(MotionEvent.AXIS_PRESSURE)
+                        orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
+                        tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
+                    }
+
+                    strokeRenderer!!.addPointInternal(point)
+                    strokeRenderer!!.renderPoints(Canvas(drawViewModel.onDrawBitmap), drawViewModel.paint)
+                    drawViewModel.updateDrawView()
 
                     val motionEventPredicted = motionEventPredictor?.predict()
 
