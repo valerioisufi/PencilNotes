@@ -1,4 +1,4 @@
-package com.studiomath.pencilnotes.document.path
+package com.studiomath.pencilnotes.document.stroke
 
 import android.graphics.Path
 

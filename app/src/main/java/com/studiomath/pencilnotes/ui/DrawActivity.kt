@@ -45,7 +45,9 @@ class DrawActivity : ComponentActivity() {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return DrawViewModel(
-                        filePath = "$filePath", filesDir = filesDir
+                        filePath = "$filePath",
+                        filesDir = filesDir,
+                        displayMetrics = resources.displayMetrics
                     ) as T
                 }
             }

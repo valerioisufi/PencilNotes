@@ -1,21 +1,7 @@
 package com.studiomath.pencilnotes.document.tool
 
-import android.app.Dialog
 import android.content.Context
-import android.graphics.Paint
-import android.view.Gravity
-import android.view.MotionEvent
-import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.SeekBar
-import android.widget.TextView
-import androidx.core.content.res.ResourcesCompat
-import com.studiomath.pencilnotes.R
-import com.studiomath.pencilnotes.customView.ColorWheel
-import com.studiomath.pencilnotes.document.DrawView
-import com.studiomath.pencilnotes.document.path.pathFitCurve
-import com.studiomath.pencilnotes.dpToPx
-import kotlin.math.abs
 
 class StrumentoEvidenziatore(var context: Context, var view: ImageView) {
 //    // variabili con i valori dell'oggetto, stroke (pt) e color

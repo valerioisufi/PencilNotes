@@ -1,13 +1,7 @@
 package com.studiomath.pencilnotes.document.tool
 
 import android.content.Context
-import android.graphics.Paint
-import android.view.MotionEvent
 import android.widget.ImageView
-import androidx.core.content.res.ResourcesCompat
-import com.studiomath.pencilnotes.R
-import com.studiomath.pencilnotes.document.DrawView
-import com.studiomath.pencilnotes.document.path.pathFitCurve
 
 class StrumentoGomma(var context: Context, var view: ImageView) {
 //    // variabili con i valori dell'oggetto, stroke (pt) e color

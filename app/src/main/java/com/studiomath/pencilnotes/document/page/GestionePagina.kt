@@ -22,7 +22,7 @@ package com.studiomath.pencilnotes.document.page
 //        var paintString = ""
 //        var rectString = ""
 //
-//        var pathObject: Path? = null
+//        var pathObject: Stroke? = null
 //        var paintObject: Paint? = null
 //        var rectObject: RectF? = null
 //

@@ -5,36 +5,53 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.graphics.Path as AndroidPath
-import android.graphics.PointF
-import android.graphics.Rect
+import android.graphics.Path
 import android.graphics.RectF
-import android.graphics.pdf.PdfRenderer
-import android.os.ParcelFileDescriptor
+import android.util.DisplayMetrics
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.ViewModel
+import com.studiomath.pencilnotes.document.FastRenderer
 import com.studiomath.pencilnotes.document.page.Dimension
-import com.studiomath.pencilnotes.document.page.RigaturaQuadrettatura
 import com.studiomath.pencilnotes.document.page.mm
 import com.studiomath.pencilnotes.document.page.risoluzionePxInchPagePredefinito
+import com.studiomath.pencilnotes.document.touch.OnDrag
+import com.studiomath.pencilnotes.document.touch.OnScaleTranslate
+import com.studiomath.pencilnotes.document.touch.OnTouch
 import com.studiomath.pencilnotes.dpToPx
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
-import kotlin.math.pow
 import kotlin.math.sqrt
+import android.graphics.Path as AndroidPath
 
 class DrawViewModel(
-    filesDir: File, var filePath: String
+    val filesDir: File,
+    var filePath: String,
+    var displayMetrics: DisplayMetrics
 ) : ViewModel() {
 
+    /**
+     * invalidate drawView when onDrawBitmap change
+     */
+    var onDrawBitmapChange: (() -> Unit)? = null
+
+    private fun onDrawBitmapChanged() {
+        onDrawBitmapChange?.let { it() } // Raise the event here; any subscriber will receive this.
+    }
+
+    /**
+     * data class for document data
+     */
     @Serializable
     data class Resource(val id: String, var type: ResourceType) {
         enum class ResourceType {
@@ -49,8 +66,8 @@ class DrawViewModel(
     }
 
     @Serializable
-    data class Path(val zIndex: Int, var type: PathType) {
-        enum class PathType {
+    data class Stroke(val zIndex: Int, var type: StrokeType) {
+        enum class StrokeType {
             PENNA, EVIDENZIATORE
         }
 
@@ -107,7 +124,7 @@ class DrawViewModel(
         /**
          * grafica contenuta nella pagina
          */
-        val pathData = mutableListOf<Path>()
+        val strokeData = mutableListOf<Stroke>()
         val imageData = mutableListOf<Image>()
         val pdfData = mutableListOf<Pdf>()
     }
@@ -118,14 +135,18 @@ class DrawViewModel(
         val resources = mutableListOf<Resource>() // key = resourceId
     }
 
-
+    /**
+     * gestione documento
+     */
     fun preparePage(pageIndex: Int) {
         document.pages[pageIndex].apply {
             dimension = Dimension(width.mm, height.mm)
 
             bitmapPage = Bitmap.createBitmap(
-                dimension!!.calcWidthFromRisoluzionePxInch(risoluzionePxInchPagePredefinito).toInt(),
-                dimension!!.calcHeightFromRisoluzionePxInch(risoluzionePxInchPagePredefinito).toInt(),
+                dimension!!.calcWidthFromRisoluzionePxInch(risoluzionePxInchPagePredefinito)
+                    .toInt(),
+                dimension!!.calcHeightFromRisoluzionePxInch(risoluzionePxInchPagePredefinito)
+                    .toInt(),
                 Bitmap.Config.ARGB_8888
             )
             canvasPage = Canvas(bitmapPage!!)
@@ -146,6 +167,9 @@ class DrawViewModel(
             return document.pages[pageIndexNow]
         }
 
+    private var jobPrepareBitmapPage: Job
+    var scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
     init {
         fileManager = FileManager(filesDir, filePath)
         if (fileManager.justCreated) {
@@ -160,27 +184,58 @@ class DrawViewModel(
             )
         }
         document = Json.decodeFromString(fileManager.text)
-//        preparePage(pageIndexNow)
+
+        preparePage(pageIndexNow)
+        jobPrepareBitmapPage = scope.launch {
+            for ((index, page) in document.pages.withIndex()) {
+                preparePage(index)
+
+                /**
+                 * aggiorno la cache
+                 */
+                page.bitmapPage = makePage(
+                    page.bitmapPage!!,
+                    null,
+                    page.index
+                )
+            }
+        }
     }
 
 
     fun addPathData(
         isLastPath: Boolean = false,
-        pathType: Path.PathType = Path.PathType.PENNA,
-        point: Path.Point
+        strokeType: Stroke.StrokeType = Stroke.StrokeType.PENNA,
+        point: Stroke.Point
     ) {
         if (isLastPath) {
-            document.pages[pageIndexNow].pathData.last().points.add(point)
+            document.pages[pageIndexNow].strokeData.last().points.add(point)
         } else {
-            document.pages[pageIndexNow].pathData.add(
-                Path(
+            document.pages[pageIndexNow].strokeData.add(
+                Stroke(
                     zIndex = 100,
-                    type = pathType
+                    type = strokeType
                 ).apply {
                     points.add(point)
                 }
             )
         }
+    }
+
+
+    fun computePath(pathIndex: Int = document.pages[pageIndexNow].strokeData.lastIndex): Path {
+        val path: Path = Path().apply {
+            for ((index, point) in document.pages[pageIndexNow].strokeData[pathIndex].points.withIndex()) {
+                if (index == 0) {
+                    moveTo(point.x, point.y)
+                } else
+                    lineTo(point.x, point.y)
+            }
+
+        }
+        return path
+
+
     }
 
     fun addColorResource(color: Int) {
@@ -201,8 +256,11 @@ class DrawViewModel(
     }
 
 
+    var activeTool = Stroke.StrokeType.PENNA
+
 
     lateinit var windowRect: RectF
+
     /**
      * le funzioni seguenti avranno il
      * prefisso make- semplicemente per distinguerle
@@ -247,15 +305,15 @@ class DrawViewModel(
             val paintSfondoPaginaBianco = Paint().apply {
                 color = Color.parseColor("#FFFFFF")
                 style = Paint.Style.FILL
-                setShadowLayer(
-                    document.pages[pageIndex].dimension!!.calcPxFromPt(
-                        24f,
-                        rect.width().toInt()
-                    ),
-                    0f,
-                    8f,
-                    Color.parseColor("#BF959DA5")
-                )
+//                setShadowLayer(
+//                    document.pages[pageIndex].dimension!!.calcPxFromPt(
+//                        24f,
+//                        rect.width().toInt()
+//                    ),
+//                    0f,
+//                    8f,
+//                    Color.parseColor("#BF959DA5")
+//                )
             }
             canvas.drawRect(rect, paintSfondoPaginaBianco)
 
@@ -369,7 +427,7 @@ class DrawViewModel(
              */
             // TODO: 31/12/2021 poi valuterò l'idea di utlizzare una funzione a parte che richiama i metodi make- dei singoli strumenti
 //            preparePage(pageIndex)
-//            for (path in document.pages[pageIndex].pathData) {
+//            for (path in document.pages[pageIndex].strokeData) {
 //                val pathTracciato: AndroidPath = stringToPath(tracciato.pathString)
 //                val paintTracciato: Paint = Paint(tracciato.paintObject!!).apply {
 //                    strokeWidth = drawFile.body[pageIndex].dimensioni.calcPxFromPt(
@@ -500,96 +558,56 @@ class DrawViewModel(
 //    }
 
 
+    private var widthView: Int = 0
+    private var heightView: Int = 0
+
     /**
      * le funzioni seguenti avranno il prefisso calc-
      * e il loro scopo è quello di determinare alcune
      * caratteristiche della pagina
      */
-//    fun calcPageRect(
-//        matrix: Matrix = document.pages[pageIndexNow].matrix,
-//        paddingDp: Int = 8
-//    ): RectF {
-//        val padding = dpToPx(context, paddingDp).toFloat()
-//
-//        var onWidth = true
-//        var widthPage = widthView - padding * 2
-//        var heightPage = (widthPage * sqrt(2.0)).toFloat()
-//        if (heightPage + padding * 2 > heightView) {
-//            onWidth = false
-//            heightPage = heightView - padding * 2
-//            widthPage = (heightPage / sqrt(2.0)).toFloat()
-//        }
-//
-//        var left = padding
-//        var top = padding
-//        var right = (padding + widthPage)
-//        var bottom = (padding + heightPage)
-//
-//        if (onWidth) {
-//            top = (heightView - heightPage) / 2
-//            bottom = top + heightPage
-//        } else {
-//            left = (widthView - widthPage) / 2
-//            right = left + widthPage
-//        }
-//
-//        val rect = RectF(left, top, right, bottom)
-//        matrix.mapRect(rect)
-//
-//        return rect
-//    }
+    fun calcPageRect(
+        matrix: Matrix = document.pages[pageIndexNow].matrix,
+        paddingDp: Float = 8f
+    ): RectF {
+        val padding = dpToPx(paddingDp, displayMetrics).toFloat()
 
+        var onWidth = true
+        var widthPage = widthView - padding * 2
+        var heightPage = (widthPage * sqrt(2.0)).toFloat()
+        if (heightPage + padding * 2 > heightView) {
+            onWidth = false
+            heightPage = heightView - padding * 2
+            widthPage = (heightPage / sqrt(2.0)).toFloat()
+        }
 
-    /**
-     * variabili e funzioni necessarie per il regolare funzionamento di DrawView
-     */
+        var left = padding
+        var top = padding
+        var right = (padding + widthPage)
+        var bottom = (padding + heightPage)
 
-    /**
-     * scale e translate
-     */
+        if (onWidth) {
+            top = (heightView - heightPage) / 2
+            bottom = top + heightPage
+        } else {
+            left = (widthView - widthPage) / 2
+            right = left + widthPage
+        }
 
-    var windowMatrix = Matrix()
-    var startMatrix = Matrix()
-    var moveMatrix = Matrix()
+        val rect = RectF(left, top, right, bottom)
+        matrix.mapRect(rect)
 
-    class MatrixTransformation() {
-        var pointers = mutableListOf<PointF>()
-            set(value) {
-                field = value
-
-                if (value.size == 1) {
-                    distance = 1f
-                    focusPos = PointF(
-                        pointers[0].x,
-                        pointers[0].y
-                    )
-
-                } else if (value.size == 2) {
-                    distance = sqrt(
-                        (pointers[1].x - pointers[0].x).pow(2) + (pointers[1].y - pointers[0].y).pow(
-                            2
-                        )
-                    )
-                    focusPos = PointF(
-                        (pointers[0].x + pointers[1].x) / 2,
-                        (pointers[0].y + pointers[1].y) / 2
-                    )
-
-                }
-            }
-
-        var distance = 1f
-        var focusPos = PointF()
+        return rect
     }
 
-    var down = MatrixTransformation()
-    var move = MatrixTransformation()
+    var windowMatrix = Matrix()
+    var moveMatrix = Matrix()
 
-    val FIRST_POINTER_INDEX = 0
-    val SECOND_POINTER_INDEX = 1
 
-    var translate = PointF(0f, 0f)
-    var scaleFactor = 1f
+    var fastRenderer: FastRenderer = FastRenderer(this)
+    var onTouch = OnTouch(this)
+    var onScaleTranslate = OnScaleTranslate(this)
+    var onDrag = OnDrag(this)
 
-    var isScaling = false
+
 }
