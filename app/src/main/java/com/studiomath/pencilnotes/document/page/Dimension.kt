@@ -2,7 +2,7 @@ package com.studiomath.pencilnotes.document.page
 
 import android.graphics.RectF
 
-var risoluzionePxInchPagePredefinito = 160
+var risoluzionePxInchPagePredefinito = 1200
 
 class Measure(size: Float, type: Unit) {
     enum class Unit {

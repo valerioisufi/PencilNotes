@@ -11,16 +11,16 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 
-class StrokeRenderer(stroke: DrawViewModel.Stroke) {
+class StrokeRenderer(var stroke: DrawViewModel.Stroke) {
     constructor(zIndex: Int, type: DrawViewModel.Stroke.StrokeType) : this(
         DrawViewModel.Stroke(
             zIndex, type
         )
     )
 
-    private val TOLERANCE = 5f
+    private val TOLERANCE = 3f
 
-    private val mSegments = 5
+    private val mSegments = 10
     private val mTension = .5f
 
     private val mTensionVector1 = PointF()
@@ -28,13 +28,15 @@ class StrokeRenderer(stroke: DrawViewModel.Stroke) {
 
     private val mPoints = RingBuffer<DrawViewModel.Stroke.Point>(4)
 
+    var pointPredicted: DrawViewModel.Stroke.Point? = null
+
     fun addPointInternal(point: DrawViewModel.Stroke.Point): Boolean {
         val prevPoint: DrawViewModel.Stroke.Point?
         if (mPoints.size > 0) {
             prevPoint = mPoints.last
-//            if ((abs(prevPoint!!.x - point.x) < TOLERANCE) && (abs(prevPoint.y - point.y) < TOLERANCE)) {
-//                return false
-//            }
+            if (sqrt((prevPoint!!.x - point.x).pow(2) + (prevPoint.y - point.y).pow(2)) < TOLERANCE) {
+                return false
+            }
         }
 
         mPoints.add(point)
@@ -54,6 +56,59 @@ class StrokeRenderer(stroke: DrawViewModel.Stroke) {
         val p1: DrawViewModel.Stroke.Point = mPoints[1]!!
         val p2: DrawViewModel.Stroke.Point = mPoints[2]!!
         val pp: DrawViewModel.Stroke.Point = mPoints[3]!!
+
+        mTensionVector1.x = (p2.x - pn.x) * mTension
+        mTensionVector1.y = (p2.y - pn.y) * mTension
+        mTensionVector2.x = (pp.x - p1.x) * mTension
+        mTensionVector2.y = (pp.y - p1.y) * mTension
+
+        val dx = pp.x - p2.x
+        val dy = pp.y - p2.y
+        val segmentsCount: Int =
+                (sqrt(dx.pow(2) + dy.pow(2)) * (1 / (mSegments).toFloat()) + 0.5).toInt() + 2
+
+        for (index in 0 until segmentsCount) {
+            val progress = index / (segmentsCount - 1).toFloat()
+
+            val pow2 = progress.toDouble().pow(2.0).toFloat()
+            val pow3 = pow2 * progress
+            val pow23 = pow2 * 3
+            val pow32 = pow3 * 2
+
+            val c1 = pow32 - pow23 + 1
+            val c2 = pow23 - pow32
+            val c3 = pow3 - 2 * pow2 + progress
+            val c4 = pow3 - pow2
+
+            val x: Float = c1 * p1.x + c2 * p2.x + c3 * mTensionVector1.x + c4 * mTensionVector2.x
+            val y: Float = c1 * p1.y + c2 * p2.y + c3 * mTensionVector1.y + c4 * mTensionVector2.y
+
+            if (index > 0) {
+                paint.strokeWidth =
+                    (stroke.width * p1.pressure!!) + ((stroke.width * p2.pressure!!) - (stroke.width * p1.pressure!!)) * progress
+                canvas.drawLine(lastX, lastY, x, y, paint)
+            }
+
+            lastX = x
+            lastY = y
+        }
+
+        return true
+    }
+
+    fun renderPredictedPoint(canvas: Canvas, paint: Paint): Boolean {
+        if ((mPoints.size < 4) && (pointPredicted == null)) {
+            return false
+        }
+        var lastX = 0f
+        var lastY = 0f
+
+        paint.strokeCap = Paint.Cap.ROUND
+
+        val pn: DrawViewModel.Stroke.Point = mPoints[1]!!
+        val p1: DrawViewModel.Stroke.Point = mPoints[2]!!
+        val p2: DrawViewModel.Stroke.Point = mPoints[3]!!
+        val pp: DrawViewModel.Stroke.Point = pointPredicted!!
 
         mTensionVector1.x = (p2.x - pn.x) * mTension
         mTensionVector1.y = (p2.y - pn.y) * mTension
@@ -89,7 +144,7 @@ class StrokeRenderer(stroke: DrawViewModel.Stroke) {
 
             if (index > 0) {
                 paint.strokeWidth =
-                    (p1.size * p1.pressure!!) + ((p2.size * p2.pressure!!) - (p1.size * p1.pressure!!)) * progress
+                    (stroke.width * p1.pressure!!) + ((stroke.width * p2.pressure!!) - (stroke.width * p1.pressure!!)) * progress + stroke.width/2
                 canvas.drawLine(lastX, lastY, x, y, paint)
             }
 
@@ -98,6 +153,15 @@ class StrokeRenderer(stroke: DrawViewModel.Stroke) {
         }
 
         return true
+
+    }
+
+    fun renderStroke(canvas: Canvas, paint: Paint){
+        for(point in stroke.points){
+            addPointInternal(point)
+            renderPoints(canvas, paint)
+        }
+
     }
 
 

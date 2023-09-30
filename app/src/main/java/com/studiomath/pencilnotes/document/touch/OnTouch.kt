@@ -14,12 +14,12 @@ class OnTouch(
 ) {
 
     var motionEventPredictor: MotionEventPredictor? = null
-    private var isStylusActive = true
+    private var isStylusActive = false
 
     private var strokeRenderer : StrokeRenderer? = null
 
     @SuppressLint("ClickableViewAccessibility")
-    val onTouchListener = View.OnTouchListener { _, event ->
+    val onTouchListener = View.OnTouchListener { view, event ->
         motionEventPredictor?.record(event)
 
         if (event.action == MotionEvent.ACTION_DOWN) drawViewModel.onScaleTranslate.continueScaleTranslate = false
@@ -32,9 +32,6 @@ class OnTouch(
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    // Ask that the input system not batch MotionEvents
-                    // but instead deliver them as soon as they're available
-//                  view.requestUnbufferedDispatch(event)
 
                     drawViewModel.addPathData(
                         strokeType = drawViewModel.activeTool,
@@ -58,10 +55,8 @@ class OnTouch(
                         tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
                     }
                     strokeRenderer = StrokeRenderer(10, DrawViewModel.Stroke.StrokeType.PENNA)
-
-                    strokeRenderer!!.addPointInternal(point)
-                    strokeRenderer!!.renderPoints(Canvas(drawViewModel.onDrawBitmap), drawViewModel.paint)
-                    drawViewModel.updateDrawView()
+                    if (strokeRenderer!!.addPointInternal(point))
+                        drawViewModel.fastRenderer.frontBufferRenderer?.renderFrontBufferedLayer(strokeRenderer!!)
                 }
 
                 MotionEvent.ACTION_MOVE -> {
@@ -112,13 +107,21 @@ class OnTouch(
                         tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
                     }
 
-                    strokeRenderer!!.addPointInternal(point)
-                    strokeRenderer!!.renderPoints(Canvas(drawViewModel.onDrawBitmap), drawViewModel.paint)
-                    drawViewModel.updateDrawView()
 
-                    val motionEventPredicted = motionEventPredictor?.predict()
+                    val eventPredicted = motionEventPredictor?.predict()
+                    if(eventPredicted != null){
+                        val pointPredicted = DrawViewModel.Stroke.Point(
+                            eventPredicted.x, eventPredicted.y
+                        ).apply {
+                            pressure = eventPredicted.getAxisValue(MotionEvent.AXIS_PRESSURE)
+                            orientation = eventPredicted.getAxisValue(MotionEvent.AXIS_ORIENTATION)
+                            tilt = eventPredicted.getAxisValue(MotionEvent.AXIS_TILT)
+                        }
+                        strokeRenderer!!.pointPredicted = pointPredicted
+                    }
 
-                    drawViewModel.fastRenderer.frontBufferRenderer?.renderFrontBufferedLayer(Unit)
+                    if (strokeRenderer!!.addPointInternal(point))
+                        drawViewModel.fastRenderer.frontBufferRenderer?.renderFrontBufferedLayer(strokeRenderer!!)
 
                 }
 

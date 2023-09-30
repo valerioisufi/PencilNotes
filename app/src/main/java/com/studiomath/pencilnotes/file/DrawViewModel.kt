@@ -17,6 +17,7 @@ import com.studiomath.pencilnotes.document.FastRenderer
 import com.studiomath.pencilnotes.document.page.Dimension
 import com.studiomath.pencilnotes.document.page.mm
 import com.studiomath.pencilnotes.document.page.risoluzionePxInchPagePredefinito
+import com.studiomath.pencilnotes.document.stroke.StrokeRenderer
 import com.studiomath.pencilnotes.document.touch.OnDrag
 import com.studiomath.pencilnotes.document.touch.OnScaleTranslate
 import com.studiomath.pencilnotes.document.touch.OnTouch
@@ -69,6 +70,10 @@ class DrawViewModel(
 
     @Serializable
     data class Stroke(val zIndex: Int, var type: StrokeType) {
+        fun transform(pathStrokeMatrix: Matrix) {
+
+        }
+
         enum class StrokeType {
             PENNA, EVIDENZIATORE
         }
@@ -77,14 +82,13 @@ class DrawViewModel(
         data class Point(
             var x: Float = 0f, var y: Float = 0f
         ) {
-            var size: Float = 8f
-
             var pressure: Float? = null
             var tilt: Float? = null
             var orientation: Float? = null
         }
 
         var points = mutableListOf<Point>()
+        var width: Float = 8f
         var color: Int = 0xFFFFFF
     }
 
@@ -323,6 +327,8 @@ class DrawViewModel(
                     Matrix(document.pages[pageIndexNow].matrix)
 
                 updateDrawView()
+                // TODO("non funziona")
+                fastRenderer.clear()
 
                 /**
                  * aggiorno la cache
@@ -631,23 +637,28 @@ class DrawViewModel(
              * make tracciati
              */
             // TODO: 31/12/2021 poi valuterò l'idea di utlizzare una funzione a parte che richiama i metodi make- dei singoli strumenti
-//            preparePage(pageIndex)
-//            for (path in document.pages[pageIndex].strokeData) {
-//                val pathTracciato: AndroidPath = stringToPath(tracciato.pathString)
-//                val paintTracciato: Paint = Paint(tracciato.paintObject!!).apply {
-//                    strokeWidth = drawFile.body[pageIndex].dimensioni.calcPxFromPt(
-//                        strokeWidth,
-//                        rect.width().toInt()
-//                    )
-//                }
+            preparePage(pageIndex)
+            for (stroke in document.pages[pageIndex].strokeData) {
+
+                val strokePaint: Paint = Paint(paint).apply {
+                    strokeWidth = document.pages[pageIndex].dimension!!.calcPxFromPt(
+                        stroke.width,
+                        rect.width().toInt()
+                    )
+                }
 //                val rectTracciato: RectF = tracciato.rectObject!!
-//
+
 //                val pathTracciatoMatrix = Matrix().apply {
 //                    setRectToRect(rectTracciato, rect, Matrix.ScaleToFit.CENTER)
 //                }
 //                pathTracciato.transform(pathTracciatoMatrix)
+
+                val strokeRenderer = StrokeRenderer(stroke)
+                strokeRenderer.renderStroke(canvas, strokePaint)
 //                canvas.drawPath(pathTracciato, paintTracciato)
-//            }
+
+
+            }
 
 
             /**
@@ -687,35 +698,40 @@ class DrawViewModel(
 
     }
 
-    fun makeSingleTracciato(pathString: String, paintObject: Paint) {
-//        val pathObject = stringToPath(pathString)
-//
-//        val onDrawCanvas = Canvas(onDrawBitmap)
-//        onDrawCanvas.clipRect(redrawPageRect)
-//        onDrawCanvas.drawPath(pathObject, Paint(paintObject).apply {
-//            strokeWidth = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
-//                paintObject.strokeWidth,
-//                redrawPageRect.width().toInt()
-//            )
-//        })
-//
-//        val onScalingCanvas = Canvas(drawFile.body[pageAttuale].bitmapPage)
-//        val dstRect = RectF().apply {
-//            left = 0f
-//            top = 0f
-//            right = document.pages[pageAttuale].bitmapPage.width.toFloat()
-//            bottom = document.pages[pageAttuale].bitmapPage.height.toFloat()
-//        }
-//        val pathTracciatoMatrix = Matrix().apply {
-//            setRectToRect(redrawPageRect, dstRect, Matrix.ScaleToFit.CENTER)
-//        }
-//        pathObject.transform(pathTracciatoMatrix)
-//        onScalingCanvas.drawPath(pathObject, Paint(paintObject).apply {
-//            strokeWidth = drawFile.body[pageAttuale].dimensioni.calcPxFromPt(
-//                paintObject.strokeWidth,
-//                drawFile.body[pageAttuale].bitmapPage.width
-//            )
-//        })
+    fun makeStroke(strokeRenderer: StrokeRenderer, paint: Paint) {
+
+        val onDrawCanvas = Canvas(onDrawBitmap)
+        onDrawCanvas.clipRect(redrawPageRect)
+
+        var strokePaint = Paint(paint).apply {
+            strokeWidth = document.pages[pageIndexNow].dimension!!.calcPxFromPt(
+                paint.strokeWidth,
+                redrawPageRect.width().toInt()
+            )
+        }
+        strokeRenderer.renderStroke(onDrawCanvas, strokePaint)
+
+        val onScalingCanvas = Canvas(document.pages[pageIndexNow].bitmapPage!!)
+        val dstRect = RectF().apply {
+            left = 0f
+            top = 0f
+            right = document.pages[pageIndexNow].bitmapPage!!.width.toFloat()
+            bottom = document.pages[pageIndexNow].bitmapPage!!.height.toFloat()
+        }
+        val pathStrokeMatrix = Matrix().apply {
+            setRectToRect(redrawPageRect, dstRect, Matrix.ScaleToFit.CENTER)
+        }
+
+        // Todo("da completare")
+//        strokeRenderer.stroke.transform(pathStrokeMatrix)
+
+        strokePaint = Paint(paint).apply {
+            strokeWidth = document.pages[pageIndexNow].dimension!!.calcPxFromPt(
+                paint.strokeWidth,
+                document.pages[pageIndexNow].bitmapPage!!.width
+            )
+        }
+        strokeRenderer.renderStroke(onDrawCanvas, strokePaint)
     }
 
 
@@ -780,7 +796,8 @@ class DrawViewModel(
         onDrawBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
         windowRect = RectF(0f, 0f, width.toFloat(), height.toFloat())
-//        redrawPageRect = calcPageRect()
+
+        fastRenderer.onSizeChanged(width, height)
 
 
         draw(redraw = true, scaling = false)
