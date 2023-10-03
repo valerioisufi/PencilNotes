@@ -18,6 +18,8 @@ import com.studiomath.pencilnotes.document.page.Dimension
 import com.studiomath.pencilnotes.document.page.mm
 import com.studiomath.pencilnotes.document.page.risoluzionePxInchPagePredefinito
 import com.studiomath.pencilnotes.document.stroke.StrokeRenderer
+import com.studiomath.pencilnotes.document.stroke.Vec2d
+import com.studiomath.pencilnotes.document.stroke.getStroke
 import com.studiomath.pencilnotes.document.touch.OnDrag
 import com.studiomath.pencilnotes.document.touch.OnScaleTranslate
 import com.studiomath.pencilnotes.document.touch.OnTouch
@@ -82,7 +84,7 @@ class DrawViewModel(
         data class Point(
             var x: Float = 0f, var y: Float = 0f
         ) {
-            var pressure: Float? = null
+            var pressure: Float = 1f
             var tilt: Float? = null
             var orientation: Float? = null
         }
@@ -90,6 +92,9 @@ class DrawViewModel(
         var points = mutableListOf<Point>()
         var width: Float = 8f
         var color: Int = 0xFFFFFF
+
+        @Transient
+        var vec2ds = mutableListOf<Vec2d>()
     }
 
     @Serializable
@@ -158,7 +163,60 @@ class DrawViewModel(
                 Bitmap.Config.ARGB_8888
             )
             canvasPage = Canvas(bitmapPage!!)
+
+            for (stroke in strokeData){
+                stroke.vec2ds.clear()
+                for(point in stroke.points){
+                    stroke.vec2ds.add(
+                        Vec2d(
+                            point.x.toDouble(),
+                            point.y.toDouble(),
+                            point.pressure!!.toDouble()
+                        )
+                    )
+
+                }
+
+            }
+
+
         }
+    }
+
+    fun getPathGraphic(vec2ds: List<Vec2d>): Path {
+        val stroke = getStroke(vec2ds)
+        val path = Path()
+
+        if (stroke.size < 4) {
+            // the stroke will be 3 points as a sort of shrugging fail state, so let's draw a dot instead
+            val r = vec2ds.size / 2.0
+            val x = vec2ds[vec2ds.size - 1].x
+            val y = vec2ds[vec2ds.size - 1].y
+
+            path.addCircle(x.toFloat(), y.toFloat(), r.toFloat(), Path.Direction.CW)
+        } else {
+            // If we do have a stroke, then draw the stroke path
+            path.apply {
+                for ((index, point) in stroke.withIndex()) {
+                    val x = point.x.toFloat()
+                    val y = point.y.toFloat()
+
+                    if (index == 0) {
+                        moveTo(x, y)
+                        continue
+                    }
+//                    if (index == stroke.lastIndex){
+//                        close()
+//                    }
+
+                    lineTo(x, y)
+
+
+                }
+            }
+        }
+
+        return path
     }
 
 
@@ -218,6 +276,13 @@ class DrawViewModel(
     ) {
         if (isLastPath) {
             document.pages[pageIndexNow].strokeData.last().points.add(point)
+            document.pages[pageIndexNow].strokeData.last().vec2ds.add(
+                Vec2d(
+                    point.x.toDouble(),
+                    point.y.toDouble(),
+                    point.pressure!!.toDouble()
+                )
+            )
         } else {
             document.pages[pageIndexNow].strokeData.add(
                 Stroke(
@@ -225,7 +290,18 @@ class DrawViewModel(
                     type = strokeType
                 ).apply {
                     points.add(point)
+                    vec2ds.add(
+                        Vec2d(
+                            point.x.toDouble(),
+                            point.y.toDouble(),
+                            point.pressure!!.toDouble()
+                        )
+                    )
+
                 }
+
+
+
             )
         }
     }
@@ -638,6 +714,17 @@ class DrawViewModel(
              */
             // TODO: 31/12/2021 poi valuterò l'idea di utlizzare una funzione a parte che richiama i metodi make- dei singoli strumenti
             preparePage(pageIndex)
+
+            var paintFreehand = Paint(paint).apply {
+                color = Color.parseColor("#3F51B5")
+                // Smooths out edges of what is drawn without affecting shape.
+                isAntiAlias = true
+                // Dithering affects how colors with higher-precision than the device are down-sampled.
+                isDither = true
+                isFilterBitmap = true
+                style = Paint.Style.STROKE
+
+            }
             for (stroke in document.pages[pageIndex].strokeData) {
 
                 val strokePaint: Paint = Paint(paint).apply {
@@ -652,11 +739,13 @@ class DrawViewModel(
 //                    setRectToRect(rectTracciato, rect, Matrix.ScaleToFit.CENTER)
 //                }
 //                pathTracciato.transform(pathTracciatoMatrix)
-
-                val strokeRenderer = StrokeRenderer(stroke)
-                strokeRenderer.renderStroke(canvas, strokePaint)
 //                canvas.drawPath(pathTracciato, paintTracciato)
 
+
+                canvas.drawPath(getPathGraphic(getStroke(stroke.vec2ds).toList()), paintFreehand)
+
+//                val strokeRenderer = StrokeRenderer(stroke)
+//                strokeRenderer.renderStroke(canvas, strokePaint)
 
             }
 

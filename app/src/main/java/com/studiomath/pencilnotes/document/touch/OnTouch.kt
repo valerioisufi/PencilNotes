@@ -47,16 +47,19 @@ class OnTouch(
                     /**
                      * strokeRenderer
                      */
-                    val point = DrawViewModel.Stroke.Point(
-                        event.x, event.y
-                    ).apply {
-                        pressure = event.getAxisValue(MotionEvent.AXIS_PRESSURE)
-                        orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
-                        tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
-                    }
-                    strokeRenderer = StrokeRenderer(10, DrawViewModel.Stroke.StrokeType.PENNA)
-                    if (strokeRenderer!!.addPointInternal(point))
-                        drawViewModel.fastRenderer.frontBufferRenderer?.renderFrontBufferedLayer(strokeRenderer!!)
+//                    val point = DrawViewModel.Stroke.Point(
+//                        event.x, event.y
+//                    ).apply {
+//                        pressure = event.getAxisValue(MotionEvent.AXIS_PRESSURE)
+//                        orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
+//                        tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
+//                    }
+//                    strokeRenderer = StrokeRenderer(10, DrawViewModel.Stroke.StrokeType.PENNA)
+//                    if (strokeRenderer!!.addPointInternal(point))
+//                        drawViewModel.fastRenderer.frontBufferRenderer?.renderFrontBufferedLayer(strokeRenderer!!)
+
+
+
                 }
 
                 MotionEvent.ACTION_MOVE -> {
@@ -99,29 +102,31 @@ class OnTouch(
                     /**
                      * strokeRenderer
                      */
-                    val point = DrawViewModel.Stroke.Point(
-                        event.x, event.y
-                    ).apply {
-                        pressure = event.getAxisValue(MotionEvent.AXIS_PRESSURE)
-                        orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
-                        tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
-                    }
+//                    val point = DrawViewModel.Stroke.Point(
+//                        event.x, event.y
+//                    ).apply {
+//                        pressure = event.getAxisValue(MotionEvent.AXIS_PRESSURE)
+//                        orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
+//                        tilt = event.getAxisValue(MotionEvent.AXIS_TILT)
+//                    }
+//
+//
+//                    val eventPredicted = motionEventPredictor?.predict()
+//                    if(eventPredicted != null){
+//                        val pointPredicted = DrawViewModel.Stroke.Point(
+//                            eventPredicted.x, eventPredicted.y
+//                        ).apply {
+//                            pressure = eventPredicted.getAxisValue(MotionEvent.AXIS_PRESSURE)
+//                            orientation = eventPredicted.getAxisValue(MotionEvent.AXIS_ORIENTATION)
+//                            tilt = eventPredicted.getAxisValue(MotionEvent.AXIS_TILT)
+//                        }
+//                        strokeRenderer!!.pointPredicted = pointPredicted
+//                    }
+//
+//                    if (strokeRenderer!!.addPointInternal(point))
+//                        drawViewModel.fastRenderer.frontBufferRenderer?.renderFrontBufferedLayer(strokeRenderer!!)
 
-
-                    val eventPredicted = motionEventPredictor?.predict()
-                    if(eventPredicted != null){
-                        val pointPredicted = DrawViewModel.Stroke.Point(
-                            eventPredicted.x, eventPredicted.y
-                        ).apply {
-                            pressure = eventPredicted.getAxisValue(MotionEvent.AXIS_PRESSURE)
-                            orientation = eventPredicted.getAxisValue(MotionEvent.AXIS_ORIENTATION)
-                            tilt = eventPredicted.getAxisValue(MotionEvent.AXIS_TILT)
-                        }
-                        strokeRenderer!!.pointPredicted = pointPredicted
-                    }
-
-                    if (strokeRenderer!!.addPointInternal(point))
-                        drawViewModel.fastRenderer.frontBufferRenderer?.renderFrontBufferedLayer(strokeRenderer!!)
+//                    drawViewModel.draw(redraw = true)
 
                 }
 
