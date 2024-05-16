@@ -31,4 +31,15 @@
     <string name="title_activity_settings" translatable="false">SettingsActivity</string>
     <string name="button_confirm">Confirm</string>
     <string name="button_folder">Folder</string>
+    <string name="settings_general">General</string>
+    <string name="settings_notes">Notes</string>
+    <string name="settings_manageStorage">Manage storage</string>
+    <string name="settings_storageNotes">This includes your note, imported images and pdf files.</string>
+    <string name="settings_cache">Cache</string>
+    <string name="settings_storageCache">Cache helps improve app performance.</string>
+    <string name="settings_notesKeepScreenOn">Keep screen on</string>
+    <string name="settings_notesKeepScreenOnDescription">Screen will stay awake when notes are open</string>
+    <string name="settings_notesContinueFromLastOpenedPage">Continue from last opend page</string>
+    <string name="settings_generalLanguage">Language</string>
+    <string name="settings_generalTheme">Theme</string>
 </resources>

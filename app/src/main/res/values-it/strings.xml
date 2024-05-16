@@ -29,4 +29,15 @@
     <string name="request_name">Scegliere un nome</string>
     <string name="button_confirm">Conferma</string>
     <string name="button_folder">Cartella</string>
+    <string name="settings_general">Generali</string>
+    <string name="settings_notes">Note</string>
+    <string name="settings_manageStorage">Gestisci l\'archiviazione</string>
+    <string name="settings_storageNotes">Ciò include le note, le immagini importate e i file pdf</string>
+    <string name="settings_cache">Cache</string>
+    <string name="settings_storageCache">La cache aiuta a migliorare le prestazioni dell\'app</string>
+    <string name="settings_notesKeepScreenOn">Mantieni lo schermo acceso</string>
+    <string name="settings_notesKeepScreenOnDescription">Lo schermo rimarrà acceso quando le note sono aperte</string>
+    <string name="settings_notesContinueFromLastOpenedPage">Continua dall\'ultima pagina aperta</string>
+    <string name="settings_generalLanguage">Linguaggio</string>
+    <string name="settings_generalTheme">Tema</string>
 </resources>

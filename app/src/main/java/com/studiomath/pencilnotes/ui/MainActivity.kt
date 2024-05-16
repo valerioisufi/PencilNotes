@@ -116,8 +116,8 @@ class MainActivity : ComponentActivity() {
         val callback = onBackPressedDispatcher.addCallback {
             if (fileExplorerViewModel.backFolder() == null) finish()
         }
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             PencilNotesTheme {
                 RootActivity(fileExplorerViewModel = fileExplorerViewModel)
