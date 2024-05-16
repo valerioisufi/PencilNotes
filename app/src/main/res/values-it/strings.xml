@@ -40,4 +40,5 @@
     <string name="settings_notesContinueFromLastOpenedPage">Continua dall\'ultima pagina aperta</string>
     <string name="settings_generalLanguage">Linguaggio</string>
     <string name="settings_generalTheme">Tema</string>
+    <string name="dialog_deleteFileDescription">Gli elementi eliminati non sono recuperabili.</string>
 </resources>

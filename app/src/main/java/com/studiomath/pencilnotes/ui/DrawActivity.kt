@@ -289,9 +289,9 @@ fun DrawActivity(modifier: Modifier = Modifier, drawViewModel: DrawViewModel) {
         }
 
 
-//        DrawCompose(
-//            drawViewModel = drawViewModel
-//        )
+        DrawCompose(
+            drawViewModel = drawViewModel
+        )
     }
 
 }

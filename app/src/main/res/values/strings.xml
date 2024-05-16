@@ -42,4 +42,5 @@
     <string name="settings_notesContinueFromLastOpenedPage">Continue from last opend page</string>
     <string name="settings_generalLanguage">Language</string>
     <string name="settings_generalTheme">Theme</string>
+    <string name="dialog_deleteFileDescription">Deleted items are not recoverable.</string>
 </resources>

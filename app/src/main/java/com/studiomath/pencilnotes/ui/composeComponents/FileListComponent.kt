@@ -168,7 +168,7 @@ fun ListItem(
                 val intent = Intent(mContext, DrawActivity::class.java)
                 intent.putExtra(
                     "filePath",
-                    "/documenti/${fileExplorerViewModel.currentDirectoryPath.value}${dataFile.name.value}.json"
+                    fileExplorerViewModel.fileLocation(fileName = dataFile.name.value)
                 )
                 mContext.startActivity(intent)
             } else if (dataFile.type == FileExplorerViewModel.FileType.FOLDER) {
@@ -281,9 +281,42 @@ fun FileDetailsWithBottomSheet(
                         .padding(16.dp)
                 )
 
+                var showRenameDialog by remember { mutableStateOf(false) }
+                if (showRenameDialog) {
+                    RequestNameDialog(
+                        title = stringResource(id = R.string.menu_rename),
+                        labelTextField = stringResource(id = R.string.request_name),
+                        textConfirmButton = stringResource(id = R.string.button_confirm),
+                        onDismissRequest = {showRenameDialog = false},
+                        onConfirm = { text ->
+                            fileExplorerViewModel.renameFile(dataFile.name.value, text)
+                            showRenameDialog = false
+                        }
+                    )
+                }
+
+                var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+                if (showDeleteConfirmDialog) {
+                    ConfirmActionDialog(
+                        title = stringResource(id = R.string.menu_delete),
+                        textDescription = stringResource(id = R.string.dialog_deleteFileDescription),
+                        textConfirmButton = stringResource(id = R.string.button_confirm),
+                        onDismissRequest = {showDeleteConfirmDialog = false},
+                        onConfirm = {
+                            fileExplorerViewModel.deleteFile(dataFile.name.value)
+                            showDeleteConfirmDialog = false
+                        }
+                    )
+                }
+
+
+
                 OptionItem(
                     icon = Icons.Filled.DriveFileRenameOutline,
                     text = stringResource(id = R.string.menu_rename),
+                    onClick = {
+                        showRenameDialog = true
+                    }
                 )
                 OptionItem(
                     icon = Icons.AutoMirrored.Filled.DriveFileMove,
@@ -292,6 +325,9 @@ fun FileDetailsWithBottomSheet(
                 OptionItem(
                     icon = Icons.Filled.Delete,
                     text = stringResource(id = R.string.menu_delete),
+                    onClick = {
+                        showDeleteConfirmDialog = true
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

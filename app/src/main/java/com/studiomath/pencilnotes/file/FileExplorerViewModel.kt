@@ -52,7 +52,10 @@ class FileExplorerViewModel(
         readXML()
     }
 
-    fun createFile(type: FileType, name: String) {
+    fun createFile(type: FileType, name: String): Boolean {
+        if (existNameInDirectory(name = name)) {
+            return false
+        }
         filesExplorer[currentDirectoryPath.value]!!.filesList.add(
             0, Files(type = type, name = mutableStateOf(name))
         )
@@ -61,6 +64,7 @@ class FileExplorerViewModel(
                 DirectoryFiles("${currentDirectoryPath.value}$name/")
         }
         writeXML()
+        return true
     }
 
     fun enterFolder(name: String) {
@@ -70,6 +74,94 @@ class FileExplorerViewModel(
     fun backFolder(): String? {
         return directorySequence.removeLastOrNull()
     }
+
+    fun fileLocation(fileName: String, directoryPath: String = currentDirectoryPath.value): String {
+        return "/documenti/${directoryPath}${fileName}.json"
+    }
+
+    fun existNameInDirectory(directoryPath: String = currentDirectoryPath.value, name: String): Boolean {
+        for (element in filesExplorer[directoryPath]!!.filesList) {
+            if (element.name.value == name) {
+                return true
+            }
+        }
+        return false
+    }
+
+    fun renameFile(oldName: String, newName: String, directoryPath: String = currentDirectoryPath.value): Boolean {
+        if (existNameInDirectory(directoryPath = directoryPath, name = newName)) {
+            return false
+        }
+
+        val from = File(fileLocation(oldName, directoryPath))
+
+        if (from.exists()){
+            val to = File(fileLocation(newName, directoryPath))
+            from.renameTo(to)
+        }
+
+        for (element in filesExplorer[directoryPath]!!.filesList) {
+            if (element.name.value == oldName) {
+                element.name.value = newName
+                if (element.type == FileType.FOLDER) {
+                    filesExplorer["${directoryPath}${newName}/"]!!.filesList = filesExplorer["${directoryPath}${oldName}/"]!!.filesList
+                    filesExplorer["${directoryPath}${newName}/"]!!.directoryPath = "${directoryPath}${newName}/"
+                }
+            }
+
+        }
+        writeXML()
+        return true
+
+    }
+
+    fun deleteFile(name: String, directoryPath: String = currentDirectoryPath.value): Boolean {
+        val fileToDelete = File(fileLocation(name, directoryPath))
+
+        if (fileToDelete.exists()){
+            if (fileToDelete.isDirectory) {
+                fun deleteDirectory(directory: File) {
+                    for (element in directory.listFiles()!!){
+                        if (element.isDirectory) {
+                            deleteDirectory(element)
+                        }
+                        element.delete()
+                    }
+                }
+                deleteDirectory(fileToDelete)
+
+            }
+            fileToDelete.delete()
+        }
+
+        for (index in filesExplorer[directoryPath]!!.filesList.indices) {
+            if (filesExplorer[directoryPath]!!.filesList[index].name.value == name) {
+
+                if (filesExplorer[directoryPath]!!.filesList[index].type == FileType.FOLDER) {
+                    filesExplorer.remove("${directoryPath}${name}/")
+                }
+                filesExplorer[directoryPath]!!.filesList.removeAt(index)
+                break
+            }
+
+        }
+        writeXML()
+        return true
+    }
+
+    fun moveFile(name: String, newDirectoryPath: String, oldDirectoryPath: String = currentDirectoryPath.value): Boolean {
+        TODO("Not yet implemented")
+//        if (existNameInDirectory(directoryPath = newDirectoryPath, name = name)) {
+//            return false
+//        }
+//        val fileToMove = File(fileLocation(name, oldDirectoryPath))
+//        val newDirectory = File(fileLocation(name, newDirectoryPath))
+
+        writeXML()
+        return true
+    }
+
+
 
     /**
      * Funzione per la lettura dei file XML

@@ -88,6 +88,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.core.view.WindowCompat
+import com.studiomath.pencilnotes.ui.composeComponents.RequestNameDialog
 import com.studiomath.pencilnotes.ui.composeComponents.isScrollingUp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -417,56 +418,3 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
 
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun RequestNameDialog(
-    title: String = "",
-    labelTextField: String = "",
-    textConfirmButton: String = "",
-    onDismissRequest: () -> Unit,
-    onConfirm: (inputText: String) -> Unit,
-){
-    BasicAlertDialog(
-        onDismissRequest = {
-            // Dismiss the dialog when the user clicks outside the dialog or on the back
-            // button. If you want to disable that functionality, simply use an empty
-            // onDismissRequest.
-            onDismissRequest()
-        }
-    ) {
-        Surface(
-            modifier = Modifier
-                .wrapContentWidth()
-                .wrapContentHeight(),
-            shape = MaterialTheme.shapes.large,
-            tonalElevation = AlertDialogDefaults.TonalElevation
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                var text by remember { mutableStateOf("") }
-                OutlinedTextField(value = text,
-                    onValueChange = { text = it },
-                    label = { Text(labelTextField) }
-                )
-                TextButton(
-                    modifier = Modifier.align(Alignment.End),
-                    onClick = {
-                        onConfirm(text)
-                    }
-                ) {
-                    Text(text = textConfirmButton)
-                }
-            }
-        }
-    }
-}
