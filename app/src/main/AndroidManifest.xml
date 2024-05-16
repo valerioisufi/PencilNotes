@@ -12,6 +12,11 @@
         android:theme="@style/Theme.PencilNotes.Starting"
         tools:targetApi="31">
         <activity
+            android:name=".ui.SettingsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_settings"
+            android:theme="@style/Theme.PencilNotes" />
+        <activity
             android:name=".ui.DrawActivity"
             android:exported="true"
             android:immersive="true"
@@ -24,6 +29,7 @@
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PencilNotes</string>
+    <string name="menu_lastModified">Ultimi modificati</string>
+    <string name="menu_lastOpen">Ultimi aperti</string>
+    <string name="menu_dateCreated">Data di creazione</string>
+    <string name="menu_name">Nome</string>
+    <string name="menu_keepFoldersOnTop">Mantieni le cartelle in alto</string>
+    <string name="menu_rename">Rinomina</string>
+    <string name="menu_moveTo">Sposta su</string>
+    <string name="menu_delete">Elimina</string>
+    <string name="menu_export">Esporta</string>
+    <string name="menu_cancel">Annulla</string>
+    <string name="menu_createFolder">Crea una cartella</string>
+    <string name="menu_importPDF">Importa PDF</string>
+    <string name="menu_importImages">Importa immagini</string>
+    <string name="button_newNote">Nuova nota</string>
+    <string name="button_new">Nuovo</string>
+    <string name="button_home">Home</string>
+    <string name="button_shared">Condivisi</string>
+    <string name="button_file">File</string>
+    <string name="button_all">Tutti</string>
+    <string name="button_favorites">Preferiti</string>
+    <string name="button_recents">Recenti</string>
+    <string name="description_searchNotes">Cerca nelle tue note</string>
+    <string name="menu_settings">Impostazioni</string>
+    <string name="menu_whatsnew">Cosa c\'è di nuovo</string>
+    <string name="menu_help">Aiuto</string>
+    <string name="request_name">Scegliere un nome</string>
+    <string name="button_confirm">Conferma</string>
+    <string name="button_folder">Cartella</string>
+</resources>

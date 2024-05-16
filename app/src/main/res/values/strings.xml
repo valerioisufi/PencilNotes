@@ -1,4 +1,34 @@
 <resources>
     <string name="app_name">PencilNotes</string>
-    <string name="title_activity_draw">DrawActivity</string>
+    <string name="title_activity_draw" translatable="false">DrawActivity</string>
+    <string name="menu_lastModified">Last Modified</string>
+    <string name="menu_lastOpen">Last open</string>
+    <string name="menu_dateCreated">Date created</string>
+    <string name="menu_name">Name</string>
+    <string name="menu_keepFoldersOnTop">Keep folders on top</string>
+    <string name="menu_rename">Rename</string>
+    <string name="menu_moveTo">Move to</string>
+    <string name="menu_delete">Delete</string>
+    <string name="menu_export">Export</string>
+    <string name="menu_cancel">Cancel</string>
+    <string name="menu_createFolder">Create folder</string>
+    <string name="menu_importPDF">Import PDF</string>
+    <string name="menu_importImages">Import images</string>
+    <string name="button_newNote">New note</string>
+    <string name="button_new">New</string>
+    <string name="button_home">Home</string>
+    <string name="button_shared">Shared</string>
+    <string name="button_file">File</string>
+    <string name="button_all">All</string>
+    <string name="button_favorites">Favorites</string>
+    <string name="button_recents">Recents</string>
+    <string name="description_searchNotes">Search your notes</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_whatsnew">What\'s new</string>
+    <string name="menu_help">Help</string>
+
+    <string name="request_name">Choose a name</string>
+    <string name="title_activity_settings" translatable="false">SettingsActivity</string>
+    <string name="button_confirm">Confirm</string>
+    <string name="button_folder">Folder</string>
 </resources>

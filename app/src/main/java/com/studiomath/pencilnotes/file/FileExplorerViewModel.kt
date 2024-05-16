@@ -4,7 +4,6 @@ import android.util.Xml
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.lifecycle.ViewModel
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlSerializer
@@ -32,11 +31,11 @@ class FileExplorerViewModel(
 
     private var filesExplorer: MutableMap<String, DirectoryFiles>
 
-    private var _directorySequence = mutableStateListOf<String>()
+    var directorySequence = mutableStateListOf<String>()
     val currentDirectoryPath: MutableState<String>
         get() {
             var path = "/"
-            for (item in _directorySequence) {
+            for (item in directorySequence) {
                 path += "$item/"
             }
             return mutableStateOf(path)
@@ -65,11 +64,11 @@ class FileExplorerViewModel(
     }
 
     fun enterFolder(name: String) {
-        _directorySequence.add(name)
+        directorySequence.add(name)
     }
 
     fun backFolder(): String? {
-        return _directorySequence.removeLastOrNull()
+        return directorySequence.removeLastOrNull()
     }
 
     /**
