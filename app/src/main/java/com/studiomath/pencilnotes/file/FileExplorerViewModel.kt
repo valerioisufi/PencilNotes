@@ -104,8 +104,8 @@ class FileExplorerViewModel(
             if (element.name.value == oldName) {
                 element.name.value = newName
                 if (element.type == FileType.FOLDER) {
+                    filesExplorer["${directoryPath}${newName}/"] = DirectoryFiles("${directoryPath}${newName}/")
                     filesExplorer["${directoryPath}${newName}/"]!!.filesList = filesExplorer["${directoryPath}${oldName}/"]!!.filesList
-                    filesExplorer["${directoryPath}${newName}/"]!!.directoryPath = "${directoryPath}${newName}/"
                 }
             }
 

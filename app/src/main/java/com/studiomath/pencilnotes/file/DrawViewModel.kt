@@ -722,7 +722,7 @@ class DrawViewModel(
                 // Dithering affects how colors with higher-precision than the device are down-sampled.
                 isDither = true
                 isFilterBitmap = true
-                style = Paint.Style.STROKE
+                style = Paint.Style.FILL
 
             }
             for (stroke in document.pages[pageIndex].strokeData) {
@@ -742,7 +742,7 @@ class DrawViewModel(
 //                canvas.drawPath(pathTracciato, paintTracciato)
 
 
-                canvas.drawPath(getPathGraphic(getStroke(stroke.vec2ds).toList()), paintFreehand)
+                canvas.drawPath(getPathGraphic((stroke.vec2ds).toList()), paintFreehand)
 
 //                val strokeRenderer = StrokeRenderer(stroke)
 //                strokeRenderer.renderStroke(canvas, strokePaint)
