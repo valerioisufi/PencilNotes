@@ -252,6 +252,7 @@ class DrawView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             val windowMatrixTransform = Matrix().apply {
                 setRectToRect(startRect, endRect, Matrix.ScaleToFit.CENTER)
             }
+            Log.d("DrawComponent", "windowMatrixTransform: $windowMatrixTransform")
             canvas.drawBitmap(onDrawBitmap, windowMatrixTransform, null)
 
         } else if (changePageOnDraw){

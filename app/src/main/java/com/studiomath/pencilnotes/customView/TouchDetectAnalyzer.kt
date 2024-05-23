@@ -178,8 +178,8 @@ class TouchDetectAnalyzer(context: Context, attrs: AttributeSet) : View(context,
 
         for (deviceId in deviceIds) {
             var inputDevice = InputDevice.getDevice(deviceId)
-            var descriptor = inputDevice.descriptor
-            var motionRanges = inputDevice.motionRanges
+            var descriptor = inputDevice?.descriptor
+            var motionRanges = inputDevice?.motionRanges
 
         }
     }

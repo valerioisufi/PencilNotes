@@ -16,7 +16,7 @@ class DrawMotionEvent(var context: Context, var drawView: DrawView) {
         val deviceIds = InputDevice.getDeviceIds()
         for (deviceId in deviceIds) {
             val inputDevice = InputDevice.getDevice(deviceId)
-            val descriptor = inputDevice.descriptor
+            val descriptor = inputDevice!!.descriptor
             val motionRanges = inputDevice.motionRanges
 
             listDevices[descriptor] = inputDevice

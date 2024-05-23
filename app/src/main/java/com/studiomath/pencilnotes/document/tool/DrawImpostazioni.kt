@@ -12,7 +12,7 @@ import com.google.android.material.chip.Chip
 class DrawImpostazioni(context: Context, attrs: AttributeSet) : androidx.appcompat.widget.AppCompatImageView(context, attrs)  {
     var sharedPref = context.getSharedPreferences(context.getString(R.string.preference_file_key), Context.MODE_PRIVATE)
 
-    var modePenna = sharedPref.getBoolean(context.getString(R.string.mode_penna), true)
+    var modePenna = sharedPref.getBoolean(context.getString(R.string.mode_penna), false)
 
 
     init {
