@@ -14,6 +14,15 @@ import kotlin.math.ceil
  */
 class ColorShowView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
+    private val QUADRATO_TRASPARENZA_SIZE = dpToPx(8)
+
+    /**
+     * The width in pixels of the border
+     * surrounding all color panels.
+     */
+    private val BORDER_WIDTH = dpToPx(2)
+
+
     /**
      * Utilities
      */
@@ -132,14 +141,5 @@ class ColorShowView(context: Context, attrs: AttributeSet) : View(context, attrs
             verticalStartWhite = !verticalStartWhite
         }
     }
-
-
-    private val QUADRATO_TRASPARENZA_SIZE = dpToPx(8)
-
-    /**
-     * The width in pixels of the border
-     * surrounding all color panels.
-     */
-    private val BORDER_WIDTH = dpToPx(2)
 
 }

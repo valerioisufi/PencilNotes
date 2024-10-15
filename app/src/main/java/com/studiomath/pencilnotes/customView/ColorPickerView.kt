@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
+import androidx.compose.ui.unit.dp
 import kotlin.math.ceil
 
 /**
@@ -13,6 +14,21 @@ import kotlin.math.ceil
  */
 class ColorPickerView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
+    private val HUE_PANEL_WIDTH = dpToPx(30)
+    private val ALPHA_PANEL_HEIGHT = dpToPx(20)
+    private val PANEL_SPACING = dpToPx(10)
+    private val CIRCLE_TRACKER_RADIUS = dpToPx(5)
+    private val SLIDER_TRACKER_SIZE = dpToPx(4)
+    private val SLIDER_TRACKER_OFFSET = dpToPx(2)
+    private val QUADRATO_TRASPARENZA_SIZE = dpToPx(4)
+
+    /**
+     * The width in pixels of the border
+     * surrounding all color panels.
+     */
+    private val BORDER_WIDTH = 1
+
+    
     /**
      * Utilities
      */
@@ -515,19 +531,5 @@ class ColorPickerView(context: Context, attrs: AttributeSet) : View(context, att
         lateinit var bitmap: Bitmap
         var value: Float = 0f
     }
-
-    private val HUE_PANEL_WIDTH = dpToPx(30)
-    private val ALPHA_PANEL_HEIGHT = dpToPx(20)
-    private val PANEL_SPACING = dpToPx(10)
-    private val CIRCLE_TRACKER_RADIUS = dpToPx(5)
-    private val SLIDER_TRACKER_SIZE = dpToPx(4)
-    private val SLIDER_TRACKER_OFFSET = dpToPx(2)
-    private val QUADRATO_TRASPARENZA_SIZE = dpToPx(4)
-
-    /**
-     * The width in pixels of the border
-     * surrounding all color panels.
-     */
-    private val BORDER_WIDTH = 1
 
 }
