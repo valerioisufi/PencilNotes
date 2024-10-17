@@ -87,6 +87,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.core.view.WindowCompat
 import com.studiomath.pencilnotes.ui.composeComponents.RequestNameDialog
 import com.studiomath.pencilnotes.ui.composeComponents.isScrollingUp
@@ -209,7 +213,8 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                                                 .align(Alignment.CenterVertically),
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
-                                            style = MaterialTheme.typography.titleLarge
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontFamily = FontFamily(Font(resId = R.font.limelight, weight = FontWeight.W400, style = FontStyle.Normal))
                                         )
                                     }
 
