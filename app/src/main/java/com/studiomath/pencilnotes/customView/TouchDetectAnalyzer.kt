@@ -7,12 +7,13 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.util.DisplayMetrics
+import android.util.TypedValue
 import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import com.studiomath.pencilnotes.R
-import com.studiomath.pencilnotes.dpToPx
 
 class TouchDetectAnalyzer(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
@@ -182,5 +183,16 @@ class TouchDetectAnalyzer(context: Context, attrs: AttributeSet) : View(context,
             var motionRanges = inputDevice?.motionRanges
 
         }
+    }
+
+    fun dpToPx(dipValue: Float, metrics: DisplayMetrics): Int {
+        val `val` = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            dipValue,
+            metrics
+        )
+        val res = (`val` + 0.5).toInt() // Round
+        // Ensure at least 1 pixel if val was > 0
+        return if (res == 0 && `val` > 0) 1 else res
     }
 }

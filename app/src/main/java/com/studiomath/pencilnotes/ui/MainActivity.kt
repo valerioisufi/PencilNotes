@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
@@ -61,6 +62,7 @@ import com.studiomath.pencilnotes.file.FileExplorerViewModel
 import com.studiomath.pencilnotes.ui.composeComponents.FileListComponent
 import com.studiomath.pencilnotes.ui.theme.PencilNotesTheme
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -103,10 +105,11 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
         // Handle the splash screen transition.
         val splashScreen = installSplashScreen()
-
-        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         val fileExplorerViewModel = viewModels<FileExplorerViewModel> {
             object : ViewModelProvider.Factory {
@@ -122,7 +125,6 @@ class MainActivity : ComponentActivity() {
             if (fileExplorerViewModel.backFolder() == null) finish()
         }
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             PencilNotesTheme {
                 RootActivity(fileExplorerViewModel = fileExplorerViewModel)

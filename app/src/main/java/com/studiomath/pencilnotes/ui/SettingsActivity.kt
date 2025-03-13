@@ -4,7 +4,9 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -42,6 +44,7 @@ import com.studiomath.pencilnotes.ui.theme.PencilNotesTheme
 class SettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -56,7 +59,6 @@ class SettingsActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsActivity(modifier: Modifier) {
-    val activity = LocalContext.current as Activity
     Scaffold (
         topBar ={
             CenterAlignedTopAppBar(
@@ -73,7 +75,6 @@ fun SettingsActivity(modifier: Modifier) {
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            activity.finish()
                         }
                     ) {
                         Icon(
