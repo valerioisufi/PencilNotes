@@ -117,8 +117,15 @@ class DrawActivity : ComponentActivity() {
     private lateinit var drawViewModel: DrawViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        enableEdgeToEdge()
+
+        // Get the WindowInsetsControllerCompat
+        var windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+        // Configure behavior and visibility
+        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
 
         val intent = intent
         val filePath = intent.getStringExtra("filePath")
@@ -143,7 +150,7 @@ class DrawActivity : ComponentActivity() {
 
         setContent {
             PencilNotesTheme {
-                DrawActivity(drawViewModel = drawViewModel, inProgressStrokesView = inProgressStrokesView)
+                DrawActivity(drawViewModel = drawViewModel, inProgressStrokesView = inProgressStrokesView, windowInsetsController = windowInsetsController)
             }
         }
 
@@ -160,11 +167,6 @@ class DrawActivity : ComponentActivity() {
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
 
-        // Get the WindowInsetsControllerCompat
-        var windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
-        // Configure behavior and visibility
-        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
     }
 
 }
@@ -176,7 +178,8 @@ class DrawActivity : ComponentActivity() {
 fun DrawActivity(
     modifier: Modifier = Modifier,
     drawViewModel: DrawViewModel,
-    inProgressStrokesView: InProgressStrokesView
+    inProgressStrokesView: InProgressStrokesView,
+    windowInsetsController: WindowInsetsControllerCompat? = null
 ) {
     Column(
         modifier = Modifier
@@ -366,7 +369,8 @@ fun DrawActivity(
                             }
                         },
                         expanded = penSettingsExpanded,
-                        onDismissRequest = { penSettingsExpanded = false }
+                        onDismissRequest = { penSettingsExpanded = false },
+                        windowInsetsController = windowInsetsController
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.icon_ink_pen),
@@ -427,7 +431,8 @@ fun DrawActivity(
                             }
                         },
                         expanded = highlighterSettingsExpanded,
-                        onDismissRequest = { highlighterSettingsExpanded = false }
+                        onDismissRequest = { highlighterSettingsExpanded = false },
+                        windowInsetsController = windowInsetsController
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.icon_ink_highlighter),
@@ -474,7 +479,8 @@ fun DrawActivity(
                             }
                         },
                         expanded = eraserSettingsExpanded,
-                        onDismissRequest = { eraserSettingsExpanded = false }
+                        onDismissRequest = { eraserSettingsExpanded = false },
+                        windowInsetsController = windowInsetsController
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.icon_ink_eraser),
@@ -556,6 +562,7 @@ fun ToolButton(
     dropDownMenu: @Composable() () -> Unit = {},
     expanded: Boolean = false,
     onDismissRequest: () -> Unit = {},
+    windowInsetsController: WindowInsetsControllerCompat? = null,
     content: @Composable() RowScope.() -> Unit = {}
 ){
     Box{
@@ -585,6 +592,7 @@ fun ToolButton(
             expanded = expanded,
             onDismissRequest = { onDismissRequest() }
         ) {
+            windowInsetsController?.hide(WindowInsetsCompat.Type.systemBars())
             dropDownMenu()
         }
 
