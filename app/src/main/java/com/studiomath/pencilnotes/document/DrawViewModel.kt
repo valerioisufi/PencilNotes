@@ -19,6 +19,7 @@ import com.studiomath.pencilnotes.document.page.DrawDocumentData
 import com.studiomath.pencilnotes.document.page.PageMaker
 import com.studiomath.pencilnotes.document.page.pt
 import com.studiomath.pencilnotes.document.page.px
+import com.studiomath.pencilnotes.file.DrawDatabase
 import kotlinx.serialization.Serializable
 import java.io.File
 
@@ -32,6 +33,7 @@ class DrawViewModel(
     var drawManager = DrawManager(this, displayMetrics)
     val pageMaker = PageMaker(displayMetrics)
 
+//    var db: DrawDatabase = DrawDatabase.getInstance(filesDir)
     var data: DrawDocumentData = DrawDocumentData(filesDir, filePath, displayMetrics, this)
 
 
