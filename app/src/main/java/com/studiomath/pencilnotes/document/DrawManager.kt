@@ -136,7 +136,7 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
         }
 
         val canvas = Canvas(onDrawBitmap)
-//        canvas.clipRect(pageRectWithIndex.rect)
+        canvas.clipOutPath(getMaskPath())
         strokes.values.forEach { stroke ->
             drawViewModel.pageMaker.canvasStrokeRenderer.draw(
                 stroke = stroke,
