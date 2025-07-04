@@ -1,56 +1,64 @@
 # PencilNotes
 
-PencilNotes è un'applicazione Android per prendere appunti e disegnare a mano libera. Offre un'interfaccia intuitiva e strumenti avanzati per creare, modificare e gestire documenti digitali.
+PencilNotes is a native Android note-taking application designed for stylus input. It provides an intuitive interface and advanced tools for creating, editing, and managing digital documents.
 
-## Funzionalità principali
+This project started as a personal endeavor during high school, with the first version being independently developed and published on the Google Play Store. It is currently undergoing a complete architectural redesign to improve performance, and maintainability, and to add new features.
 
-- **Disegno a mano libera**: Usa strumenti come penna, evidenziatore, gomma e selezione lasso.
-- **Gestione documenti**: Crea, salva e modifica documenti multipagina.
-- **Personalizzazione strumenti**: Cambia colore, dimensione e stile degli strumenti di disegno.
-- **Supporto per evidenziatori**: Evidenzia contenuti con colori personalizzati.
-- **Navigazione fluida**: Zoom, pan e gestione delle pagine con animazioni fluide.
-- **Salvataggio automatico**: I documenti vengono salvati automaticamente per evitare perdite di dati.
+## Key Features
 
-## Requisiti
+* **Freehand Drawing**: Utilize tools like a pen, highlighter, eraser, and lasso selection for a natural writing experience.
+* **Document Management**: Easily create, save, and manage multi-page documents.
+* **Tool Customization**: Adjust the color, size, and style of your drawing tools to fit your needs.
+* **Smooth Navigation**: Enjoy fluid zooming, panning, and page management with smooth animations.
+* **Automatic Saving**: Your documents are saved automatically to prevent data loss.
 
-- Android 8.0 (API 26) o versioni successive.
-- Android Studio per lo sviluppo e il debug.
+## Technologies Used
 
-## Installazione
+* **Kotlin** and **Java**
+* **Android SDK**
+* **Room Database** for local storage
+* **MVVM Architecture**
 
-1. Clona il repository:
-   ```bash
-   git clone https://github.com/tuo-utente/PencilNotes.git
-   ```
-2. Apri il progetto in Android Studio.
-3. Sincronizza le dipendenze di Gradle.
-4. Collega un dispositivo Android o avvia un emulatore.
-5. Esegui l'applicazione.
+## Getting Started
 
-## Utilizzo
+To get a local copy up and running, follow these simple steps.
 
-1. Avvia l'app e crea un nuovo documento.
-2. Usa la barra degli strumenti per selezionare penna, evidenziatore, gomma o altri strumenti.
-3. Disegna o scrivi direttamente sullo schermo.
-4. Salva il documento per accedervi in seguito.
+### Prerequisites
 
-## Struttura del progetto
+* Android Studio
+* An Android device or emulator running Android 8.0 (API 26) or higher.
 
-- **`ui/`**: Contiene le attività e i componenti dell'interfaccia utente.
-- **`document/`**: Gestisce i dati e la logica per la creazione e modifica dei documenti.
-- **`composeComponents/`**: Componenti riutilizzabili basati su Jetpack Compose.
-- **`theme/`**: Definizioni di temi e stili per l'app.
+### Installation
 
-## Contributi
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/valerioisufi/PencilNotes.git
+    ```
+2.  Open the project in Android Studio.
+3.  Sync the Gradle dependencies.
+4.  Connect an Android device or start an emulator.
+5.  Run the application.
 
-Contributi, segnalazioni di bug e suggerimenti sono benvenuti! Per contribuire:
-1. Fai un fork del repository.
-2. Crea un branch per le tue modifiche:
-   ```bash
-   git checkout -b feature/nuova-funzionalità
-   ```
-3. Invia una pull request.
+## Project Structure
 
-## Licenza
+The project is organized as follows:
 
-Questo progetto è distribuito sotto la licenza MIT. Consulta il file `LICENSE` per maggiori dettagli.
+* `app/src/main/java/com/studiomath/pencilnotes/ui`: Contains the activities and UI components for the user interface.
+* `app/src/main/java/com/studiomath/pencilnotes/document`: Manages the data and logic for creating and modifying documents.
+* `app/src/main/java/com/studiomath/pencilnotes/ui/composeComponents`: Reusable components built with Jetpack Compose.
+* `app/src/main/java/com/studiomath/pencilnotes/file`: Handles file management and storage.
+* `app/src/main/java/com/studiomath/pencilnotes/ui/theme`: Defines the themes and styles for the app.
+
+## Contributing
+
+Contributions, bug reports, and suggestions are welcome! To contribute:
+
+1.  Fork the Project.
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
+4.  Push to the Branch (`git push origin feature/AmazingFeature`).
+5.  Open a Pull Request.
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
