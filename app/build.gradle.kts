@@ -1,19 +1,19 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21"
-    id("com.google.devtools.ksp")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
 }
 
 android {
     namespace = "com.studiomath.pencilnotes"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.studiomath.pencilnotes"
         minSdk = 29
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 2
         versionName = "2.0"
 
@@ -32,13 +32,6 @@ android {
             )
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
     buildFeatures {
         compose = true
     }
@@ -47,6 +40,10 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+}
+
+kotlin {
+    jvmToolchain(21)
 }
 
 dependencies {
