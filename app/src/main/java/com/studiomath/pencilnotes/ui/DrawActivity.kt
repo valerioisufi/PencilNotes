@@ -137,7 +137,8 @@ class DrawActivity : ComponentActivity() {
                         filePath = "$filePath",
                         filesDir = filesDir,
                         displayMetrics = resources.displayMetrics,
-                        configuration = ViewConfiguration.get(this@DrawActivity)
+                        configuration = ViewConfiguration.get(this@DrawActivity),
+                        context = this@DrawActivity
                     ) as T
                 }
             }

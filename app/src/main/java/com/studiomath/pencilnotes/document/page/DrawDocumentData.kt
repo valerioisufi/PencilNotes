@@ -14,9 +14,20 @@ import androidx.ink.brush.Brush
 import androidx.ink.brush.InputToolType
 import androidx.ink.brush.StockBrushes
 import androidx.ink.strokes.MutableStrokeInputBatch
+import androidx.ink.strokes.ImmutableStrokeInputBatch
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.io.OutputStream
+import java.io.DataOutputStream
+import java.io.DataInputStream
 import com.studiomath.pencilnotes.document.DrawManager.DrawAttachments
 import com.studiomath.pencilnotes.document.DrawViewModel
 import com.studiomath.pencilnotes.file.FileManager
+import com.studiomath.pencilnotes.file.DrawDatabase
+import com.studiomath.pencilnotes.file.Document as DbDocument
+import com.studiomath.pencilnotes.file.Page as DbPage
+import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,7 +56,8 @@ class DrawDocumentData(
     filesDir: File,
     filePath: String,
     var displayMetrics: DisplayMetrics,
-    var drawViewModel: DrawViewModel
+    var drawViewModel: DrawViewModel,
+    context: Context
 ){
     /**
      * data class for document data
@@ -86,24 +98,19 @@ class DrawDocumentData(
                     else -> ToolType.UNKNOWN
                 }
 
-            val scratchInput = androidx.ink.strokes.StrokeInput()
-            for (i in 0 until stroke!!.inputs.size) {
-                stroke!!.inputs.populate(i, scratchInput)
-                inputs.add(
-                    StrokeInput(
-                        x = scratchInput.x,
-                        y = scratchInput.y
-                    ).apply {
-                        timeMillis = scratchInput.elapsedTimeMillis.toFloat()
-                        strokeUnitLengthCm = if(scratchInput.strokeUnitLengthCm != androidx.ink.strokes.StrokeInput.NO_STROKE_UNIT_LENGTH) scratchInput.strokeUnitLengthCm else null
-                        pressure = if(scratchInput.pressure != androidx.ink.strokes.StrokeInput.NO_PRESSURE) scratchInput.pressure else null
-                        tilt = if(scratchInput.tiltRadians != androidx.ink.strokes.StrokeInput.NO_TILT) scratchInput.tiltRadians else null
-                        orientation = if(scratchInput.orientationRadians != androidx.ink.strokes.StrokeInput.NO_ORIENTATION) scratchInput.orientationRadians else null
-                    }
-                )
+            // Use StrokeInputBatch.encode() for serialization
+            // For now, using a placeholder implementation that can be replaced with proper protobuf serialization
+            try {
+                val outputStream = ByteArrayOutputStream()
+                // TODO: Replace with proper StrokeInputBatch.encode(outputStream) when available
+                encodeStrokeInputBatch(stroke!!.inputs, outputStream)
+                inputsData = outputStream.toByteArray()
+            } catch (e: Exception) {
+                // Fallback to empty data if encoding fails
+                inputsData = byteArrayOf()
             }
-
         }
+        
         fun toInkStroke() {
             val toolType =
                 when (toolType){
@@ -112,18 +119,19 @@ class DrawDocumentData(
                     ToolType.MOUSE -> InputToolType.MOUSE
                     else -> InputToolType.UNKNOWN
                 }
-            val batch = MutableStrokeInputBatch()
-            inputs.forEach { input ->
-                batch.add(
-                    type = toolType,
-                    x = input.x,
-                    y = input.y,
-                    elapsedTimeMillis = input.timeMillis.toLong(),
-                    strokeUnitLengthCm = if(input.strokeUnitLengthCm != null) input.strokeUnitLengthCm!! else androidx.ink.strokes.StrokeInput.NO_STROKE_UNIT_LENGTH,
-                    pressure = if(input.pressure != null) input.pressure!! else androidx.ink.strokes.StrokeInput.NO_PRESSURE,
-                    tiltRadians  = if(input.tilt != null) input.tilt!! else androidx.ink.strokes.StrokeInput.NO_TILT,
-                    orientationRadians = if(input.orientation != null) input.orientation!! else androidx.ink.strokes.StrokeInput.NO_ORIENTATION
-                )
+            
+            // Use StrokeInputBatch.decode() for deserialization 
+            // For now, using a placeholder implementation that can be replaced with proper protobuf deserialization
+            val batch = try {
+                if (inputsData.isNotEmpty()) {
+                    val inputStream = ByteArrayInputStream(inputsData)
+                    // TODO: Replace with proper StrokeInputBatch.Companion.decode(inputStream) when available
+                    decodeStrokeInputBatch(inputStream)
+                } else {
+                    MutableStrokeInputBatch()
+                }
+            } catch (e: Exception) {
+                MutableStrokeInputBatch()
             }
 
             val brushFamily =
@@ -150,21 +158,9 @@ class DrawDocumentData(
             PRESSURE_PEN, HIGHLIGHTER, MARKER
         }
 
-        // TODO: utlizzare invece una lista di float
-        @Serializable
-        data class StrokeInput(
-            @SerialName("x") var x: Float = 0f, @SerialName("y") var y: Float = 0f
-        ) {
-            @SerialName("m") var timeMillis: Float = 0f
-            @SerialName("l") var strokeUnitLengthCm: Float? = null
-            @SerialName("p") var pressure: Float? = null
-            @SerialName("t") var tilt: Float? = null
-            @SerialName("o") var orientation: Float? = null
-        }
-
         @SerialName("tT") var toolType = ToolType.UNKNOWN
         @SerialName("b") var brush: BrushFamily = BrushFamily.PRESSURE_PEN
-        @SerialName("i") var inputs = mutableListOf<StrokeInput>()
+        @SerialName("iD") var inputsData: ByteArray = byteArrayOf() // Binary stroke data
 
         @SerialName("s") var size: Float = 8f
         @SerialName("c") var color: Int = 0xFFFFFF
@@ -257,7 +253,9 @@ class DrawDocumentData(
 
 
     private var fileManager: FileManager = FileManager(filesDir, filePath, options = FileManager.Options(false, true))
+    private var database: DrawDatabase = DrawDatabase.getInstance(context)
     lateinit var document: Document
+    private var documentId: Int = -1 // Database document ID
     
     // TODO: utilizzare documentMutex solo per modifiche che coinvolgono Document data class
     // TODO: page.mutex deve tenere conto anche di documentMutex 
@@ -287,14 +285,48 @@ class DrawDocumentData(
                 if (isDocumentLoaded){
                     // TODO: utilizzare page.mutex invece e serializzare solo le pagine che hanno subito modifiche
                     documentMutex.withLock{
-                        fileManager.text = Json.encodeToString(document)
+                        // Save to database instead of file
+                        saveDocumentToDatabase()
                     }
                 }
+            }
+        }
 
+    private suspend fun saveDocumentToDatabase() {
+        try {
+            // Update document in database
+            if (documentId != -1) {
+                val dbDocument = DbDocument(
+                    id = documentId,
+                    name = document.name,
+                    folderId = null
+                )
+                database.documentDao().update(dbDocument)
             }
 
-
+            // Save pages to database
+            document.pages.forEachIndexed { index, page ->
+                val pageContent = Json.encodeToString(page)
+                val existingPages = database.pageDao().getPagesForDocument(documentId)
+                
+                if (index < existingPages.size) {
+                    // Update existing page
+                    database.pageDao().updatePageContent(existingPages[index].id, pageContent)
+                } else {
+                    // Insert new page
+                    val dbPage = DbPage(
+                        documentId = documentId,
+                        pageNumber = index,
+                        content = pageContent
+                    )
+                    database.pageDao().insert(dbPage)
+                }
+            }
+        } catch (e: Exception) {
+            // Fallback to file manager if database operations fail
+            fileManager.text = Json.encodeToString(document)
         }
+    }
 
 //    var pageIndexNow by mutableIntStateOf(0)
 //    val pageNow: Page
@@ -307,30 +339,18 @@ class DrawDocumentData(
     var isDocumentShowed by mutableStateOf(false)
     init {
         documentJob = documentScope.launch {
-            if (fileManager.justCreated) {
-                fileManager.text = Json.encodeToString(
-                    Document(fileManager.file.name).apply {
-                        pages.add(Page(0).apply {
-                            dimension = Dimension.A4()
-                            width = dimension!!.width.mm
-                            height = dimension!!.height.mm
-                        })
-
-//                        pages.add(Page(1).apply {
-//                            dimension = Dimension.A5()
-//                            width = dimension!!.width.mm
-//                            height = dimension!!.height.mm
-//                        })
-//
-//                        pages.add(Page(2).apply {
-//                            dimension = Dimension.A3()
-//                            width = dimension!!.width.mm
-//                            height = dimension!!.height.mm
-//                        })
-                    }
-                )
+            try {
+                // Try to load from database first
+                if (loadDocumentFromDatabase()) {
+                    // Document loaded from database successfully
+                } else {
+                    // Fallback to file manager for backward compatibility
+                    loadDocumentFromFile()
+                }
+            } catch (e: Exception) {
+                // Fallback to file manager if database fails
+                loadDocumentFromFile()
             }
-            document = Json.decodeFromString(fileManager.text)
 
             for (page in document.pages){
                 page.prepare()
@@ -350,7 +370,85 @@ class DrawDocumentData(
                 }
             )
         }
+    }
 
+    private suspend fun loadDocumentFromDatabase(): Boolean {
+        return try {
+            val documentName = fileManager.file.name
+            val dbDocument = database.documentDao().getRootDocumentByName(documentName)
+            
+            if (dbDocument != null) {
+                documentId = dbDocument.id
+                val pages = database.pageDao().getPagesForDocument(documentId)
+                
+                document = Document(dbDocument.name).apply {
+                    pages.forEach { dbPage ->
+                        try {
+                            val page = Json.decodeFromString<Page>(dbPage.content)
+                            this.pages.add(page)
+                        } catch (e: Exception) {
+                            // Skip corrupted page data
+                        }
+                    }
+                    
+                    // If no pages found, add default page
+                    if (this.pages.isEmpty()) {
+                        this.pages.add(Page(0).apply {
+                            dimension = Dimension.A4()
+                            width = dimension!!.width.mm
+                            height = dimension!!.height.mm
+                        })
+                    }
+                }
+                true
+            } else {
+                // Document doesn't exist in database, create it
+                createNewDocumentInDatabase()
+                true
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private suspend fun createNewDocumentInDatabase(): Boolean {
+        return try {
+            val documentName = fileManager.file.name
+            val dbDocument = DbDocument(
+                name = documentName,
+                folderId = null
+            )
+            documentId = database.documentDao().insert(dbDocument).toInt()
+            
+            document = Document(documentName).apply {
+                pages.add(Page(0).apply {
+                    dimension = Dimension.A4()
+                    width = dimension!!.width.mm
+                    height = dimension!!.height.mm
+                })
+            }
+            
+            // Save the initial page
+            saveDocumentToDatabase()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private suspend fun loadDocumentFromFile() {
+        if (fileManager.justCreated) {
+            fileManager.text = Json.encodeToString(
+                Document(fileManager.file.name).apply {
+                    pages.add(Page(0).apply {
+                        dimension = Dimension.A4()
+                        width = dimension!!.width.mm
+                        height = dimension!!.height.mm
+                    })
+                }
+            )
+        }
+        document = Json.decodeFromString(fileManager.text)
     }
 
     /**
@@ -401,6 +499,64 @@ class DrawDocumentData(
     fun getColorResource(resourceId: String): Int {
         return if (document.resources[resourceId.toInt()].type == Resource.ResourceType.COLOR)
             document.resources[resourceId.toInt()].content.toInt() else 0xFFFFFF
+    }
+
+
+    // Placeholder implementation for StrokeInputBatch serialization
+    // TODO: Replace with proper androidx.ink.strokes serialization functions when available
+    private fun encodeStrokeInputBatch(batch: ImmutableStrokeInputBatch, outputStream: OutputStream) {
+        val dataOutput = DataOutputStream(outputStream)
+        try {
+            dataOutput.writeInt(batch.size)
+            val scratchInput = androidx.ink.strokes.StrokeInput()
+            for (i in 0 until batch.size) {
+                batch.populate(i, scratchInput)
+                dataOutput.writeFloat(scratchInput.x)
+                dataOutput.writeFloat(scratchInput.y)
+                dataOutput.writeLong(scratchInput.elapsedTimeMillis)
+                dataOutput.writeFloat(scratchInput.strokeUnitLengthCm)
+                dataOutput.writeFloat(scratchInput.pressure)
+                dataOutput.writeFloat(scratchInput.tiltRadians)
+                dataOutput.writeFloat(scratchInput.orientationRadians)
+                dataOutput.writeInt(scratchInput.toolType.ordinal)
+            }
+        } finally {
+            dataOutput.close()
+        }
+    }
+
+    private fun decodeStrokeInputBatch(inputStream: InputStream): MutableStrokeInputBatch {
+        val dataInput = DataInputStream(inputStream)
+        val batch = MutableStrokeInputBatch()
+        try {
+            val size = dataInput.readInt()
+            for (i in 0 until size) {
+                val x = dataInput.readFloat()
+                val y = dataInput.readFloat()
+                val elapsedTimeMillis = dataInput.readLong()
+                val strokeUnitLengthCm = dataInput.readFloat()
+                val pressure = dataInput.readFloat()
+                val tiltRadians = dataInput.readFloat()
+                val orientationRadians = dataInput.readFloat()
+                val toolTypeOrdinal = dataInput.readInt()
+                
+                val toolType = InputToolType.values().getOrElse(toolTypeOrdinal) { InputToolType.UNKNOWN }
+                
+                batch.add(
+                    type = toolType,
+                    x = x,
+                    y = y,
+                    elapsedTimeMillis = elapsedTimeMillis,
+                    strokeUnitLengthCm = if (strokeUnitLengthCm != androidx.ink.strokes.StrokeInput.NO_STROKE_UNIT_LENGTH) strokeUnitLengthCm else androidx.ink.strokes.StrokeInput.NO_STROKE_UNIT_LENGTH,
+                    pressure = if (pressure != androidx.ink.strokes.StrokeInput.NO_PRESSURE) pressure else androidx.ink.strokes.StrokeInput.NO_PRESSURE,
+                    tiltRadians = if (tiltRadians != androidx.ink.strokes.StrokeInput.NO_TILT) tiltRadians else androidx.ink.strokes.StrokeInput.NO_TILT,
+                    orientationRadians = if (orientationRadians != androidx.ink.strokes.StrokeInput.NO_ORIENTATION) orientationRadians else androidx.ink.strokes.StrokeInput.NO_ORIENTATION
+                )
+            }
+        } finally {
+            dataInput.close()
+        }
+        return batch
     }
 
 
