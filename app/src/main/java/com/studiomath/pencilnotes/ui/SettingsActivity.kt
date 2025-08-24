@@ -59,6 +59,8 @@ class SettingsActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsActivity(modifier: Modifier) {
+    val activity = LocalActivity.current
+
     Scaffold (
         topBar ={
             CenterAlignedTopAppBar(
@@ -75,6 +77,7 @@ fun SettingsActivity(modifier: Modifier) {
                 navigationIcon = {
                     IconButton(
                         onClick = {
+                            activity?.finish()
                         }
                     ) {
                         Icon(
