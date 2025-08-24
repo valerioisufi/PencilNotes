@@ -23,7 +23,8 @@ abstract class DrawDatabase : RoomDatabase() {
                     context.applicationContext,
                     DrawDatabase::class.java,
                     "draw_database"
-                ).build()
+                ).fallbackToDestructiveMigration(false) // For development, we can use destructive migration
+                .build()
                 INSTANCE = instance
                 instance
             }
@@ -46,7 +47,7 @@ data class Folder(
 data class Document(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
-    val folderId: Int // A quale cartella appartiene
+    val folderId: Int? = null // A quale cartella appartiene - null per documenti root
 )
 
 @Entity(
@@ -75,22 +76,67 @@ data class Resource(
 @Dao
 interface FolderDao {
     @Insert
-    suspend fun insert(folder: Folder)
+    suspend fun insert(folder: Folder): Long
+
+    @Update
+    suspend fun update(folder: Folder)
+
+    @Delete
+    suspend fun delete(folder: Folder)
+
+    @Query("DELETE FROM folders WHERE id = :folderId")
+    suspend fun deleteById(folderId: Int)
 
     @Query("SELECT * FROM folders WHERE parentId IS NULL")
     suspend fun getRootFolders(): List<Folder>
 
     @Query("SELECT * FROM folders WHERE parentId = :parentId")
     suspend fun getSubFolders(parentId: Int): List<Folder>
+
+    @Query("SELECT * FROM folders WHERE id = :folderId")
+    suspend fun getFolderById(folderId: Int): Folder?
+
+    @Query("SELECT * FROM folders WHERE name = :name AND parentId = :parentId")
+    suspend fun getFolderByNameAndParent(name: String, parentId: Int?): Folder?
+
+    @Query("UPDATE folders SET name = :newName WHERE id = :folderId")
+    suspend fun renameFolder(folderId: Int, newName: String)
 }
 
 @Dao
 interface DocumentDao {
     @Insert
-    suspend fun insert(document: Document)
+    suspend fun insert(document: Document): Long
+
+    @Update
+    suspend fun update(document: Document)
+
+    @Delete
+    suspend fun delete(document: Document)
+
+    @Query("DELETE FROM documents WHERE id = :documentId")
+    suspend fun deleteById(documentId: Int)
 
     @Query("SELECT * FROM documents WHERE folderId = :folderId")
     suspend fun getDocumentsInFolder(folderId: Int): List<Document>
+
+    @Query("SELECT * FROM documents WHERE folderId IS NULL")
+    suspend fun getRootDocuments(): List<Document>
+
+    @Query("SELECT * FROM documents WHERE id = :documentId")
+    suspend fun getDocumentById(documentId: Int): Document?
+
+    @Query("SELECT * FROM documents WHERE name = :name AND folderId = :folderId")
+    suspend fun getDocumentByNameAndFolder(name: String, folderId: Int): Document?
+
+    @Query("SELECT * FROM documents WHERE name = :name AND folderId IS NULL")
+    suspend fun getRootDocumentByName(name: String): Document?
+
+    @Query("UPDATE documents SET name = :newName WHERE id = :documentId")
+    suspend fun renameDocument(documentId: Int, newName: String)
+
+    @Query("UPDATE documents SET folderId = :newFolderId WHERE id = :documentId")
+    suspend fun moveDocument(documentId: Int, newFolderId: Int?)
 }
 
 @Dao
