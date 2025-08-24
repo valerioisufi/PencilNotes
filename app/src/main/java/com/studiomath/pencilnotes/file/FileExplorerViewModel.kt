@@ -1,18 +1,18 @@
 package com.studiomath.pencilnotes.file
 
-import android.util.Xml
+import android.content.Context
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlSerializer
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import java.io.File
 
 class FileExplorerViewModel(
-    filesDir: File, var nomeFile: String // "fileExplorerXml.xml"
+    context: Context, var nomeFile: String // "fileExplorerXml.xml" - kept for compatibility but not used
 ) : ViewModel() {
-    private var fileManager: FileManager
+    private val fileRepository = FileRepository(context)
 
     /**
      * DATA
@@ -22,7 +22,9 @@ class FileExplorerViewModel(
     }
 
     data class Files(
-        var type: FileType, var name: MutableState<String> = mutableStateOf("")
+        var type: FileType, 
+        var name: MutableState<String> = mutableStateOf(""),
+        var id: Int = 0 // Added to track database IDs
     )
 
     data class DirectoryFiles(var directoryPath: String) {
@@ -32,6 +34,8 @@ class FileExplorerViewModel(
     private var filesExplorer: MutableMap<String, DirectoryFiles>
 
     var directorySequence = mutableStateListOf<String>()
+    private var directoryIdSequence = mutableStateListOf<Int?>() // Track folder IDs for database
+    
     val currentDirectoryPath: MutableState<String>
         get() {
             var path = "/"
@@ -46,41 +50,92 @@ class FileExplorerViewModel(
             return filesExplorer[currentDirectoryPath.value]!!
         }
 
+    private val currentFolderId: Int?
+        get() = directoryIdSequence.lastOrNull()
+
     init {
-        fileManager = FileManager(filesDir, nomeFile)
         filesExplorer = mutableMapOf()
-        readXML()
+        loadCurrentDirectory()
+    }
+
+    private fun loadCurrentDirectory() {
+        viewModelScope.launch {
+            val currentPath = currentDirectoryPath.value
+            
+            if (filesExplorer[currentPath] == null) {
+                filesExplorer[currentPath] = DirectoryFiles(currentPath)
+            }
+            
+            // Clear current items
+            filesExplorer[currentPath]!!.filesList.clear()
+            
+            // Load items from database
+            val items = fileRepository.getItemsInFolder(currentFolderId)
+            
+            for (item in items) {
+                val fileType = when (item.type) {
+                    FileRepository.FileType.FOLDER -> FileType.FOLDER
+                    FileRepository.FileType.DOCUMENT -> FileType.FILE
+                }
+                
+                filesExplorer[currentPath]!!.filesList.add(
+                    Files(
+                        type = fileType,
+                        name = mutableStateOf(item.name),
+                        id = item.id
+                    )
+                )
+            }
+        }
     }
 
     fun createFile(type: FileType, name: String): Boolean {
         if (existNameInDirectory(name = name)) {
             return false
         }
-        filesExplorer[currentDirectoryPath.value]!!.filesList.add(
-            0, Files(type = type, name = mutableStateOf(name))
-        )
-        if (type == FileType.FOLDER) {
-            filesExplorer["${currentDirectoryPath.value}$name/"] =
-                DirectoryFiles("${currentDirectoryPath.value}$name/")
+        
+        viewModelScope.launch {
+            val success = when (type) {
+                FileType.FOLDER -> fileRepository.createFolder(name, currentFolderId)
+                FileType.FILE -> fileRepository.createDocument(name, currentFolderId)
+            }
+            
+            if (success) {
+                loadCurrentDirectory() // Refresh the view
+            }
         }
-        writeXML()
-        return true
+        return true // Return true optimistically for UI responsiveness
     }
 
     fun enterFolder(name: String) {
-        directorySequence.add(name)
+        // Find the folder ID
+        val folder = filesExplorer[currentDirectoryPath.value]?.filesList?.find { 
+            it.name.value == name && it.type == FileType.FOLDER 
+        }
+        
+        if (folder != null) {
+            directorySequence.add(name)
+            directoryIdSequence.add(folder.id)
+            loadCurrentDirectory()
+        }
     }
 
     fun backFolder(): String? {
-        return directorySequence.removeLastOrNull()
+        val removed = directorySequence.removeLastOrNull()
+        if (removed != null) {
+            directoryIdSequence.removeLastOrNull()
+            loadCurrentDirectory()
+        }
+        return removed
     }
 
     fun fileLocation(fileName: String, directoryPath: String = currentDirectoryPath.value): String {
+        // For database-based system, we construct the path for compatibility
         return "/documenti/${directoryPath}${fileName}.json"
     }
 
     fun existNameInDirectory(directoryPath: String = currentDirectoryPath.value, name: String): Boolean {
-        for (element in filesExplorer[directoryPath]!!.filesList) {
+        for (element in filesExplorer[directoryPath]?.filesList ?: emptyList()) {
             if (element.name.value == name) {
                 return true
             }
@@ -89,188 +144,60 @@ class FileExplorerViewModel(
     }
 
     fun renameFile(oldName: String, newName: String, directoryPath: String = currentDirectoryPath.value): Boolean {
-        if (existNameInDirectory(directoryPath = directoryPath, name = newName)) {
-            return false
-        }
+        val fileItem = filesExplorer[directoryPath]?.filesList?.find { 
+            it.name.value == oldName 
+        } ?: return false
 
-        val from = File(fileLocation(oldName, directoryPath))
-
-        if (from.exists()){
-            val to = File(fileLocation(newName, directoryPath))
-            from.renameTo(to)
-        }
-
-        for (element in filesExplorer[directoryPath]!!.filesList) {
-            if (element.name.value == oldName) {
-                element.name.value = newName
-                if (element.type == FileType.FOLDER) {
-                    filesExplorer["${directoryPath}${newName}/"] = DirectoryFiles("${directoryPath}${newName}/")
-                    filesExplorer["${directoryPath}${newName}/"]!!.filesList = filesExplorer["${directoryPath}${oldName}/"]!!.filesList
+        viewModelScope.launch {
+            val success = when (fileItem.type) {
+                FileType.FOLDER -> fileRepository.renameFolder(fileItem.id, newName)
+                FileType.FILE -> fileRepository.renameDocument(fileItem.id, newName)
+            }
+            
+            if (success) {
+                fileItem.name.value = newName
+                // Also handle any physical file renaming for compatibility
+                val from = File(fileLocation(oldName, directoryPath))
+                if (from.exists()) {
+                    val to = File(fileLocation(newName, directoryPath))
+                    from.renameTo(to)
                 }
             }
-
         }
-        writeXML()
-        return true
-
+        return true // Return true optimistically for UI responsiveness
     }
 
     fun deleteFile(name: String, directoryPath: String = currentDirectoryPath.value): Boolean {
-        val fileToDelete = File(fileLocation(name, directoryPath))
+        val fileItem = filesExplorer[directoryPath]?.filesList?.find { 
+            it.name.value == name 
+        } ?: return false
 
-        if (fileToDelete.exists()){
-            if (fileToDelete.isDirectory) {
-                fun deleteDirectory(directory: File) {
-                    for (element in directory.listFiles()!!){
-                        if (element.isDirectory) {
-                            deleteDirectory(element)
-                        }
-                        element.delete()
+        viewModelScope.launch {
+            val success = when (fileItem.type) {
+                FileType.FOLDER -> fileRepository.deleteFolder(fileItem.id)
+                FileType.FILE -> fileRepository.deleteDocument(fileItem.id)
+            }
+            
+            if (success) {
+                // Remove from UI
+                filesExplorer[directoryPath]?.filesList?.removeIf { it.name.value == name }
+                
+                // Also handle any physical file deletion for compatibility
+                val fileToDelete = File(fileLocation(name, directoryPath))
+                if (fileToDelete.exists()) {
+                    if (fileToDelete.isDirectory) {
+                        fileToDelete.deleteRecursively()
+                    } else {
+                        fileToDelete.delete()
                     }
                 }
-                deleteDirectory(fileToDelete)
-
             }
-            fileToDelete.delete()
         }
-
-        for (index in filesExplorer[directoryPath]!!.filesList.indices) {
-            if (filesExplorer[directoryPath]!!.filesList[index].name.value == name) {
-
-                if (filesExplorer[directoryPath]!!.filesList[index].type == FileType.FOLDER) {
-                    filesExplorer.remove("${directoryPath}${name}/")
-                }
-                filesExplorer[directoryPath]!!.filesList.removeAt(index)
-                break
-            }
-
-        }
-        writeXML()
-        return true
+        return true // Return true optimistically for UI responsiveness
     }
 
     fun moveFile(name: String, newDirectoryPath: String, oldDirectoryPath: String = currentDirectoryPath.value): Boolean {
-        TODO("Not yet implemented")
-//        if (existNameInDirectory(directoryPath = newDirectoryPath, name = name)) {
-//            return false
-//        }
-//        val fileToMove = File(fileLocation(name, oldDirectoryPath))
-//        val newDirectory = File(fileLocation(name, newDirectoryPath))
-
-        writeXML()
-        return true
+        // TODO: Implement move functionality for database
+        return false
     }
-
-
-
-    /**
-     * Funzione per la lettura dei file XML
-     */
-    private fun readXML() {
-
-        if (fileManager.file.length() == 0L) {
-            writeXML()
-        }
-
-        val inputStream = fileManager.file.inputStream()
-
-        val parser: XmlPullParser = Xml.newPullParser()
-        parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
-        parser.setInput(inputStream, null)
-
-        dataReader(parser)
-    }
-
-    /**
-     * Ogni volta che in una funzione raggiungo un start_tag
-     * e quindi richiamo un'altra funzione, mi assicuro che nella funzione
-     * chiamata raggiungo sempre l'end_tag corrispettivo
-     */
-    private fun dataReader(parser: XmlPullParser) {
-        while (!(parser.depth == 1 && parser.eventType == XmlPullParser.END_TAG)) {
-            // start_tag data e tag successivi
-            parser.nextTag()
-
-            fun funReader(parser: XmlPullParser, root: String) {
-                val startDepht = parser.depth
-
-                while (!(parser.depth == startDepht && parser.eventType == XmlPullParser.END_TAG)) {
-                    parser.nextTag()
-
-                    if (parser.name == "file" && parser.eventType == XmlPullParser.START_TAG) {
-                        filesExplorer[root]!!.filesList.add(
-                            Files(
-                                type = FileType.FILE,
-                                name = mutableStateOf(parser.getAttributeValue(null, "nome"))
-                            )
-                        )
-
-                    } else if (parser.name == "folder" && parser.eventType == XmlPullParser.START_TAG) {
-                        filesExplorer[root]!!.filesList.add(
-                            Files(
-                                type = FileType.FOLDER,
-                                name = mutableStateOf(parser.getAttributeValue(null, "nome"))
-                            )
-                        )
-
-                        filesExplorer["$root${parser.getAttributeValue(null, "nome")}/"] =
-                            DirectoryFiles("$root${parser.getAttributeValue(null, "nome")}/")
-                        funReader(parser, "$root${parser.getAttributeValue(null, "nome")}/")
-
-                    }
-                }
-            }
-
-            val root = "/"
-            filesExplorer[root] = DirectoryFiles(root)
-            funReader(parser, root)
-
-        }
-    }
-
-
-    /**
-     * Funzione per la scrittura dei file XML
-     */
-    private fun writeXML() {
-        val outputStreamWriter = fileManager.file.writer()
-
-        val serializer = Xml.newSerializer()
-        serializer.setOutput(outputStreamWriter)
-
-        //Start Document
-        serializer.startDocument("UTF-8", true)
-        serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true)
-        serializer.startTag("", "data")
-
-        fun funWriter(serializer: XmlSerializer, root: String) {
-
-            for (element in filesExplorer[root]!!.filesList) {
-                if (element.type == FileType.FILE) {
-                    serializer.startTag("", "file")
-                    serializer.attribute(null, "nome", element.name.value)
-                    serializer.endTag("", "file")
-
-                } else if (element.type == FileType.FOLDER) {
-                    serializer.startTag("", "folder")
-                    serializer.attribute(null, "nome", element.name.value)
-
-                    funWriter(serializer, "$root${element.name.value}/")
-
-                    serializer.endTag("", "folder")
-
-                }
-
-            }
-        }
-
-        if (filesExplorer.isNotEmpty()) {
-            funWriter(serializer, "/")
-        }
-
-        //End tag <file>
-        serializer.endTag("", "data")
-        serializer.endDocument()
-    }
-
 }

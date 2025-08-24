@@ -115,7 +115,8 @@ class MainActivity : ComponentActivity() {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return FileExplorerViewModel(
-                        nomeFile = "fileExplorerXml.xml", filesDir = filesDir
+                        context = this@MainActivity,
+                        nomeFile = "fileExplorerXml.xml"
                     ) as T
                 }
             }
