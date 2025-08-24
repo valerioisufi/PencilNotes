@@ -5,7 +5,7 @@ import androidx.room.*
 
 @Database(
     entities = [Folder::class, Document::class, Page::class, Resource::class],
-    version = 1
+    version = 2
 )
 abstract class DrawDatabase : RoomDatabase() {
     abstract fun folderDao(): FolderDao
@@ -47,7 +47,7 @@ data class Folder(
 data class Document(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
-    val folderId: Int // A quale cartella appartiene
+    val folderId: Int? = null // A quale cartella appartiene - null per documenti root
 )
 
 @Entity(
@@ -120,17 +120,23 @@ interface DocumentDao {
     @Query("SELECT * FROM documents WHERE folderId = :folderId")
     suspend fun getDocumentsInFolder(folderId: Int): List<Document>
 
+    @Query("SELECT * FROM documents WHERE folderId IS NULL")
+    suspend fun getRootDocuments(): List<Document>
+
     @Query("SELECT * FROM documents WHERE id = :documentId")
     suspend fun getDocumentById(documentId: Int): Document?
 
     @Query("SELECT * FROM documents WHERE name = :name AND folderId = :folderId")
     suspend fun getDocumentByNameAndFolder(name: String, folderId: Int): Document?
 
+    @Query("SELECT * FROM documents WHERE name = :name AND folderId IS NULL")
+    suspend fun getRootDocumentByName(name: String): Document?
+
     @Query("UPDATE documents SET name = :newName WHERE id = :documentId")
     suspend fun renameDocument(documentId: Int, newName: String)
 
     @Query("UPDATE documents SET folderId = :newFolderId WHERE id = :documentId")
-    suspend fun moveDocument(documentId: Int, newFolderId: Int)
+    suspend fun moveDocument(documentId: Int, newFolderId: Int?)
 }
 
 @Dao

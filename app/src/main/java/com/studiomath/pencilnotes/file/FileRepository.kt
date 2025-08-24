@@ -8,10 +8,6 @@ class FileRepository(context: Context) {
     private val database = DrawDatabase.getInstance(context)
     private val folderDao = database.folderDao()
     private val documentDao = database.documentDao()
-    
-    companion object {
-        const val ROOT_FOLDER_ID = 0 // Use 0 to represent root folder for documents
-    }
 
     // Folder operations
     suspend fun createFolder(name: String, parentId: Int?): Boolean {
@@ -68,26 +64,40 @@ class FileRepository(context: Context) {
     // Document operations
     suspend fun createDocument(name: String, folderId: Int?): Boolean {
         // Check if document already exists
-        val effectiveFolderId = folderId ?: ROOT_FOLDER_ID
-        if (documentDao.getDocumentByNameAndFolder(name, effectiveFolderId) != null) {
+        val existingDocument = if (folderId == null) {
+            documentDao.getRootDocumentByName(name)
+        } else {
+            documentDao.getDocumentByNameAndFolder(name, folderId)
+        }
+        
+        if (existingDocument != null) {
             return false
         }
         
-        val document = Document(name = name, folderId = effectiveFolderId)
+        val document = Document(name = name, folderId = folderId)
         documentDao.insert(document)
         return true
     }
 
     suspend fun getDocumentsInFolder(folderId: Int?): List<Document> {
-        val effectiveFolderId = folderId ?: ROOT_FOLDER_ID
-        return documentDao.getDocumentsInFolder(effectiveFolderId)
+        return if (folderId == null) {
+            documentDao.getRootDocuments()
+        } else {
+            documentDao.getDocumentsInFolder(folderId)
+        }
     }
 
     suspend fun renameDocument(documentId: Int, newName: String): Boolean {
         val document = documentDao.getDocumentById(documentId) ?: return false
         
         // Check if new name already exists in the same folder
-        if (documentDao.getDocumentByNameAndFolder(newName, document.folderId) != null) {
+        val existingDocument = if (document.folderId == null) {
+            documentDao.getRootDocumentByName(newName)
+        } else {
+            documentDao.getDocumentByNameAndFolder(newName, document.folderId)
+        }
+        
+        if (existingDocument != null) {
             return false
         }
         
@@ -100,11 +110,17 @@ class FileRepository(context: Context) {
         return true
     }
 
-    suspend fun moveDocument(documentId: Int, newFolderId: Int): Boolean {
+    suspend fun moveDocument(documentId: Int, newFolderId: Int?): Boolean {
         val document = documentDao.getDocumentById(documentId) ?: return false
         
         // Check if document with same name already exists in target folder
-        if (documentDao.getDocumentByNameAndFolder(document.name, newFolderId) != null) {
+        val existingDocument = if (newFolderId == null) {
+            documentDao.getRootDocumentByName(document.name)
+        } else {
+            documentDao.getDocumentByNameAndFolder(document.name, newFolderId)
+        }
+        
+        if (existingDocument != null) {
             return false
         }
         
@@ -139,17 +155,9 @@ class FileRepository(context: Context) {
         }
         
         // Add documents
-        if (parentId != null) {
-            val documents = documentDao.getDocumentsInFolder(parentId)
-            documents.forEach { document ->
-                items.add(FileItem(document.id, document.name, FileType.DOCUMENT, parentId))
-            }
-        } else {
-            // For root directory, get documents with ROOT_FOLDER_ID
-            val documents = documentDao.getDocumentsInFolder(ROOT_FOLDER_ID)
-            documents.forEach { document ->
-                items.add(FileItem(document.id, document.name, FileType.DOCUMENT, null))
-            }
+        val documents = getDocumentsInFolder(parentId)
+        documents.forEach { document ->
+            items.add(FileItem(document.id, document.name, FileType.DOCUMENT, parentId))
         }
         
         return items
