@@ -66,7 +66,6 @@ dependencies {
     implementation(libs.androidx.ink.nativeloader)
     implementation(libs.androidx.ink.rendering)
     implementation(libs.androidx.ink.strokes)
-    implementation(libs.androidx.ink.serialization)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
