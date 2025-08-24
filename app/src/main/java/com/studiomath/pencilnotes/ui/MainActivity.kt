@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -71,6 +72,7 @@ import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Home
@@ -78,17 +80,32 @@ import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonMenu
+import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ToggleFloatingActionButton
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -137,7 +154,7 @@ enum class NavigationBarItem(val value: Int) {
     HOME(0), SHARED(-1), FILE(1)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplorerViewModel) {
     val mContext = LocalContext.current
@@ -148,6 +165,7 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
 //    val selectedItem = remember { mutableStateOf(items[0]) }
 
     val listState = rememberLazyListState()
+    val fabVisible by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
 
     ModalNavigationDrawer(
 //        drawerState = drawerState,
@@ -287,20 +305,6 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                 }
             },
             floatingActionButton = {
-                val sheetState = rememberModalBottomSheetState()
-                var isSheetOpen by rememberSaveable {
-                    mutableStateOf(false)
-                }
-
-                ExtendedFloatingActionButton(
-                    onClick = {
-                        isSheetOpen = true
-                    },
-                    expanded = listState.isScrollingUp(),
-                    icon = { Icon(Icons.Filled.Add, stringResource(id = R.string.button_new)) },
-                    text = { Text(text = stringResource(id = R.string.button_new)) }
-                )
-
 
                 var openDialogNewFile by rememberSaveable { mutableStateOf(false) }
                 if (openDialogNewFile) {
@@ -334,58 +338,77 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                     )
                 }
 
-                if (isSheetOpen) {
-                    ModalBottomSheet(
-                        sheetState = sheetState,
-                        onDismissRequest = { isSheetOpen = false },
-                        dragHandle = { BottomSheetDefaults.DragHandle() }
-                    ) {
-                        Column {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
+                var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
+                BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
-                                Button(
-                                    modifier = Modifier
-                                        .height(64.dp),
-                                    onClick = {
-                                        isSheetOpen = false
-                                        openDialogNewFile = true
-                                    }
-                                ) {
-                                    Icon(imageVector = Icons.AutoMirrored.Filled.Article, contentDescription = "")
-                                    Text(
-                                        modifier = Modifier
-                                            .padding(horizontal = 8.dp),
-                                        text = stringResource(id = R.string.button_file)
-                                    )
-                                }
-                                OutlinedButton(
-                                    modifier = Modifier
-                                        .height(64.dp),
-                                    onClick = {
-                                        isSheetOpen = false
-                                        openDialogNewFolder = true
-                                    }
-                                ) {
-                                    Icon(imageVector = Icons.Filled.Folder, contentDescription = "")
-                                    Text(
-                                        modifier = Modifier
-                                            .padding(horizontal = 8.dp),
-                                        text = stringResource(id = R.string.button_folder)
-                                    )
-                                }
+                val items =
+                    listOf(
+                        Icons.AutoMirrored.Filled.Article to stringResource(id = R.string.button_file),
+                        Icons.Filled.Folder to stringResource(id = R.string.button_folder),
+                    )
 
+                FloatingActionButtonMenu(
+                    modifier = Modifier,
+                    expanded = fabMenuExpanded,
+                    button = {
+                        ToggleFloatingActionButton(
+                            modifier =
+                                Modifier.semantics {
+                                    traversalIndex = -1f
+                                    stateDescription = if (fabMenuExpanded) "Expanded" else "Collapsed"
+                                    contentDescription = "Toggle menu"
+                                }.animateFloatingActionButton(
+                                    visible = fabVisible || fabMenuExpanded,
+                                    alignment = Alignment.BottomEnd,
+                                ),
+                            checked = fabMenuExpanded,
+                            onCheckedChange = { fabMenuExpanded = !fabMenuExpanded },
+
+                        ) {
+                            val imageVector by remember {
+                                derivedStateOf {
+                                    if (checkedProgress > 0.5f) Icons.Filled.Close else Icons.Filled.Add
+                                }
                             }
-
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Icon(
+                                painter = rememberVectorPainter(imageVector),
+                                contentDescription = null,
+                                modifier = Modifier.animateIcon({ checkedProgress }),
+                            )
                         }
-
-
+                    }
+                ) {
+                    items.forEachIndexed { i, item ->
+                        FloatingActionButtonMenuItem(
+                            modifier =
+                                Modifier.semantics {
+                                    isTraversalGroup = true
+                                    // Add a custom a11y action to allow closing the menu when focusing
+                                    // the last menu item, since the close button comes before the first
+                                    // menu item in the traversal order.
+                                    if (i == items.size - 1) {
+                                        customActions =
+                                            listOf(
+                                                CustomAccessibilityAction(
+                                                    label = "Close menu",
+                                                    action = {
+                                                        fabMenuExpanded = false
+                                                        true
+                                                    },
+                                                )
+                                            )
+                                    }
+                                },
+                            onClick = {
+                                fabMenuExpanded = false
+                                when (i) {
+                                    0 -> openDialogNewFile = true
+                                    1 -> openDialogNewFolder = true
+                                }
+                            },
+                            icon = { Icon(item.first, contentDescription = null) },
+                            text = { Text(text = item.second) }
+                        )
                     }
                 }
             },
