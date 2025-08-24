@@ -116,7 +116,6 @@ class MainActivity : ComponentActivity() {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return FileExplorerViewModel(
                         context = this@MainActivity,
-                        nomeFile = "fileExplorerXml.xml"
                     ) as T
                 }
             }
@@ -202,13 +201,6 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                                         modifier = Modifier
                                             .padding(horizontal = 8.dp),
                                     ){
-                                        Image(
-                                            painter = painterResource(R.drawable.logo),
-                                            contentDescription = "Localized description",
-                                            modifier = Modifier
-                                                .padding(end = 8.dp)
-                                                .size(32.dp)
-                                        )
                                         Text(
                                             text = stringResource(R.string.app_name),
                                             modifier = Modifier
@@ -217,7 +209,7 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                             style = MaterialTheme.typography.titleLarge,
-                                            fontFamily = FontFamily(Font(resId = R.font.limelight, weight = FontWeight.W400, style = FontStyle.Normal))
+                                            fontFamily = FontFamily(Font(resId = R.font.cherry_bomb_one, weight = FontWeight.W400, style = FontStyle.Normal))
                                         )
                                     }
 

@@ -5,7 +5,7 @@ import androidx.room.*
 
 @Database(
     entities = [Folder::class, Document::class, Page::class, Resource::class],
-    version = 2
+    version = 1
 )
 abstract class DrawDatabase : RoomDatabase() {
     abstract fun folderDao(): FolderDao
@@ -23,7 +23,7 @@ abstract class DrawDatabase : RoomDatabase() {
                     context.applicationContext,
                     DrawDatabase::class.java,
                     "draw_database"
-                ).fallbackToDestructiveMigration() // For development, we can use destructive migration
+                ).fallbackToDestructiveMigration(false) // For development, we can use destructive migration
                 .build()
                 INSTANCE = instance
                 instance

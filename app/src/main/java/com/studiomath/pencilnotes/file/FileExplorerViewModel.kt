@@ -10,12 +10,9 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 class FileExplorerViewModel(
-    private val context: Context, var nomeFile: String // "fileExplorerXml.xml" - kept for compatibility but not used
+    context: Context
 ) : ViewModel() {
     private val fileRepository = FileRepository(context)
-    
-    // Migration utility
-    private val migration = XMLToRoomMigration(context, context.filesDir)
 
     /**
      * DATA
@@ -34,7 +31,7 @@ class FileExplorerViewModel(
         var filesList = mutableStateListOf<Files>()
     }
 
-    private var filesExplorer: MutableMap<String, DirectoryFiles>
+    private var filesExplorer: MutableMap<String, DirectoryFiles> = mutableMapOf()
 
     var directorySequence = mutableStateListOf<String>()
     private var directoryIdSequence = mutableStateListOf<Int?>() // Track folder IDs for database
@@ -57,13 +54,7 @@ class FileExplorerViewModel(
         get() = directoryIdSequence.lastOrNull()
 
     init {
-        filesExplorer = mutableMapOf()
-        
-        // Perform migration if needed, then load current directory
-        viewModelScope.launch {
-            migration.migrateIfNeeded(nomeFile)
-            loadCurrentDirectory()
-        }
+        loadCurrentDirectory()
     }
 
     private fun loadCurrentDirectory() {
