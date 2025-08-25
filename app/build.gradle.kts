@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.androidx.input.motionprediction)
 
     implementation(libs.androidx.ink.authoring)
+    implementation(libs.androidx.ink.authoring.compose)
     implementation(libs.androidx.ink.brush)
     implementation(libs.androidx.ink.geometry)
     implementation(libs.androidx.ink.nativeloader)
