@@ -49,6 +49,7 @@ kotlin {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui.unit)
+    implementation(libs.androidx.ui)
     androidTestImplementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.material3)

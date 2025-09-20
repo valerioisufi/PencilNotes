@@ -1,4 +1,4 @@
-package com.studiomath.pencilnotes.document.compose.state
+package com.studiomath.pencilnotes.document.compose.lazyDocument.state
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.DecayAnimationSpec
@@ -12,6 +12,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.Velocity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -25,7 +26,7 @@ import kotlin.math.abs
  * @param flingDecay Specifica l'animazione di decadimento per l'inerzia (fling).
  */
 @Stable
-class DocumentViewerState(
+class TransformableState(
     val minScale: Float = 0.5f,
     val maxScale: Float = 5f,
     val flingDecay: DecayAnimationSpec<Float> = exponentialDecay()
@@ -67,18 +68,18 @@ class DocumentViewerState(
     /**
      * Aggiorna le dimensioni del layout. Chiamato quando il componente viene misurato.
      */
-    fun onLayoutSizeChanged(size: IntSize) {
+    fun onLayoutSizeChanged(size: IntSize, scope: CoroutineScope) {
         layoutSize = size
         // Forza la correzione dell'offset se i nuovi limiti vengono violati
-        correctOffset()
+        correctOffset(scope)
     }
 
     /**
      * Aggiorna le dimensioni totali del contenuto.
      */
-    fun onContentSizeChanged(size: IntSize) {
+    fun onContentSizeChanged(size: IntSize, scope: CoroutineScope) {
         contentSize = size
-        correctOffset()
+        correctOffset(scope)
     }
 
     /**
@@ -119,9 +120,9 @@ class DocumentViewerState(
 
                 if (abs(coerced.x - current.x) > 0.1f || abs(coerced.y - current.y) > 0.1f) {
                     // Limite superato, ferma l'animazione di fling
-                    this.cancelAnimation()
+                    // this.cancelAnimation()
                     // Avvia l'animazione di bounce per tornare dolcemente al limite
-                    _offset.animateTo(coerced, spring())
+                    // _offset.animateTo(coerced, spring())
                 }
             }
         }
@@ -131,15 +132,14 @@ class DocumentViewerState(
      * Corregge l'offset per assicurarsi che rientri nei limiti validi.
      * Utile dopo un cambio di zoom o di dimensioni.
      */
-    private fun correctOffset() {
+    private fun correctOffset(scope: CoroutineScope) {
         val coercedOffset = offset.coerceIn(minOffsetX, maxOffsetX, minOffsetY, maxOffsetY)
         if (coercedOffset != offset) {
             // Se l'offset è fuori dai limiti, lancialo in un CoroutineScope
             // per evitare di chiamare animateTo direttamente da una funzione non-composable
             // o non-suspend. In un'app reale, questo scope dovrebbe essere gestito
             // più attentamente, ma per questo esempio è sufficiente.
-            val tempScope = CoroutineScope(kotlinx.coroutines.Dispatchers.Main)
-            tempScope.launch {
+            scope.launch {
                 _offset.animateTo(coercedOffset, spring())
             }
         }
@@ -153,15 +153,15 @@ class DocumentViewerState(
 }
 
 /**
- * Composable che crea e ricorda un'istanza di [DocumentViewerState].
+ * Composable che crea e ricorda un'istanza di [TransformableState].
  */
 @Composable
-fun rememberDocumentViewerState(
+fun rememberTrasformableState(
     minScale: Float = 0.5f,
     maxScale: Float = 5f,
     flingDecay: DecayAnimationSpec<Float> = exponentialDecay()
-): DocumentViewerState {
+): TransformableState {
     return remember {
-        DocumentViewerState(minScale, maxScale, flingDecay)
+        TransformableState(minScale, maxScale, flingDecay)
     }
 }
