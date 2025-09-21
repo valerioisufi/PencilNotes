@@ -6,6 +6,8 @@ import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.forEachGesture
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,11 +27,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode.Companion.Color
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.GraphicsContext
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.input.pointer.util.VelocityTracker
@@ -39,118 +43,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.studiomath.pencilnotes.document.compose.lazyDocument.state.LazyDocumentViewerState
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.TransformableState
+import com.studiomath.pencilnotes.document.compose.lazyDocument.state.rememberLazyDocumentViewerState
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.rememberTrasformableState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-
-/**
- * Defines the scope for the content of a LazyDocumentViewer.
- * This provides a DSL for defining items within the lazy layout.
- */
-interface LazyDocumentViewerScope {
-    /**
-     * Adds a number of items to the document viewer.
-     *
-     * @param count The number of items to add.
-     * @param key A factory of stable and unique keys representing the item.
-     * Using keys allows Compose to uniquely identify items, which is essential
-     * for preserving state and improving performance with dynamic content.
-     * @param itemContent The composable content for a given item index.
-     */
-    fun items(
-        count: Int,
-        key: ((index: Int) -> Any)? = null,
-        itemContent: @Composable (index: Int) -> Unit,
-    )
-}
-
-/**
- * A data class to hold the key and composable content for a single item.
- */
-private class LazyDocumentItem(
-    val key: Any,
-    val content: @Composable () -> Unit
-)
-
-/**
- * The default implementation of [LazyDocumentViewerScope].
- * It processes the DSL and builds a list of [LazyDocumentItem]s.
- */
-private class LazyDocumentViewerScopeImpl : LazyDocumentViewerScope {
-    val items = mutableListOf<LazyDocumentItem>()
-
-    override fun items(
-        count: Int,
-        key: ((index: Int) -> Any)?,
-        itemContent: @Composable (index: Int) -> Unit,
-    ) {
-        for (i in 0 until count) {
-            // Use the provided key, or fallback to the index if no key is provided.
-            // Using the index as a key is better than null, but custom keys are recommended.
-            val itemKey = key?.invoke(i) ?: i
-            items.add(LazyDocumentItem(itemKey) { itemContent(i) })
-        }
-    }
-}
-
-/**
- * An implementation of [LazyLayoutItemProvider] that provides items to the [LazyLayout].
- * It's backed by a [State] object containing the list of items, so the layout
- * can react to changes in the content.
- *
- * @param itemsState A state object holding the current list of document items.
- */
-private class LazyDocumentViewerProvider(
-    private val itemsState: State<List<LazyDocumentItem>>
-) : LazyLayoutItemProvider {
-    private val items: List<LazyDocumentItem>
-        get() = itemsState.value
-
-    override val itemCount: Int
-        get() = items.size
-
-    override fun getKey(index: Int): Any = items[index].key
-
-    @Composable
-    override fun Item(index: Int, key: Any) {
-        // The key is handled by the LazyLayout infrastructure. We just need to invoke
-        // the composable content for the given index.
-        items[index].content()
-    }
-}
-
-
-/**
- * Creates and remembers a [LazyDocumentViewerProvider].
- *
- * This function follows a common pattern in Compose for lazy layouts. It uses [derivedStateOf]
- * to ensure that the list of items is only re-calculated when the `content` lambda actually changes.
- *
- * @param content The DSL block that defines the items in the lazy document viewer.
- * @return A remembered instance of [LazyDocumentViewerProvider].
- */
-@Composable
-private fun rememberLazyDocumentViewerProvider(
-    content: LazyDocumentViewerScope.() -> Unit
-): LazyDocumentViewerProvider {
-    // rememberUpdatedState ensures that we are always using the latest version of the content lambda
-    // without causing unnecessary recompositions.
-    val latestContent = rememberUpdatedState(content)
-
-    // derivedStateOf creates a state object that will only update when the result of its calculation changes.
-    // This is more efficient than recalculating on every recomposition.
-    val itemsState = remember {
-        derivedStateOf {
-            LazyDocumentViewerScopeImpl().apply(latestContent.value).items
-        }
-    }
-
-    // Remember the provider itself. It will be stable across recompositions
-    // unless the itemsState instance changes (which it won't).
-    return remember { LazyDocumentViewerProvider(itemsState) }
-}
-
 
 
 /**
@@ -166,10 +65,11 @@ private fun rememberLazyDocumentViewerProvider(
 @Composable
 fun LazyDocumentViewer(
     modifier: Modifier = Modifier,
+    state: LazyDocumentViewerState = rememberLazyDocumentViewerState(),
     transformableState: TransformableState = rememberTrasformableState(),
     content: LazyDocumentViewerScope.() -> Unit
 ) {
-    val itemProvider = rememberLazyDocumentViewerProvider(content)
+    val itemProvider = rememberLazyDocumentViewerProvider(state, content)
     // NUOVO: Un CoroutineScope per lanciare le animazioni di fling e bounce
     // al di fuori della composizione.
     val scope = rememberCoroutineScope()
@@ -271,11 +171,11 @@ fun LazyDocumentViewerPreview() {
     var list by remember { mutableStateOf(listOf<String>("allora", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi", "oppure", "quindi")) }
 
     var listSize by remember { mutableStateOf(listOf(
-        IntSize(400, 800),
-        IntSize(400, 800),
-        IntSize(200, 300),
+        IntSize(400, 200),
+        IntSize(400, 100),
+        IntSize(200, 50),
         IntSize(700, 100),
-        IntSize(400, 800),
+        IntSize(400, 10),
         IntSize(400, 800),
         IntSize(200, 300),
         IntSize(700, 100),
