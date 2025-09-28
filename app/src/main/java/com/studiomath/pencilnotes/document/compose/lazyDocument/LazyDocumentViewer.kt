@@ -9,12 +9,15 @@ import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.layout.LazyLayout
 import androidx.compose.foundation.lazy.layout.LazyLayoutItemProvider
+import androidx.compose.foundation.lazy.layout.LazyLayoutMeasurePolicy
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,14 +42,18 @@ import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.offset
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.LazyDocumentViewerState
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.TransformableState
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.rememberLazyDocumentViewerState
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.rememberTrasformableState
+import com.studiomath.pencilnotes.document.page.Dimension
+import com.studiomath.pencilnotes.document.page.mm
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -64,15 +71,35 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun LazyDocumentViewer(
+    /** Modifier to be applied for the inner layout */
     modifier: Modifier = Modifier,
     state: LazyDocumentViewerState = rememberLazyDocumentViewerState(),
     transformableState: TransformableState = rememberTrasformableState(),
+
+    /** The inner padding to be added for the whole content(not for each individual item) */
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    /** The layout orientation of the list */
+    isVertical: Boolean = true,
+    /** Number of items to layout before and after the visible items */
+    beyondBoundsItemCount: Int = 10,
+    /** The alignment to align items horizontally. Required when isVertical is true */
+    horizontalAlignment: Alignment.Horizontal? = null,
+    /** The vertical arrangement for items. Required when isVertical is true */
+    verticalArrangement: Arrangement.Vertical? = null,
+    /** The alignment to align items vertically. Required when isVertical is false */
+    verticalAlignment: Alignment.Vertical? = null,
+    /** The horizontal arrangement for items. Required when isVertical is false */
+    horizontalArrangement: Arrangement.Horizontal? = null,
+
+    /** The content of the list */
     content: LazyDocumentViewerScope.() -> Unit
 ) {
-    val itemProvider = rememberLazyDocumentViewerProvider(state, content)
+    val itemProviderLambda = rememberLazyDocumentViewerProvider(state, content)
+
     // NUOVO: Un CoroutineScope per lanciare le animazioni di fling e bounce
     // al di fuori della composizione.
-    val scope = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
+    val graphicsContext = LocalGraphicsContext.current
 
     // NUOVO: Il modifier per la gestione dei gesti viene applicato qui.
     val gestureModifier = Modifier.pointerInput(Unit) {
@@ -95,7 +122,7 @@ fun LazyDocumentViewer(
 
                     // Se c'è un cambiamento, applica la trasformazione allo stato.
                     if (zoom != 1f || pan != Offset.Zero) {
-                        scope.launch {
+                        coroutineScope.launch {
                             transformableState.applyTransform(event.calculateCentroid(), pan, zoom, this)
                         }
                     }
@@ -112,59 +139,153 @@ fun LazyDocumentViewer(
                 // Quando l'utente solleva le dita, calcola la velocità...
                 val velocity = velocityTracker.calculateVelocity()
                 // ...e avvia l'animazione di fling.
-                scope.launch {
+                coroutineScope.launch {
                     transformableState.fling(velocity, this)
                 }
             }
         }
     }
 
+    val measurePolicy =
+        rememberLazyDocumentViewerMeasurePolicy(
+            itemProviderLambda,
+            state,
+            transformableState,
+            contentPadding,
+            isVertical,
+            beyondBoundsItemCount,
+            horizontalAlignment,
+            verticalAlignment,
+            horizontalArrangement,
+            verticalArrangement,
+            coroutineScope,
+            graphicsContext,
+        )
+
     LazyLayout(
         // Applica il modifier per i gesti insieme a quello passato dall'esterno.
         modifier = modifier.then(gestureModifier),
-        itemProvider = { itemProvider }
-    ) { constraints ->
-        // ... (la logica di misurazione e posizionamento rimane esattamente la stessa) ...
-        val scale = transformableState.scale
-        val offsetX = transformableState.offset.x
-        val offsetY = transformableState.offset.y
+        itemProvider = itemProviderLambda,
+        measurePolicy = measurePolicy,
+    )
+}
 
-        transformableState.onLayoutSizeChanged(
-            IntSize(constraints.maxWidth, constraints.maxHeight),
-            scope
-        )
 
-        val itemConstraints = constraints.copy(minWidth = constraints.maxWidth, minHeight = 0)
-        var totalHeight = 0
-        val visiblePlaceables = mutableListOf<Pair<Placeable, IntOffset>>()
+@Composable
+fun rememberLazyDocumentViewerMeasurePolicy(
+    /** Items provider of the list. */
+    itemProviderLambda: () -> LazyDocumentViewerProvider,
+    /** The state of the list. */
+    state: LazyDocumentViewerState,
+    transformableState: TransformableState,
+    /** The inner padding to be added for the whole content(nor for each individual item) */
+    contentPadding: PaddingValues,
+    /** The layout orientation of the list */
+    isVertical: Boolean,
+    /** Number of items to layout before and after the visible items */
+    beyondBoundsItemCount: Int,
+    /** The alignment to align items horizontally */
+    horizontalAlignment: Alignment.Horizontal?,
+    /** The alignment to align items vertically */
+    verticalAlignment: Alignment.Vertical?,
+    /** The horizontal arrangement for items */
+    horizontalArrangement: Arrangement.Horizontal?,
+    /** The vertical arrangement for items */
+    verticalArrangement: Arrangement.Vertical?,
+    /** Scope for animations */
+    coroutineScope: CoroutineScope,
+    /** Used for creating graphics layers */
+    graphicsContext: GraphicsContext
+) =
+    remember(){
+        LazyLayoutMeasurePolicy { containerConstraints ->
 
-        for (index in 0 until itemProvider.itemCount) {
-            val placeable = compose(index).map { it.measure(itemConstraints) }.first()
-            val itemHeight = placeable.height
-            val yPos = totalHeight
-            val itemTopScaled = yPos * scale + offsetY
-            val itemBottomScaled = (yPos + itemHeight) * scale + offsetY
+            // resolve content paddings
+            val startPadding =
+                if (isVertical) {
+                    contentPadding.calculateLeftPadding(layoutDirection).roundToPx()
+                } else {
+                    // in horizontal configuration, padding is reversed by placeRelative
+                    contentPadding.calculateStartPadding(layoutDirection).roundToPx()
+                }
 
-            if (itemBottomScaled >= 0 && itemTopScaled <= constraints.maxHeight) {
-                val finalX = offsetX.roundToInt()
-                val finalY = (yPos * scale + offsetY).roundToInt()
-                visiblePlaceables.add(placeable to IntOffset(finalX, finalY))
+            val endPadding =
+                if (isVertical) {
+                    contentPadding.calculateRightPadding(layoutDirection).roundToPx()
+                } else {
+                    // in horizontal configuration, padding is reversed by placeRelative
+                    contentPadding.calculateEndPadding(layoutDirection).roundToPx()
+                }
+            val topPadding = contentPadding.calculateTopPadding().roundToPx()
+            val bottomPadding = contentPadding.calculateBottomPadding().roundToPx()
+            val totalVerticalPadding = topPadding + bottomPadding
+            val totalHorizontalPadding = startPadding + endPadding
+            val totalMainAxisPadding =
+                if (isVertical) totalVerticalPadding else totalHorizontalPadding
+            val beforeContentPadding =
+                when {
+                    isVertical -> topPadding
+                    else -> startPadding
+                }
+            val afterContentPadding = totalMainAxisPadding - beforeContentPadding
+            val contentConstraints =
+                containerConstraints.offset(-totalHorizontalPadding, -totalVerticalPadding)
+
+            val spaceBetweenItemsDp =
+                if (isVertical) {
+                    verticalArrangement?.spacing ?: Arrangement.SpaceBetween.spacing
+                } else {
+                    horizontalArrangement?.spacing ?: Arrangement.SpaceBetween.spacing
+                }
+            val spaceBetweenItems = spaceBetweenItemsDp.roundToPx()
+
+            val itemProvider = itemProviderLambda()
+
+            // ... (la logica di misurazione e posizionamento rimane esattamente la stessa) ...
+            val scale = transformableState.scale
+            val offsetX = transformableState.offset.x
+            val offsetY = transformableState.offset.y
+
+
+
+            transformableState.onLayoutSizeChanged(
+                IntSize(containerConstraints.maxWidth, containerConstraints.maxHeight),
+                coroutineScope
+            )
+
+            val itemConstraints = containerConstraints.copy(minWidth = containerConstraints.maxWidth, minHeight = 0)
+            var totalHeight = 0
+            val visiblePlaceables = mutableListOf<Pair<Placeable, IntOffset>>()
+
+            for (index in 0 until itemProvider.itemCount) {
+                val placeable = compose(index).map { it.measure(itemConstraints) }.first()
+                val itemHeight = placeable.height
+                val yPos = totalHeight
+                val itemTopScaled = yPos * scale + offsetY
+                val itemBottomScaled = (yPos + itemHeight) * scale + offsetY
+
+                if (itemBottomScaled >= 0 && itemTopScaled <= containerConstraints.maxHeight) {
+                    val finalX = offsetX.roundToInt()
+                    val finalY = (yPos * scale + offsetY).roundToInt()
+                    visiblePlaceables.add(placeable to IntOffset(finalX, finalY))
+                }
+                totalHeight += itemHeight
             }
-            totalHeight += itemHeight
-        }
 
-        transformableState.onContentSizeChanged(
-            IntSize(constraints.maxWidth, totalHeight),
-            scope
-        )
+            transformableState.onContentSizeChanged(
+                IntSize(containerConstraints.maxWidth, totalHeight),
+                coroutineScope
+            )
 
-        layout(constraints.maxWidth, constraints.maxHeight) {
-            visiblePlaceables.forEach { (placeable, position) ->
-                placeable.placeRelative(position)
+            layout(containerConstraints.maxWidth, containerConstraints.maxHeight) {
+                visiblePlaceables.forEach { (placeable, position) ->
+                    placeable.placeRelative(position)
+                }
             }
+
         }
     }
-}
+
 @Preview
 @Composable
 fun LazyDocumentViewerPreview() {
@@ -181,13 +302,19 @@ fun LazyDocumentViewerPreview() {
         IntSize(700, 100),
     )) }
 
+    var listDimension by remember { mutableStateOf(listOf(
+        Dimension(400.mm, 200.mm),
+        Dimension(400.mm, 100.mm),
+        Dimension(200.mm, 50.mm),
+    )) }
+
     LazyDocumentViewer {
-        items(listSize.size, key = { it  }) { item ->
+        items(listDimension) { item ->
             Spacer(
                 modifier = Modifier
                     .padding(8.dp)
                     .background(Color(0xFFCCCCCC))
-                    .size(listSize[item].width.dp, listSize[item].height.dp)
+                    .documentSize(item)
             )
         }
     }

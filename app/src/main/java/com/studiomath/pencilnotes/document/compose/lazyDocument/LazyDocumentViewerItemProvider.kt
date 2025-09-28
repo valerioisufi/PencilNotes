@@ -25,7 +25,7 @@ import com.studiomath.pencilnotes.document.compose.lazyDocument.state.LazyDocume
 fun rememberLazyDocumentViewerProvider(
     state: LazyDocumentViewerState,
     content: LazyDocumentViewerScope.() -> Unit
-): LazyDocumentViewerProvider {
+): () -> LazyDocumentViewerProvider {
     // rememberUpdatedState ensures that we are always using the latest version of the content lambda
     // without causing unnecessary recompositions.
     val latestContent = rememberUpdatedState(content)
@@ -49,7 +49,7 @@ fun rememberLazyDocumentViewerProvider(
                     keyIndexMap = map,
                 )
             }
-        itemProviderState.value
+        itemProviderState::value
     }
 }
 
