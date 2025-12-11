@@ -116,6 +116,9 @@ fun LazyDocumentViewer(
                 // Attendi il primo tocco
                 awaitFirstDown(requireUnconsumed = false)
 
+                // Variable to track if any significant zoom happened during the gesture
+                var zoomOccurred = false
+
                 do {
                     val event = awaitPointerEvent()
 
@@ -125,15 +128,16 @@ fun LazyDocumentViewer(
 
                     // Se c'è un cambiamento, applica la trasformazione allo stato.
                     if (zoom != 1f || pan != Offset.Zero) {
+                        if (zoom != 1f) zoomOccurred = true
                         coroutineScope.launch {
-                            transformableState.applyTransform(event.calculateCentroid(), pan, zoom, this)
+                            transformableState.applyTransform(event.calculateCentroid(), pan, zoom)
                         }
                     }
 
                     // Aggiungi gli eventi al velocity tracker per calcolare la velocità finale.
                     event.changes.forEach {
                         if (it.positionChanged()) {
-                            velocityTracker.addPointerInputChange(it)
+                             velocityTracker.addPointerInputChange(it)
                         }
                     }
 
@@ -141,9 +145,18 @@ fun LazyDocumentViewer(
 
                 // Quando l'utente solleva le dita, calcola la velocità...
                 val velocity = velocityTracker.calculateVelocity()
-                // ...e avvia l'animazione di fling.
-                coroutineScope.launch {
-                    transformableState.fling(velocity, this)
+                
+                // ...e avvia l'animazione di fling SOLO se non abbiamo fatto zoom.
+                // Se abbiamo fatto zoom, è probabile che il movimento delle dita abbia generato velocità spuria.
+                if (!zoomOccurred) {
+                    coroutineScope.launch {
+                        transformableState.fling(velocity)
+                    }
+                } else {
+                    // Se c'è stato zoom (e quindi potremmo essere fuori scala), assicuriamoci di "settle".
+                     coroutineScope.launch {
+                        transformableState.settle()
+                    }
                 }
             }
         }
@@ -347,7 +360,7 @@ fun LazyDocumentViewerPreview() {
     var listDimension by remember { mutableStateOf(listOf(
         Dimension(400.mm, 200.mm),
         Dimension(400.mm, 100.mm),
-        Dimension(200.mm, 50.mm),
+        Dimension(200.mm, 100.mm),
     )) }
 
     LazyDocumentViewer {
