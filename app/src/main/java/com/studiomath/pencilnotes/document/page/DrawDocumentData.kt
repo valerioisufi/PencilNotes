@@ -199,6 +199,9 @@ class DrawDocumentData(
         // TODO: utilizzare mutex solo per modifiche che coinvolgono Page data class 
         @Transient
         var mutex = Mutex()
+        
+        @Transient
+        var version by mutableIntStateOf(0)
 
         /**
          * bitmapPage e canvasPage servono solo come cache da
@@ -240,6 +243,15 @@ class DrawDocumentData(
     data class Document(@SerialName("n") val name: String) {
         @SerialName("p") val pages = mutableListOf<Page>()
         @SerialName("r") val resources = mutableListOf<Resource>() // key = resourceId
+    }
+
+    private var _pagesState = androidx.compose.runtime.mutableStateListOf<Page>()
+    val pagesState: List<Page> = _pagesState
+
+    // Helper to sync state from document
+    private fun syncPagesState() {
+        _pagesState.clear()
+        _pagesState.addAll(document.pages)
     }
 
     // TODO: da utilizzare per ridurre il numero di cifre salvate nella serializzazione 
@@ -335,6 +347,7 @@ class DrawDocumentData(
             for (page in document.pages){
                 page.prepare()
             }
+            syncPagesState()
 
             drawViewModel.drawManager.requestDraw(
                 DrawAttachments(DrawAttachments.DrawMode.UPDATE).apply {
@@ -359,6 +372,8 @@ class DrawDocumentData(
 
     fun addPage(page: Page){
         document.pages.add(page)
+        _pagesState.add(page)
+
         drawViewModel.drawManager.calcPage.needToBeUpdated = true
         drawViewModel.drawManager.requestDraw(
             DrawAttachments(drawMode = DrawAttachments.DrawMode.UPDATE).apply {
@@ -370,6 +385,8 @@ class DrawDocumentData(
     fun removePage(index: Int = document.pages.lastIndex){
         if (index >= 0 && index < document.pages.size){
             document.pages.removeAt(index)
+            _pagesState.removeAt(index)
+
             drawViewModel.drawManager.calcPage.needToBeUpdated = true
             drawViewModel.drawManager.requestDraw(
                 DrawAttachments(drawMode = DrawAttachments.DrawMode.UPDATE).apply {

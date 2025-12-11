@@ -89,7 +89,6 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
                     setRectToRect(pageRectWithIndex.rect, drawViewModel.data.document.pages[pageRectWithIndex.index].rect(), Matrix.ScaleToFit.CENTER)
                 }
 
-                // TODO: implementare algoritmo di intersezione
                 drawViewModel.data.documentMutex.withLock{
                     strokes.values.forEach{ stroke ->
                         var serializedStroke = DrawDocumentData.Stroke(0).apply {
@@ -107,10 +106,10 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
                             toInkStroke()
                         }
                         drawViewModel.data.document.pages[pageRectWithIndex.index].strokeData.add(serializedStroke)
+                        // Trigger recomposition in PageComposable
+                        drawViewModel.data.document.pages[pageRectWithIndex.index].version++
                     }
                 }
-
-
 
                 drawViewModel.data.saveDocument()
             }

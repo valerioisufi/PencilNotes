@@ -104,6 +104,7 @@ import com.studiomath.pencilnotes.ui.composeComponents.ColorWheel
 import com.studiomath.pencilnotes.ui.composeComponents.SizeSlider
 import com.studiomath.pencilnotes.ui.theme.PencilNotesTheme
 import com.studiomath.pencilnotes.R
+import com.studiomath.pencilnotes.document.compose.LazyDrawDocumentViewer
 import com.studiomath.pencilnotes.document.compose.lazyDocument.LazyDocumentViewerPreview
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -542,7 +543,11 @@ fun DrawActivity(
         }
 
 
-        LazyDocumentViewerPreview()
+        LazyDrawDocumentViewer(
+            modifier = Modifier.fillMaxSize(),
+            drawViewModel = drawViewModel
+        )
+//        LazyDocumentViewerPreview()
 //        DrawComponent(
 //            drawViewModel = drawViewModel,
 //            inProgressStrokesView = inProgressStrokesView
