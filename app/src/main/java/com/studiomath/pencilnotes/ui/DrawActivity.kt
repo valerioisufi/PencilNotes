@@ -542,11 +542,11 @@ fun DrawActivity(
         }
 
 
-//        LazyDocumentViewerPreview()
-        DrawComponent(
-            drawViewModel = drawViewModel,
-            inProgressStrokesView = inProgressStrokesView
-        )
+        LazyDocumentViewerPreview()
+//        DrawComponent(
+//            drawViewModel = drawViewModel,
+//            inProgressStrokesView = inProgressStrokesView
+//        )
     }
 
 }

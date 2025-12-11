@@ -87,6 +87,12 @@ class LazyDocumentViewerProvider(
 
     override fun getIndex(key: Any): Int = keyIndexMap.getIndex(key)
 
+    fun getItemSize(index: Int): com.studiomath.pencilnotes.document.page.Dimension {
+        return intervalContent.withInterval(index) { localIndex, content ->
+            content.itemSize(localIndex)
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is LazyDocumentViewerProvider) return false

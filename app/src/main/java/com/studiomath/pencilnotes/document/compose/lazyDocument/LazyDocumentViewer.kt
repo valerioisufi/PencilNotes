@@ -1,5 +1,6 @@
 package com.studiomath.pencilnotes.document.compose.lazyDocument
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
@@ -53,6 +54,8 @@ import com.studiomath.pencilnotes.document.compose.lazyDocument.state.Transforma
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.rememberLazyDocumentViewerState
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.rememberTrasformableState
 import com.studiomath.pencilnotes.document.page.Dimension
+import com.studiomath.pencilnotes.document.page.px
+import androidx.compose.ui.unit.Constraints
 import com.studiomath.pencilnotes.document.page.mm
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -171,6 +174,7 @@ fun LazyDocumentViewer(
 }
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun rememberLazyDocumentViewerMeasurePolicy(
     /** Items provider of the list. */
@@ -197,7 +201,20 @@ fun rememberLazyDocumentViewerMeasurePolicy(
     /** Used for creating graphics layers */
     graphicsContext: GraphicsContext
 ) =
-    remember(){
+    remember(
+        itemProviderLambda,
+        state,
+        transformableState,
+        contentPadding,
+        isVertical,
+        beyondBoundsItemCount,
+        horizontalAlignment,
+        verticalAlignment,
+        horizontalArrangement,
+        verticalArrangement,
+        coroutineScope,
+        graphicsContext
+    ){
         LazyLayoutMeasurePolicy { containerConstraints ->
 
             // resolve content paddings
@@ -241,39 +258,64 @@ fun rememberLazyDocumentViewerMeasurePolicy(
 
             val itemProvider = itemProviderLambda()
 
-            // ... (la logica di misurazione e posizionamento rimane esattamente la stessa) ...
             val scale = transformableState.scale
             val offsetX = transformableState.offset.x
             val offsetY = transformableState.offset.y
+            
+            // Assume width is fixed to the container width (for vertical list)
+            val itemWidth = contentConstraints.maxWidth
+            var totalHeight = 0f
+            val visiblePlaceables = mutableListOf<Pair<Placeable, IntOffset>>()
 
+            // Iterate all items to calculate positions and finding visible ones
+            // This is O(N), which is acceptable for typical document lengths.
+            // A more advanced implementation could use a cached layout info structure.
+            for (index in 0 until itemProvider.itemCount) {
+                // Get pre-calculated size from metadata (Dimension)
+                val dimension = itemProvider.getItemSize(index)
+                val itemBaseHeight = dimension.calcHeightFromWidthPx(itemWidth.toFloat().px)
+                
+                // Calculate scaled position
+                val itemHeightScaled = itemBaseHeight * scale
+                val itemTopScaled = totalHeight * scale + offsetY
+                val itemBottomScaled = itemTopScaled + itemHeightScaled
+                
+                // Check intersection with viewport
+                // Viewport is 0..containerConstraints.maxHeight
+                // Using a tolerance buffer
+                val isVisible = itemBottomScaled >= -100 && itemTopScaled <= containerConstraints.maxHeight + 100
 
-
+                if (isVisible) {
+                    // Measure only if visible
+                    // We measure with the SCALED constraints to ensure content (like text/strokes) renders at correct resolution
+                    // We also clamp to avoid integer overflow or weird constraints if scale is huge
+                    val scaledWidth = (itemWidth * scale).roundToInt().coerceAtLeast(1)
+                    val scaledHeight = (itemHeightScaled).roundToInt().coerceAtLeast(1)
+                    
+                    val childConstraints = Constraints.fixed(scaledWidth, scaledHeight)
+                    
+                    val placeables = measure(index, childConstraints)
+                    placeables.forEach { placeable ->
+                         val finalX = offsetX.roundToInt() + startPadding // Add padding if needed
+                         val finalY = itemTopScaled.roundToInt() + topPadding
+                         visiblePlaceables.add(placeable to IntOffset(finalX, finalY))
+                    }
+                }
+                
+                totalHeight += itemBaseHeight + spaceBetweenItems
+            }
+            
+            // Update state with the calculated total content size
+            // Note: TransformableState expects size in base pixels (unscaled)?
+            // Looking at TransformableState logic:
+            // if (contentSize.width * scale > layoutSize.width) ...
+            // So contentSize should be the UN-SCALED size.
             transformableState.onLayoutSizeChanged(
                 IntSize(containerConstraints.maxWidth, containerConstraints.maxHeight),
                 coroutineScope
             )
-
-            val itemConstraints = containerConstraints.copy(minWidth = containerConstraints.maxWidth, minHeight = 0)
-            var totalHeight = 0
-            val visiblePlaceables = mutableListOf<Pair<Placeable, IntOffset>>()
-
-            for (index in 0 until itemProvider.itemCount) {
-                val placeable = compose(index).map { it.measure(itemConstraints) }.first()
-                val itemHeight = placeable.height
-                val yPos = totalHeight
-                val itemTopScaled = yPos * scale + offsetY
-                val itemBottomScaled = (yPos + itemHeight) * scale + offsetY
-
-                if (itemBottomScaled >= 0 && itemTopScaled <= containerConstraints.maxHeight) {
-                    val finalX = offsetX.roundToInt()
-                    val finalY = (yPos * scale + offsetY).roundToInt()
-                    visiblePlaceables.add(placeable to IntOffset(finalX, finalY))
-                }
-                totalHeight += itemHeight
-            }
-
             transformableState.onContentSizeChanged(
-                IntSize(containerConstraints.maxWidth, totalHeight),
+                IntSize(itemWidth, totalHeight.roundToInt()),
                 coroutineScope
             )
 
@@ -309,12 +351,14 @@ fun LazyDocumentViewerPreview() {
     )) }
 
     LazyDocumentViewer {
-        items(listDimension) { item ->
+        items(
+            items = listDimension,
+            itemSize = { it }
+        ) { item ->
             Spacer(
                 modifier = Modifier
                     .padding(8.dp)
                     .background(Color(0xFFCCCCCC))
-                    .documentSize(item)
             )
         }
     }

@@ -1,6 +1,7 @@
 package com.studiomath.pencilnotes.document.compose.lazyDocument
 
 import androidx.compose.runtime.Composable
+import com.studiomath.pencilnotes.document.page.Dimension
 
 /**
  * Defines the scope for the content of a LazyDocumentViewer.
@@ -23,17 +24,20 @@ interface LazyDocumentViewerScope {
      * Using keys allows Compose to uniquely identify items, which is essential
      * for preserving state and improving performance with dynamic content.
      * @param contentType A factory of the content types for the item.
+     * @param itemSize A factory of the dimensions for the item.
      * @param itemContent The composable content for a given item index.
      */
     fun items(
         count: Int,
         key: ((index: Int) -> Any)? = null,
         contentType: (index: Int) -> Any? = { null },
+        itemSize: (index: Int) -> Dimension,
         itemContent: @Composable LazyDocumentViewerItemScope.(index: Int) -> Unit,
     ) {
         error("The method is not implemented")
     }
 }
+
 
 /**
  * Adds a list of items.
@@ -48,18 +52,21 @@ interface LazyDocumentViewerScope {
  * @param contentType a factory of the content types for the item. The item compositions of the same
  *   type could be reused more efficiently. Note that null is a valid type and items of such type
  *   will be considered compatible.
+ * @param itemSize a factory of the dimensions for the item.
  * @param itemContent the content displayed by a single item
  */
 inline fun <T> LazyDocumentViewerScope.items(
     items: List<T>,
     noinline key: ((item: T) -> Any)? = null,
     noinline contentType: (item: T) -> Any? = { null },
+    noinline itemSize: (item: T) -> Dimension,
     crossinline itemContent: @Composable LazyDocumentViewerItemScope.(item: T) -> Unit,
 ) =
     items(
         count = items.size,
         key = if (key != null) { index: Int -> key(items[index]) } else null,
         contentType = { index: Int -> contentType(items[index]) },
+        itemSize = { index: Int -> itemSize(items[index]) },
     ) {
         itemContent(items[it])
     }
@@ -77,18 +84,21 @@ inline fun <T> LazyDocumentViewerScope.items(
  * @param contentType a factory of the content types for the item. The item compositions of the same
  *   type could be reused more efficiently. Note that null is a valid type and items of such type
  *   will be considered compatible.
+ * @param itemSize a factory of the dimensions for the item.
  * @param itemContent the content displayed by a single item
  */
 inline fun <T> LazyDocumentViewerScope.itemsIndexed(
     items: List<T>,
     noinline key: ((index: Int, item: T) -> Any)? = null,
     crossinline contentType: (index: Int, item: T) -> Any? = { _, _ -> null },
+    crossinline itemSize: (index: Int, item: T) -> Dimension,
     crossinline itemContent: @Composable LazyDocumentViewerItemScope.(index: Int, item: T) -> Unit,
 ) =
     items(
         count = items.size,
         key = if (key != null) { index: Int -> key(index, items[index]) } else null,
         contentType = { index -> contentType(index, items[index]) },
+        itemSize = { index -> itemSize(index, items[index]) },
     ) {
         itemContent(it, items[it])
     }
