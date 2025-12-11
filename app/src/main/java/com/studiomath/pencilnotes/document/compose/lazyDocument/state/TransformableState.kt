@@ -48,34 +48,46 @@ class TransformableState(
     // Dimensioni del contenitore del layout e del contenuto totale.
     private var layoutSize = IntSize.Zero
     private var contentSize = IntSize.Zero
+    
+    // Alignment bias (0f = Start/Top, 0.5f = Center, 1f = End/Bottom)
+    private var alignmentX: Float = 0.5f
+    private var alignmentY: Float = 0.5f
+    
+    fun setAlignment(horizontal: Float, vertical: Float) {
+        if (alignmentX != horizontal || alignmentY != vertical) {
+            alignmentX = horizontal
+            alignmentY = vertical
+            // Trigger settle if needed?
+        }
+    }
 
     // I limiti rigidi (hard bounds) per l'offset.
     private val minOffsetX: Float
         get() {
             val scaledWidth = contentSize.width * scale
             val widthDiff = layoutSize.width - scaledWidth
-            return if (widthDiff > 0) widthDiff / 2f else widthDiff
+            return if (widthDiff > 0) widthDiff * alignmentX else widthDiff
         }
 
     private val maxOffsetX: Float
         get() {
             val scaledWidth = contentSize.width * scale
             val widthDiff = layoutSize.width - scaledWidth
-            return if (widthDiff > 0) widthDiff / 2f else 0f
+            return if (widthDiff > 0) widthDiff * alignmentX else 0f
         }
 
     private val minOffsetY: Float
         get() {
             val scaledHeight = contentSize.height * scale
             val heightDiff = layoutSize.height - scaledHeight
-            return if (heightDiff > 0) heightDiff / 2f else heightDiff
+            return if (heightDiff > 0) heightDiff * alignmentY else heightDiff
         }
 
     private val maxOffsetY: Float
         get() {
             val scaledHeight = contentSize.height * scale
             val heightDiff = layoutSize.height - scaledHeight
-            return if (heightDiff > 0) heightDiff / 2f else 0f
+            return if (heightDiff > 0) heightDiff * alignmentY else 0f
         }
 
     /**
@@ -223,8 +235,16 @@ class TransformableState(
                  animationSpec = spring(stiffness = Spring.StiffnessLow)
              )
         }
+        // Need to re-read bounds as scale might change bounds logic (via widthDiff)
+        // But if we animate scale, minOffsetX changes frame by frame if it depends on scale?
+        // Yes. Ideally we animate both concurrently.
+        // But here we do sequential.
         
-        val minX = minOffsetX
+        // Re-calculate bounds with TARGET scale?
+        // Actually minOffset depends on current scale.
+        // If we settled scale, we can settle offset.
+        
+        val minX = minOffsetX 
         val maxX = maxOffsetX
         val minY = minOffsetY
         val maxY = maxOffsetY

@@ -56,6 +56,7 @@ import com.studiomath.pencilnotes.document.compose.lazyDocument.state.rememberTr
 import com.studiomath.pencilnotes.document.page.Dimension
 import com.studiomath.pencilnotes.document.page.px
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.LayoutDirection
 import com.studiomath.pencilnotes.document.page.mm
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -86,7 +87,7 @@ fun LazyDocumentViewer(
     /** Number of items to layout before and after the visible items */
     beyondBoundsItemCount: Int = 10,
     /** The alignment to align items horizontally. Required when isVertical is true */
-    horizontalAlignment: Alignment.Horizontal? = Alignment.CenterHorizontally,
+    horizontalAlignment: Alignment.Horizontal? = null,
     /** The vertical arrangement for items. Required when isVertical is true */
     verticalArrangement: Arrangement.Vertical? = null,
     /** The alignment to align items vertically. Required when isVertical is false */
@@ -231,7 +232,6 @@ fun rememberLazyDocumentViewerMeasurePolicy(
         LazyLayoutMeasurePolicy { containerConstraints ->
 
             // 1. Resolve Padding
-            // Calculate padding in px
             val startPadding = contentPadding.calculateStartPadding(layoutDirection).roundToPx()
             val endPadding = contentPadding.calculateEndPadding(layoutDirection).roundToPx()
             val topPadding = contentPadding.calculateTopPadding().roundToPx()
@@ -250,15 +250,36 @@ fun rememberLazyDocumentViewerMeasurePolicy(
 
             val itemProvider = itemProviderLambda()
 
-            // 3. Current Transform State
+            // 3. Resolve Alignment Bias & Set State
+            // We need to map Alignment to a float (0..1)
+            // Helper function to probe alignment
+            fun getAlignmentBias(horizontal: Alignment.Horizontal?, vertical: Alignment.Vertical?): Pair<Float, Float> {
+                 val hBias = if (horizontal != null) {
+                     // Hack: probe logic assuming standard alignments
+                     val probed = horizontal.align(0, 1000, LayoutDirection.Ltr)
+                     probed / 1000f
+                 } else 0.5f // Default to Center if null? Or Start? Current default in params is CenterHorizontally
+                 
+                 val vBias = if (vertical != null) {
+                     val probed = vertical.align(0, 1000)
+                     probed / 1000f
+                 } else 0.5f 
+                 
+                 return hBias to vBias
+            }
+            
+            val (hBias, vBias) = getAlignmentBias(horizontalAlignment, verticalAlignment)
+            // Update state with alignment.
+            transformableState.setAlignment(hBias, vBias)
+
+
+            // 4. Current Transform State
             val currentScale = transformableState.scale
             val currentOffset = transformableState.offset
             val offsetX = currentOffset.x
             val offsetY = currentOffset.y
 
-            // 4. Calculate Base Scale (Pixels per mm)
-            // Determine container limits for "Fit Width" (or "Fit Height") logic
-            // Constraint minus padding in the CROSS axis
+            // 5. Calculate Base Scale (Pixels per mm)
             val crossAxisContainerSize = if (isVertical) {
                 containerConstraints.maxWidth - horizontalPadding
             } else {
@@ -278,25 +299,18 @@ fun rememberLazyDocumentViewerMeasurePolicy(
                 1f
             }
 
-            // 5. Layout Calculation
+            // 6. Layout Calculation
             var totalMainAxisSize = 0f
             var maxCrossAxisSize = 0
             
-            // To store placeables to be placed
-            val visiblePlaceables = mutableListOf<Triple<Placeable, IntOffset, Int>>() // Placeable, Position, Index
+            val visiblePlaceables = mutableListOf<Triple<Placeable, IntOffset, Int>>() 
 
             // Viewport bounds in CONTENT coordinates (scaled)
-            // The viewport is at (0,0) to (maxWidth, maxHeight) relative to the container.
-            // But content is shifted by offset.
             
-            // 5a. First Pass: Calculate Total Size and Bounds
-            // Iterate all items to calculate positions 
-            
-            // We need to identify indices to measure
+            // 6a. First Pass: Calculate Total Size and Bounds
             var firstVisibleIndex = -1
             var lastVisibleIndex = -1
             
-            // Current position in MAIN axis (unscaled pixels)
             var currentMainPos = 0f
             
             val mainAxisOffset = if (isVertical) offsetY else offsetX
@@ -310,7 +324,6 @@ fun rememberLazyDocumentViewerMeasurePolicy(
                 val itemSizeMainPx = itemSizeMainMm * pixelsPerMm
                 val itemSizeCrossPx = itemSizeCrossMm * pixelsPerMm
                 
-                // Track max cross axis size
                 if (itemSizeCrossPx > maxCrossAxisSize) {
                     maxCrossAxisSize = itemSizeCrossPx.roundToInt()
                 }
@@ -331,25 +344,15 @@ fun rememberLazyDocumentViewerMeasurePolicy(
             }
             
             totalMainAxisSize = currentMainPos
-            // Remove last spacing
             if (itemProvider.itemCount > 0) {
                  totalMainAxisSize -= spaceBetweenItems
             }
 
-            // 5b. Second Pass: Measure and Place
-            // Determine range to measure
+            // 6b. Second Pass: Measure and Place
             val rangeStart = (firstVisibleIndex - beyondBoundsItemCount).coerceAtLeast(0)
             val rangeEnd = (lastVisibleIndex + beyondBoundsItemCount).coerceAtMost(itemProvider.itemCount - 1)
             
-            // Reset position for second pass
-            // Optimization: We could have stored positions, but re-calculating is cheap O(N).
-            // Better: Just loop from 0 to rangeEnd. 
-            // If rangeStart is large, looping from 0 is wasteful?
-            // Yes, but we need correct 'currentMainPos'. 
-            // Unless we store "position of index i"? 
-            // Let's assume linear accumulation is fast enough. 
-            // (If items have different sizes, we MUST iterate or cache. Since sizes are dynamic from provider...)
-            
+            // Reset scan
             currentMainPos = 0f
             
             if (firstVisibleIndex != -1) {
@@ -362,7 +365,7 @@ fun rememberLazyDocumentViewerMeasurePolicy(
                      val crossPx = crossMm * pixelsPerMm
                      
                      if (i >= rangeStart) {
-                         // Measure and Place
+                         // Measure
                          val scaledMainInt = (mainPx * currentScale).roundToInt().coerceAtLeast(1)
                          val scaledCrossInt = (crossPx * currentScale).roundToInt().coerceAtLeast(1)
                          
@@ -374,37 +377,34 @@ fun rememberLazyDocumentViewerMeasurePolicy(
                          val placeables = measure(i, childConstraints) 
                          
                          // Calculate Position
-                         // Main Axis Position (Screen coords)
+                         // Main Axis Position 
                          val mainAxisScreenPos = (currentMainPos * currentScale + mainAxisOffset).roundToInt()
-                         
-                         // Add start padding to main axis position
                          val paddingMain = if (isVertical) topPadding else startPadding
                          val finalMainPos = mainAxisScreenPos + paddingMain
                          
-                         // Cross Axis Position (Alignment)
-                         // Available space in cross axis = Container - CrossPadding
-                         val paddingBeforeCross = if (isVertical) startPadding else topPadding
-                         val paddingAfterCross = if (isVertical) endPadding else bottomPadding
+                         // Cross Axis Position
+                         // Vertical Layout -> Cross axis is X. Use offsetX.
+                         val crossAxisOffset = if (isVertical) offsetX else offsetY
+                         val paddingCross = if (isVertical) startPadding else topPadding
                          
-                         val availableCrossSpace = if (isVertical) containerConstraints.maxWidth else containerConstraints.maxHeight
-                         val actualCrossSpace = availableCrossSpace - paddingBeforeCross - paddingAfterCross
+                         // Note: If widthDiff > 0, offset is already biased by TransformableState.
+                         // So we just add it to padding.
+                         val finalCrossPos = (crossAxisOffset + paddingCross).roundToInt()
                          
+                         // We reinstate item-specific alignment relative to maxCrossAxisSize
                          placeables.forEach { p ->
-                             // Alignment
-                             val crossAxisPos = if (isVertical) {
-                                 // Horizontal Alignment
-                                 val align = horizontalAlignment ?: Alignment.Start
-                                 val alignedX = align.align(p.width, actualCrossSpace, layoutDirection)
-                                 alignedX + paddingBeforeCross
+                             val itemAlignOffset = if (isVertical) {
+                                  val align = horizontalAlignment ?: Alignment.CenterHorizontally
+                                  val scaledMaxCross = maxCrossAxisSize * currentScale
+                                  align.align(p.width, scaledMaxCross.roundToInt(), layoutDirection)
                              } else {
-                                 // Vertical Alignment
-                                 val align = verticalAlignment ?: Alignment.Top
-                                 val alignedY = align.align(p.height, actualCrossSpace)
-                                 alignedY + paddingBeforeCross
+                                  val align = verticalAlignment ?: Alignment.CenterVertically
+                                  val scaledMaxCross = maxCrossAxisSize * currentScale
+                                  align.align(p.height, scaledMaxCross.roundToInt())
                              }
                              
-                             val x = if (isVertical) crossAxisPos else finalMainPos
-                             val y = if (isVertical) finalMainPos else crossAxisPos
+                             val x = if (isVertical) finalCrossPos + itemAlignOffset else finalMainPos
+                             val y = if (isVertical) finalMainPos else finalCrossPos + itemAlignOffset
                              
                              visiblePlaceables.add(Triple(p, IntOffset(x, y), i))
                          }
@@ -414,40 +414,12 @@ fun rememberLazyDocumentViewerMeasurePolicy(
                  }
             }
 
-            // 6. Report Size to State
-            // totalMainAxisSize is sum of items + spacing (unscaled base pixels).
-            // We should add padding to the CONTENT SIZE? 
-            // In standard views, padding is part of content size?
-            // "Padding is space around content".
-            // If I scroll to top, I see padding.
-            // If I scroll to bottom, I see padding.
-            // TransformableState manages offset bounds.
-            // MinOffset = LayoutSize - ContentSize.
-            // If ContentSize include padding => We can scroll further.
-            
+            // 7. Report Size to State
             val paddingMainTotal = if (isVertical) verticalPadding else horizontalPadding
             val totalMainWithPadding = totalMainAxisSize + paddingMainTotal
             
-            // Cross axis size?
-            // Should be max item size + padding? Or container size?
-            // If we want to allow panning in cross axis if zoomed in?
-            // Content Size width => zoomed width.
-            // The item width is already calculated to fit container (pixelsPerMm).
-            // So UNZOOOMED content width = container width (approx).
-            // But padding adds to it? 
-            // If container is 1000px, padding 100px. Item is 900px.
-            // Total width 1000px.
-            
-            // Just use maxCrossAxisSize.
-            // Wait, maxCrossAxisSize was calculated as item size.
-            // We need to add cross axis padding to it?
             val paddingCrossTotal = if (isVertical) horizontalPadding else verticalPadding
             val totalCrossWithPadding = maxCrossAxisSize + paddingCrossTotal
-            
-            // Content Size for TransformableState.
-            // Swapped if horizontal.
-            // If Vertical: Width = Cross, Height = Main.
-            // If Horizontal: Width = Main, Height = Cross.
             
             val contentWidth = if (isVertical) totalCrossWithPadding.toFloat() else totalMainWithPadding
             val contentHeight = if (isVertical) totalMainWithPadding else totalCrossWithPadding.toFloat()
