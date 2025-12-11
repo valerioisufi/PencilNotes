@@ -1,6 +1,7 @@
 package com.studiomath.pencilnotes.document
 
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Path
 import android.util.DisplayMetrics
 import android.view.MotionEvent
@@ -89,6 +90,76 @@ class DrawViewModel(
 //            Length.WIDTH
 //        )
     )
+
+    /**
+     * Returns the active brush with size scaled to World Pixels (Scale 1.0).
+     * This is suitable for use with InProgressStrokes where we provide a Screen->World transform.
+     */
+    fun getActiveBrushForCompose(): Brush {
+        // 1 pt = 1/72 inch.
+        // Screen density (xdpi) = pixels per inch.
+        // SizeInPx = SizeInPt * (xdpi / 72)
+        val pxPerPt = displayMetrics.xdpi / 72f
+        val sizeInPx = activeBrush.size * pxPerPt
+        
+        return activeBrush.copy(size = sizeInPx)
+    }
+
+    fun addStroke(pageIndex: Int, stroke: androidx.ink.strokes.Stroke, transformToPage: Matrix) {
+        if (pageIndex < 0 || pageIndex >= data.document.pages.size) return
+        
+        val page = data.document.pages[pageIndex]
+        val zIndex = page.strokeData.size
+
+        // We need to transform the stroke to Page Coordinates.
+        // Since androidx.ink.strokes.Stroke is immutable in its inputs, we recreate it.
+        val inputs = stroke.inputs
+        val batch = androidx.ink.strokes.MutableStrokeInputBatch()
+        val scratchInput = androidx.ink.strokes.StrokeInput()
+        
+        // Matrix helper array
+        val points = FloatArray(2)
+
+        for (i in 0 until inputs.size) {
+            inputs.populate(i, scratchInput)
+            points[0] = scratchInput.x
+            points[1] = scratchInput.y
+            transformToPage.mapPoints(points)
+            
+            batch.add(
+                type = inputs.getToolType(), // Assuming stroke has uniform tool type
+                x = points[0],
+                y = points[1],
+                elapsedTimeMillis = scratchInput.elapsedTimeMillis,
+                strokeUnitLengthCm = scratchInput.strokeUnitLengthCm,
+                pressure = scratchInput.pressure,
+                tiltRadians = scratchInput.tiltRadians,
+                orientationRadians = scratchInput.orientationRadians
+            )
+        }
+        
+        val transformedStroke = androidx.ink.strokes.Stroke(stroke.brush, batch)
+        
+        val newStroke = DrawDocumentData.Stroke(zIndex).apply {
+            this.stroke = transformedStroke
+            toSerializedStroke()
+        }
+        
+        page.strokeData.add(newStroke)
+        
+        // Trigger generic update (bitmap redraw might be needed if we want to "bake" it, 
+        // but for now we just add it to the model. 
+        // We probably want to request a redraw of the page.)
+        drawManager.calcPage.needToBeUpdated = true
+        drawManager.requestDraw(
+            DrawManager.DrawAttachments(DrawManager.DrawAttachments.DrawMode.UPDATE).apply {
+                update = DrawManager.DrawAttachments.Update.DRAW_BITMAP
+            }
+        )
+        
+        // Mark for saving
+        data.saveDocument()
+    }
 
     var startStrokeInProgress: ((event: MotionEvent, pointerId: Int, brush: Brush) -> InProgressStrokeId)? = null
     var addToStrokeInProgress: ((event: MotionEvent, pointerId: Int, strokeId: InProgressStrokeId, predictedEvent: MotionEvent?) -> Unit)? = null

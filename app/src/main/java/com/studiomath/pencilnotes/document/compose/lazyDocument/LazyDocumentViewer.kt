@@ -60,7 +60,22 @@ import androidx.compose.ui.unit.LayoutDirection
 import com.studiomath.pencilnotes.document.page.mm
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import com.studiomath.pencilnotes.document.compose.lazyDocument.state.LazyDocumentItemInfo
+import com.studiomath.pencilnotes.document.compose.lazyDocument.state.LazyDocumentLayoutInfo
 import kotlin.math.roundToInt
+
+class DefaultLazyDocumentLayoutInfo(
+    override val visibleItemsInfo: List<LazyDocumentItemInfo>,
+    override val viewportSize: IntSize
+) : LazyDocumentLayoutInfo
+
+class DefaultLazyDocumentItemInfo(
+    override val index: Int,
+    override val offset: IntOffset,
+    override val size: IntSize,
+    override val sizeMm: IntSize
+) : LazyDocumentItemInfo
+
 
 
 /**
@@ -79,6 +94,9 @@ fun LazyDocumentViewer(
     modifier: Modifier = Modifier,
     state: LazyDocumentViewerState = rememberLazyDocumentViewerState(),
     transformableState: TransformableState = rememberTrasformableState(),
+
+    /** Whether gestures are enabled by default by this composable */
+    enableGestures: Boolean = true,
 
     /** The inner padding to be added for the whole content(not for each individual item) */
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -106,61 +124,14 @@ fun LazyDocumentViewer(
     val graphicsContext = LocalGraphicsContext.current
 
     // NUOVO: Il modifier per la gestione dei gesti viene applicato qui.
-    val gestureModifier = Modifier.pointerInput(Unit) {
-        // forEachGesture rileva l'inizio di un nuovo gesto (es. il primo dito che tocca lo schermo).
-        forEachGesture {
-            // awaitPointerEventScope ci permette di processare tutti gli eventi di un gesto
-            // (dal primo dito giù all'ultimo dito su).
-            awaitPointerEventScope {
-                val velocityTracker = VelocityTracker()
-
-                // Attendi il primo tocco
-                awaitFirstDown(requireUnconsumed = false)
-
-                // Variable to track if any significant zoom happened during the gesture
-                var zoomOccurred = false
-
-                do {
-                    val event = awaitPointerEvent()
-
-                    // Calcola lo zoom e il pan basandosi sul movimento di tutte le dita.
-                    val zoom = event.calculateZoom()
-                    val pan = event.calculatePan()
-
-                    // Se c'è un cambiamento, applica la trasformazione allo stato.
-                    if (zoom != 1f || pan != Offset.Zero) {
-                        if (zoom != 1f) zoomOccurred = true
-                        coroutineScope.launch {
-                            transformableState.applyTransform(event.calculateCentroid(), pan, zoom)
-                        }
-                    }
-
-                    // Aggiungi gli eventi al velocity tracker per calcolare la velocità finale.
-                    event.changes.forEach {
-                        if (it.positionChanged()) {
-                             velocityTracker.addPointerInputChange(it)
-                        }
-                    }
-
-                } while (event.changes.any { it.pressed })
-
-                // Quando l'utente solleva le dita, calcola la velocità...
-                val velocity = velocityTracker.calculateVelocity()
-                
-                // ...e avvia l'animazione di fling SOLO se non abbiamo fatto zoom.
-                // Se abbiamo fatto zoom, è probabile che il movimento delle dita abbia generato velocità spuria.
-                if (!zoomOccurred) {
-                    coroutineScope.launch {
-                        transformableState.fling(velocity)
-                    }
-                } else {
-                    // Se c'è stato zoom (e quindi potremmo essere fuori scala), assicuriamoci di "settle".
-                     coroutineScope.launch {
-                        transformableState.settle()
-                    }
-                }
-            }
-        }
+    // Use the extracted gesture detector
+    val gestureModifier = if (enableGestures) {
+        Modifier.detectDocumentGestures(
+            transformableState = transformableState,
+            coroutineScope = coroutineScope
+        )
+    } else {
+        Modifier
     }
 
     val measurePolicy =
@@ -432,6 +403,21 @@ fun rememberLazyDocumentViewerMeasurePolicy(
                 IntSize(contentWidth.roundToInt(), contentHeight.roundToInt()),
                 coroutineScope
             )
+
+            // Update Layout Info
+            val layoutInfo = DefaultLazyDocumentLayoutInfo(
+                visibleItemsInfo = visiblePlaceables.map { (placeable, position, index) ->
+                    val dim = itemProvider.getItemSize(index)
+                    DefaultLazyDocumentItemInfo(
+                        index = index,
+                        offset = position,
+                        size = IntSize(placeable.width, placeable.height),
+                        sizeMm = IntSize(dim.width.mm.roundToInt(), dim.height.mm.roundToInt())
+                    )
+                },
+                viewportSize = IntSize(containerConstraints.maxWidth, containerConstraints.maxHeight)
+            )
+            state.updateLayoutInfo(layoutInfo)
 
             layout(containerConstraints.maxWidth, containerConstraints.maxHeight) {
                 visiblePlaceables.forEach { (placeable, position, _) ->
