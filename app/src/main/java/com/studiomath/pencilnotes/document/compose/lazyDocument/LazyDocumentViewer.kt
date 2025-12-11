@@ -86,7 +86,7 @@ fun LazyDocumentViewer(
     /** Number of items to layout before and after the visible items */
     beyondBoundsItemCount: Int = 10,
     /** The alignment to align items horizontally. Required when isVertical is true */
-    horizontalAlignment: Alignment.Horizontal? = null,
+    horizontalAlignment: Alignment.Horizontal? = Alignment.CenterHorizontally,
     /** The vertical arrangement for items. Required when isVertical is true */
     verticalArrangement: Arrangement.Vertical? = null,
     /** The alignment to align items vertically. Required when isVertical is false */
@@ -230,134 +230,239 @@ fun rememberLazyDocumentViewerMeasurePolicy(
     ){
         LazyLayoutMeasurePolicy { containerConstraints ->
 
-            // resolve content paddings
-            val startPadding =
-                if (isVertical) {
-                    contentPadding.calculateLeftPadding(layoutDirection).roundToPx()
-                } else {
-                    // in horizontal configuration, padding is reversed by placeRelative
-                    contentPadding.calculateStartPadding(layoutDirection).roundToPx()
-                }
-
-            val endPadding =
-                if (isVertical) {
-                    contentPadding.calculateRightPadding(layoutDirection).roundToPx()
-                } else {
-                    // in horizontal configuration, padding is reversed by placeRelative
-                    contentPadding.calculateEndPadding(layoutDirection).roundToPx()
-                }
+            // 1. Resolve Padding
+            // Calculate padding in px
+            val startPadding = contentPadding.calculateStartPadding(layoutDirection).roundToPx()
+            val endPadding = contentPadding.calculateEndPadding(layoutDirection).roundToPx()
             val topPadding = contentPadding.calculateTopPadding().roundToPx()
             val bottomPadding = contentPadding.calculateBottomPadding().roundToPx()
-            val totalVerticalPadding = topPadding + bottomPadding
-            val totalHorizontalPadding = startPadding + endPadding
-            val totalMainAxisPadding =
-                if (isVertical) totalVerticalPadding else totalHorizontalPadding
-            val beforeContentPadding =
-                when {
-                    isVertical -> topPadding
-                    else -> startPadding
-                }
-            val afterContentPadding = totalMainAxisPadding - beforeContentPadding
-            val contentConstraints =
-                containerConstraints.offset(-totalHorizontalPadding, -totalVerticalPadding)
 
-            val spaceBetweenItemsDp =
-                if (isVertical) {
-                    verticalArrangement?.spacing ?: Arrangement.SpaceBetween.spacing
-                } else {
-                    horizontalArrangement?.spacing ?: Arrangement.SpaceBetween.spacing
-                }
+            val verticalPadding = topPadding + bottomPadding
+            val horizontalPadding = startPadding + endPadding
+
+            // 2. Resolve Spacing
+            val spaceBetweenItemsDp = if (isVertical) {
+                verticalArrangement?.spacing ?: Arrangement.spacedBy(0.dp).spacing
+            } else {
+                horizontalArrangement?.spacing ?: Arrangement.spacedBy(0.dp).spacing
+            }
             val spaceBetweenItems = spaceBetweenItemsDp.roundToPx()
 
             val itemProvider = itemProviderLambda()
 
-            val scale = transformableState.scale
-            val offsetX = transformableState.offset.x
-            val offsetY = transformableState.offset.y
+            // 3. Current Transform State
+            val currentScale = transformableState.scale
+            val currentOffset = transformableState.offset
+            val offsetX = currentOffset.x
+            val offsetY = currentOffset.y
+
+            // 4. Calculate Base Scale (Pixels per mm)
+            // Determine container limits for "Fit Width" (or "Fit Height") logic
+            // Constraint minus padding in the CROSS axis
+            val crossAxisContainerSize = if (isVertical) {
+                containerConstraints.maxWidth - horizontalPadding
+            } else {
+                containerConstraints.maxHeight - verticalPadding
+            }
             
-            // Assume width is fixed to the container width (for vertical list)
-            // Calculate the base scale factor (pixels per mm) from the first item
-            // The first item's width MUST match the container width (minus padding)
             val pixelsPerMm = if (itemProvider.itemCount > 0) {
                 val firstItemDimension = itemProvider.getItemSize(0)
-                // Use a safe fallback if width is 0 to avoid division by zero
-                if (firstItemDimension.width.mm > 0) {
-                    contentConstraints.maxWidth.toFloat() / firstItemDimension.width.mm
+                val referenceDimensionMm = if (isVertical) firstItemDimension.width.mm else firstItemDimension.height.mm
+                
+                if (referenceDimensionMm > 0) {
+                    crossAxisContainerSize.toFloat() / referenceDimensionMm
                 } else {
-                    0f // Should not happen with valid pages
+                    1f
                 }
             } else {
                 1f
             }
 
-            var totalHeight = 0f
-            var maxItemWidth = 0
-            val visiblePlaceables = mutableListOf<Pair<Placeable, IntOffset>>()
+            // 5. Layout Calculation
+            var totalMainAxisSize = 0f
+            var maxCrossAxisSize = 0
+            
+            // To store placeables to be placed
+            val visiblePlaceables = mutableListOf<Triple<Placeable, IntOffset, Int>>() // Placeable, Position, Index
 
-            // Iterate all items to calculate positions and finding visible ones
-            // This is O(N), which is acceptable for typical document lengths.
-            // A more advanced implementation could use a cached layout info structure.
-            for (index in 0 until itemProvider.itemCount) {
-                // Get pre-calculated size from metadata (Dimension)
-                val dimension = itemProvider.getItemSize(index)
+            // Viewport bounds in CONTENT coordinates (scaled)
+            // The viewport is at (0,0) to (maxWidth, maxHeight) relative to the container.
+            // But content is shifted by offset.
+            
+            // 5a. First Pass: Calculate Total Size and Bounds
+            // Iterate all items to calculate positions 
+            
+            // We need to identify indices to measure
+            var firstVisibleIndex = -1
+            var lastVisibleIndex = -1
+            
+            // Current position in MAIN axis (unscaled pixels)
+            var currentMainPos = 0f
+            
+            val mainAxisOffset = if (isVertical) offsetY else offsetX
+            val containerMainSize = if (isVertical) containerConstraints.maxHeight else containerConstraints.maxWidth
+
+            for (i in 0 until itemProvider.itemCount) {
+                val dim = itemProvider.getItemSize(i)
+                val itemSizeMainMm = if (isVertical) dim.height.mm else dim.width.mm
+                val itemSizeCrossMm = if (isVertical) dim.width.mm else dim.height.mm
+
+                val itemSizeMainPx = itemSizeMainMm * pixelsPerMm
+                val itemSizeCrossPx = itemSizeCrossMm * pixelsPerMm
                 
-                // Calculate size in pixels based on the document-wide scale
-                val itemWidthPx = dimension.width.mm * pixelsPerMm
-                val itemHeightPx = dimension.height.mm * pixelsPerMm
-                
-                // Calculate scaled position for the viewer (zoomed)
-                val itemWidthScaled = itemWidthPx * scale
-                val itemHeightScaled = itemHeightPx * scale
-                
-                val itemTopScaled = totalHeight * scale + offsetY
-                val itemBottomScaled = itemTopScaled + itemHeightScaled
-                
-                // Update max width for content size
-                if (itemWidthPx > maxItemWidth) {
-                    maxItemWidth = itemWidthPx.roundToInt()
+                // Track max cross axis size
+                if (itemSizeCrossPx > maxCrossAxisSize) {
+                    maxCrossAxisSize = itemSizeCrossPx.roundToInt()
                 }
 
-                // Check intersection with viewport
-                // Viewport is 0..containerConstraints.maxHeight
-                // Using a tolerance buffer
-                val isVisible = itemBottomScaled >= -100 && itemTopScaled <= containerConstraints.maxHeight + 100
-
-                if (isVisible) {
-                    // Measure only if visible
-                    // We measure with the SCALED constraints to ensure content (like text/strokes) renders at correct resolution
-                    // We also clamp to avoid integer overflow or weird constraints if scale is huge
-                    val scaledWidthInt = itemWidthScaled.roundToInt().coerceAtLeast(1)
-                    val scaledHeightInt = itemHeightScaled.roundToInt().coerceAtLeast(1)
-                    
-                    val childConstraints = Constraints.fixed(scaledWidthInt, scaledHeightInt)
-                    
-                    val placeables = measure(index, childConstraints)
-                    placeables.forEach { placeable ->
-                         val finalX = offsetX.roundToInt() + startPadding // Add padding if needed
-                         val finalY = itemTopScaled.roundToInt() + topPadding
-                         visiblePlaceables.add(placeable to IntOffset(finalX, finalY))
-                    }
+                val scaledMainSize = itemSizeMainPx * currentScale
+                
+                // Screen Position
+                val start = currentMainPos * currentScale + mainAxisOffset
+                val end = start + scaledMainSize
+                
+                // Visibility Check
+                if (end >= -100 && start <= containerMainSize + 100) {
+                    if (firstVisibleIndex == -1) firstVisibleIndex = i
+                    lastVisibleIndex = i
                 }
                 
-                totalHeight += itemHeightPx + spaceBetweenItems
+                currentMainPos += itemSizeMainPx + spaceBetweenItems
             }
             
-            // Update state with the calculated total content size
-            // Note: TransformableState expects size in base pixels (unscaled)?
-            // Looking at TransformableState logic:
-            // if (contentSize.width * scale > layoutSize.width) ...
-            // So contentSize should be the UN-SCALED size.
+            totalMainAxisSize = currentMainPos
+            // Remove last spacing
+            if (itemProvider.itemCount > 0) {
+                 totalMainAxisSize -= spaceBetweenItems
+            }
+
+            // 5b. Second Pass: Measure and Place
+            // Determine range to measure
+            val rangeStart = (firstVisibleIndex - beyondBoundsItemCount).coerceAtLeast(0)
+            val rangeEnd = (lastVisibleIndex + beyondBoundsItemCount).coerceAtMost(itemProvider.itemCount - 1)
+            
+            // Reset position for second pass
+            // Optimization: We could have stored positions, but re-calculating is cheap O(N).
+            // Better: Just loop from 0 to rangeEnd. 
+            // If rangeStart is large, looping from 0 is wasteful?
+            // Yes, but we need correct 'currentMainPos'. 
+            // Unless we store "position of index i"? 
+            // Let's assume linear accumulation is fast enough. 
+            // (If items have different sizes, we MUST iterate or cache. Since sizes are dynamic from provider...)
+            
+            currentMainPos = 0f
+            
+            if (firstVisibleIndex != -1) {
+                 for (i in 0..rangeEnd) {
+                     val dim = itemProvider.getItemSize(i)
+                     val mainMm = if (isVertical) dim.height.mm else dim.width.mm
+                     val crossMm = if (isVertical) dim.width.mm else dim.height.mm
+                     
+                     val mainPx = mainMm * pixelsPerMm
+                     val crossPx = crossMm * pixelsPerMm
+                     
+                     if (i >= rangeStart) {
+                         // Measure and Place
+                         val scaledMainInt = (mainPx * currentScale).roundToInt().coerceAtLeast(1)
+                         val scaledCrossInt = (crossPx * currentScale).roundToInt().coerceAtLeast(1)
+                         
+                         val childConstraints = Constraints.fixed(
+                             width = if (isVertical) scaledCrossInt else scaledMainInt,
+                             height = if (isVertical) scaledMainInt else scaledCrossInt
+                         )
+                         
+                         val placeables = measure(i, childConstraints) 
+                         
+                         // Calculate Position
+                         // Main Axis Position (Screen coords)
+                         val mainAxisScreenPos = (currentMainPos * currentScale + mainAxisOffset).roundToInt()
+                         
+                         // Add start padding to main axis position
+                         val paddingMain = if (isVertical) topPadding else startPadding
+                         val finalMainPos = mainAxisScreenPos + paddingMain
+                         
+                         // Cross Axis Position (Alignment)
+                         // Available space in cross axis = Container - CrossPadding
+                         val paddingBeforeCross = if (isVertical) startPadding else topPadding
+                         val paddingAfterCross = if (isVertical) endPadding else bottomPadding
+                         
+                         val availableCrossSpace = if (isVertical) containerConstraints.maxWidth else containerConstraints.maxHeight
+                         val actualCrossSpace = availableCrossSpace - paddingBeforeCross - paddingAfterCross
+                         
+                         placeables.forEach { p ->
+                             // Alignment
+                             val crossAxisPos = if (isVertical) {
+                                 // Horizontal Alignment
+                                 val align = horizontalAlignment ?: Alignment.Start
+                                 val alignedX = align.align(p.width, actualCrossSpace, layoutDirection)
+                                 alignedX + paddingBeforeCross
+                             } else {
+                                 // Vertical Alignment
+                                 val align = verticalAlignment ?: Alignment.Top
+                                 val alignedY = align.align(p.height, actualCrossSpace)
+                                 alignedY + paddingBeforeCross
+                             }
+                             
+                             val x = if (isVertical) crossAxisPos else finalMainPos
+                             val y = if (isVertical) finalMainPos else crossAxisPos
+                             
+                             visiblePlaceables.add(Triple(p, IntOffset(x, y), i))
+                         }
+                     }
+                     
+                     currentMainPos += mainPx + spaceBetweenItems
+                 }
+            }
+
+            // 6. Report Size to State
+            // totalMainAxisSize is sum of items + spacing (unscaled base pixels).
+            // We should add padding to the CONTENT SIZE? 
+            // In standard views, padding is part of content size?
+            // "Padding is space around content".
+            // If I scroll to top, I see padding.
+            // If I scroll to bottom, I see padding.
+            // TransformableState manages offset bounds.
+            // MinOffset = LayoutSize - ContentSize.
+            // If ContentSize include padding => We can scroll further.
+            
+            val paddingMainTotal = if (isVertical) verticalPadding else horizontalPadding
+            val totalMainWithPadding = totalMainAxisSize + paddingMainTotal
+            
+            // Cross axis size?
+            // Should be max item size + padding? Or container size?
+            // If we want to allow panning in cross axis if zoomed in?
+            // Content Size width => zoomed width.
+            // The item width is already calculated to fit container (pixelsPerMm).
+            // So UNZOOOMED content width = container width (approx).
+            // But padding adds to it? 
+            // If container is 1000px, padding 100px. Item is 900px.
+            // Total width 1000px.
+            
+            // Just use maxCrossAxisSize.
+            // Wait, maxCrossAxisSize was calculated as item size.
+            // We need to add cross axis padding to it?
+            val paddingCrossTotal = if (isVertical) horizontalPadding else verticalPadding
+            val totalCrossWithPadding = maxCrossAxisSize + paddingCrossTotal
+            
+            // Content Size for TransformableState.
+            // Swapped if horizontal.
+            // If Vertical: Width = Cross, Height = Main.
+            // If Horizontal: Width = Main, Height = Cross.
+            
+            val contentWidth = if (isVertical) totalCrossWithPadding.toFloat() else totalMainWithPadding
+            val contentHeight = if (isVertical) totalMainWithPadding else totalCrossWithPadding.toFloat()
+            
             transformableState.onLayoutSizeChanged(
                 IntSize(containerConstraints.maxWidth, containerConstraints.maxHeight),
                 coroutineScope
             )
             transformableState.onContentSizeChanged(
-                IntSize(maxItemWidth, totalHeight.roundToInt()),
+                IntSize(contentWidth.roundToInt(), contentHeight.roundToInt()),
                 coroutineScope
             )
 
             layout(containerConstraints.maxWidth, containerConstraints.maxHeight) {
-                visiblePlaceables.forEach { (placeable, position) ->
+                visiblePlaceables.forEach { (placeable, position, _) ->
                     placeable.placeRelative(position)
                 }
             }
