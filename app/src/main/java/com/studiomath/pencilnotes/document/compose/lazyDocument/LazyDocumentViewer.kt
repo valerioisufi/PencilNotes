@@ -276,8 +276,22 @@ fun rememberLazyDocumentViewerMeasurePolicy(
             val offsetY = transformableState.offset.y
             
             // Assume width is fixed to the container width (for vertical list)
-            val itemWidth = contentConstraints.maxWidth
+            // Calculate the base scale factor (pixels per mm) from the first item
+            // The first item's width MUST match the container width (minus padding)
+            val pixelsPerMm = if (itemProvider.itemCount > 0) {
+                val firstItemDimension = itemProvider.getItemSize(0)
+                // Use a safe fallback if width is 0 to avoid division by zero
+                if (firstItemDimension.width.mm > 0) {
+                    contentConstraints.maxWidth.toFloat() / firstItemDimension.width.mm
+                } else {
+                    0f // Should not happen with valid pages
+                }
+            } else {
+                1f
+            }
+
             var totalHeight = 0f
+            var maxItemWidth = 0
             val visiblePlaceables = mutableListOf<Pair<Placeable, IntOffset>>()
 
             // Iterate all items to calculate positions and finding visible ones
@@ -286,13 +300,23 @@ fun rememberLazyDocumentViewerMeasurePolicy(
             for (index in 0 until itemProvider.itemCount) {
                 // Get pre-calculated size from metadata (Dimension)
                 val dimension = itemProvider.getItemSize(index)
-                val itemBaseHeight = dimension.calcHeightFromWidthPx(itemWidth.toFloat().px)
                 
-                // Calculate scaled position
-                val itemHeightScaled = itemBaseHeight * scale
+                // Calculate size in pixels based on the document-wide scale
+                val itemWidthPx = dimension.width.mm * pixelsPerMm
+                val itemHeightPx = dimension.height.mm * pixelsPerMm
+                
+                // Calculate scaled position for the viewer (zoomed)
+                val itemWidthScaled = itemWidthPx * scale
+                val itemHeightScaled = itemHeightPx * scale
+                
                 val itemTopScaled = totalHeight * scale + offsetY
                 val itemBottomScaled = itemTopScaled + itemHeightScaled
                 
+                // Update max width for content size
+                if (itemWidthPx > maxItemWidth) {
+                    maxItemWidth = itemWidthPx.roundToInt()
+                }
+
                 // Check intersection with viewport
                 // Viewport is 0..containerConstraints.maxHeight
                 // Using a tolerance buffer
@@ -302,10 +326,10 @@ fun rememberLazyDocumentViewerMeasurePolicy(
                     // Measure only if visible
                     // We measure with the SCALED constraints to ensure content (like text/strokes) renders at correct resolution
                     // We also clamp to avoid integer overflow or weird constraints if scale is huge
-                    val scaledWidth = (itemWidth * scale).roundToInt().coerceAtLeast(1)
-                    val scaledHeight = (itemHeightScaled).roundToInt().coerceAtLeast(1)
+                    val scaledWidthInt = itemWidthScaled.roundToInt().coerceAtLeast(1)
+                    val scaledHeightInt = itemHeightScaled.roundToInt().coerceAtLeast(1)
                     
-                    val childConstraints = Constraints.fixed(scaledWidth, scaledHeight)
+                    val childConstraints = Constraints.fixed(scaledWidthInt, scaledHeightInt)
                     
                     val placeables = measure(index, childConstraints)
                     placeables.forEach { placeable ->
@@ -315,7 +339,7 @@ fun rememberLazyDocumentViewerMeasurePolicy(
                     }
                 }
                 
-                totalHeight += itemBaseHeight + spaceBetweenItems
+                totalHeight += itemHeightPx + spaceBetweenItems
             }
             
             // Update state with the calculated total content size
@@ -328,7 +352,7 @@ fun rememberLazyDocumentViewerMeasurePolicy(
                 coroutineScope
             )
             transformableState.onContentSizeChanged(
-                IntSize(itemWidth, totalHeight.roundToInt()),
+                IntSize(maxItemWidth, totalHeight.roundToInt()),
                 coroutineScope
             )
 
