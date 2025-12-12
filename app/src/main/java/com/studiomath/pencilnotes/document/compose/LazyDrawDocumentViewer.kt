@@ -2,37 +2,30 @@ package com.studiomath.pencilnotes.document.compose
 
 import android.graphics.Matrix
 import android.util.Log
-import androidx.compose.ui.graphics.Matrix as ComposeMatrix
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import com.studiomath.pencilnotes.document.compose.lazyDocument.LazyDocumentViewer
-import com.studiomath.pencilnotes.document.compose.lazyDocument.items
-
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Matrix as ComposeMatrix
 import androidx.compose.ui.graphics.setFrom
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.ink.authoring.compose.InProgressStrokes
 import com.studiomath.pencilnotes.document.DrawViewModel
 import com.studiomath.pencilnotes.document.compose.lazyDocument.LazyDocumentViewer
+import com.studiomath.pencilnotes.document.compose.lazyDocument.detectDocumentGestures
 import com.studiomath.pencilnotes.document.compose.lazyDocument.items
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.rememberLazyDocumentViewerState
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.rememberTrasformableState
-import com.studiomath.pencilnotes.document.compose.lazyDocument.detectDocumentGestures
-import androidx.ink.authoring.compose.InProgressStrokes
-import androidx.compose.ui.input.pointer.PointerType
 
 @Composable
 fun LazyDrawDocumentViewer(
@@ -50,50 +43,25 @@ fun LazyDrawDocumentViewer(
             awaitEachGesture {
                 val down = awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
                 
-                val isPanTool = drawViewModel.selectedTool == DrawViewModel.ToolUtilities.Tool.PAN ||
-                        drawViewModel.selectedTool == DrawViewModel.ToolUtilities.Tool.LAZO // Assuming Lazo might be pan-like or handled differently, but for now blocking Ink? No Lazo is selection.
+                val isPanTool = drawViewModel.selectedTool == DrawViewModel.ToolUtilities.Tool.PAN
                 
-                // If it's pure Pan tool, consume immediately
                 if (isPanTool) {
-                     // Consume the down and subsequent events in Initial pass
                      down.consume()
-                     // Continue consuming the rest of the gesture
                      while(true) {
                          val event = awaitPointerEvent(PointerEventPass.Initial)
                          event.changes.forEach { it.consume() }
                          if (event.changes.all { !it.pressed }) break
                      }
                 } else {
-                    // It's a drawing tool (Pen, Highlighter, Eraser)
-                    // We check for Multi-touch (Pinch to Zoom)
-                    // Wait for a second pointer potentially?
-                    // InProgressStrokes handles single pointer.
-                    // If we have 2 pointers, we want to consume to trigger Zoom.
-                    
-                    // Simplification: Check down count or if Touch vs Stylus?
-                    // Usually: Stylus -> Always Ink (unless Pan tool).
-                    // Touch -> Ink if Pen Tool, but if 2 fingers -> Zoom.
-                    
-                    // We can't predict 2 fingers on first down.
-                    // But if 2nd finger comes down, we should consume?
-                    // But InProgressStrokes might have already started.
-                    // If InProgressStrokes receives a consumed event later, it cancels the stroke (according to doc).
-                    
                     var isZooming = false
-                    
                     do {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
-                        
                         if (!isZooming && event.changes.size > 1) {
                             isZooming = true
                         }
-                        
                         if (isZooming) {
-                            // If we detected zoom intent (multitouch), consume everything to cancel generic ink
-                            // and feed the gesture detector (which sees consumed events).
                             event.changes.forEach { it.consume() }
                         }
-                        
                     } while (event.changes.any { it.pressed })
                 }
             }
@@ -105,7 +73,15 @@ fun LazyDrawDocumentViewer(
                 .then(arbitrationModifier)
                 .detectDocumentGestures(
                     transformableState = transformableState,
-                    coroutineScope = coroutineScope
+                    coroutineScope = coroutineScope,
+                    shouldConsumeEvent = { event ->
+                        val isPanTool = drawViewModel.selectedTool == DrawViewModel.ToolUtilities.Tool.PAN
+                        if (isPanTool) {
+                            true
+                        } else {
+                            event.changes.size > 1
+                        }
+                    }
                 )
         ) {
             LazyDocumentViewer(
@@ -282,6 +258,7 @@ fun LazyDrawDocumentViewer(
                     }
                 }
             )
+
         }
     } else {
         Box(

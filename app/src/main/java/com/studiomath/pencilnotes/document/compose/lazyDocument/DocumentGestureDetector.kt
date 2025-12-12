@@ -21,8 +21,9 @@ fun Modifier.detectDocumentGestures(
     coroutineScope: CoroutineScope,
     enabled: Boolean = true,
     onGestureStart: () -> Unit = {},
-    onGestureEnd: () -> Unit = {}
-): Modifier = this.pointerInput(enabled, transformableState) {
+    onGestureEnd: () -> Unit = {},
+    shouldConsumeEvent: (androidx.compose.ui.input.pointer.PointerEvent) -> Boolean = { true }
+): Modifier = this.pointerInput(enabled, transformableState, shouldConsumeEvent) {
     if (!enabled) return@pointerInput
 
     forEachGesture {
@@ -40,23 +41,25 @@ fun Modifier.detectDocumentGestures(
                 val event = awaitPointerEvent()
 
                 // Calcola lo zoom e il pan basandosi sul movimento di tutte le dita.
-                val zoom = event.calculateZoom()
-                val pan = event.calculatePan()
+                if (shouldConsumeEvent(event)) {
+                    val zoom = event.calculateZoom()
+                    val pan = event.calculatePan()
 
-                // Se c'è un cambiamento, applica la trasformazione allo stato.
-                if (zoom != 1f || pan != Offset.Zero) {
-                    if (zoom != 1f) zoomOccurred = true
-                    coroutineScope.launch {
-                        transformableState.applyTransform(event.calculateCentroid(), pan, zoom)
+                    // Se c'è un cambiamento, applica la trasformazione allo stato.
+                    if (zoom != 1f || pan != Offset.Zero) {
+                        if (zoom != 1f) zoomOccurred = true
+                        coroutineScope.launch {
+                            transformableState.applyTransform(event.calculateCentroid(), pan, zoom)
+                        }
                     }
-                }
 
-                // Aggiungi gli eventi al velocity tracker per calcolare la velocità finale.
-                event.changes.forEach {
-                    if (it.positionChanged()) {
-                        velocityTracker.addPointerInputChange(it)
-                        // Consume the change if we are handling it
-                        it.consume()
+                    // Aggiungi gli eventi al velocity tracker per calcolare la velocità finale.
+                    event.changes.forEach {
+                        if (it.positionChanged()) {
+                            velocityTracker.addPointerInputChange(it)
+                            // Consume the change if we are handling it
+                            it.consume()
+                        }
                     }
                 }
 
