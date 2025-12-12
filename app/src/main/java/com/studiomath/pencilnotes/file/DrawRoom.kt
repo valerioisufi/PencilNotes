@@ -58,6 +58,8 @@ data class Page(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val documentId: Int, // A quale documento appartiene
     val pageNumber: Int, // Numero della pagina
+    val width: Float,
+    val height: Float,
     val content: String // Può essere un riferimento a una risorsa o testo
 )
 
@@ -142,19 +144,22 @@ interface DocumentDao {
 @Dao
 interface PageDao {
     @Insert
-    suspend fun insert(page: Page)
+    suspend fun insert(page: Page): Long
 
     @Query("SELECT * FROM pages WHERE documentId = :documentId ORDER BY pageNumber")
     fun getPagesForDocument(documentId: Int): List<Page>
 
     @Query("UPDATE pages SET content = :content WHERE id = :pageId")
     suspend fun updatePageContent(pageId: Int, content: String)
+
+    @Query("DELETE FROM pages WHERE id = :pageId")
+    suspend fun deleteById(pageId: Int)
 }
 
 @Dao
 interface ResourceDao {
     @Insert
-    suspend fun insert(resource: Resource)
+    suspend fun insert(resource: Resource): Long
 
     @Query("SELECT * FROM resources WHERE documentId = :documentId")
     suspend fun getResourcesForDocument(documentId: Int): List<Resource>

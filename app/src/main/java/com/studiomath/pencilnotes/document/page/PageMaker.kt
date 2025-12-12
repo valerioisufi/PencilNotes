@@ -13,6 +13,8 @@ import androidx.core.graphics.withMatrix
 import androidx.ink.rendering.android.canvas.CanvasStrokeRenderer
 import com.studiomath.pencilnotes.document.CalcPage
 import com.studiomath.pencilnotes.document.DrawViewModel
+import com.studiomath.pencilnotes.document.page.Page
+import com.studiomath.pencilnotes.document.page.Document
 import com.studiomath.pencilnotes.document.page.Dimension.Companion.Length
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.withLock
@@ -33,7 +35,7 @@ class PageMaker(
     suspend fun makePagesOnBitmap(
         bitmapRect: Rect,
         pagesRectWithIndex: Set<CalcPage.PageRectWithIndex>,
-        pages: DrawDocumentData.Document
+        pages: Document
     ): Bitmap {
         var bitmap = createBitmap(bitmapRect.width(), bitmapRect.height())
         var canvas = Canvas(bitmap)
@@ -53,7 +55,7 @@ class PageMaker(
     suspend fun makePage(
         bitmapRect: Rect,
         bitmapSource: Bitmap?,
-        page: DrawDocumentData.Page,
+        page: Page,
         clipRect: RectF? = null
     ): Bitmap =
         withContext(Dispatchers.Default) {

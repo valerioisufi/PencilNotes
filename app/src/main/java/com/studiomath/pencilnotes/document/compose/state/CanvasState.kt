@@ -2,11 +2,11 @@ package com.studiomath.pencilnotes.document.compose.state
 
 import android.graphics.Bitmap
 import androidx.ink.brush.Brush
-import com.studiomath.pencilnotes.document.page.DrawDocumentData
+import com.studiomath.pencilnotes.document.page.Page
 
 data class CanvasState(
     val isLoading: Boolean = true,
-    val pages: List<DrawDocumentData.Page> = emptyList(),
+    val pages: List<Page> = emptyList(),
 
     // Mappa di cache per le bitmap delle pagine, per evitare di ricaricarle
     val pageBitmaps: Map<Int, Bitmap> = emptyMap(),

@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
-import com.studiomath.pencilnotes.document.page.DrawDocumentData
+import com.studiomath.pencilnotes.document.page.Page
 import com.studiomath.pencilnotes.document.page.PageMaker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun PageComposable(
     modifier: Modifier = Modifier,
-    page: DrawDocumentData.Page,
+    page: Page,
     pageMaker: PageMaker
 ) {
     // Observe version to trigger recomposition when strokes are added
@@ -35,7 +35,7 @@ fun PageComposable(
 
     LaunchedEffect(page, updateTrigger) {
         when(updateTrigger) {
-            is DrawDocumentData.Page.UpdateTrigger.Full -> {
+            is Page.UpdateTrigger.Full -> {
                  withContext(Dispatchers.Default) {
                      if (!page.isPrepared) {
                          page.prepare()
@@ -53,7 +53,7 @@ fun PageComposable(
                  bitmap = page.bitmapPage
                  redrawKey++
             }
-            is DrawDocumentData.Page.UpdateTrigger.Incremental -> {
+            is Page.UpdateTrigger.Incremental -> {
                 // The bitmap has already been modified in place (canvas draw).
                 // We just need to ensure the UI refreshes.
                 // If bitmap reference changed (rare for incremental), update it.
@@ -62,7 +62,7 @@ fun PageComposable(
                 }
                 redrawKey++
             }
-            DrawDocumentData.Page.UpdateTrigger.None -> {
+            Page.UpdateTrigger.None -> {
                 // Initial load if bitmap is missing
                 if (bitmap == null) {
                     withContext(Dispatchers.Default) {

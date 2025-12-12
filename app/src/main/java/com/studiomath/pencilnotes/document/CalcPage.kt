@@ -12,7 +12,7 @@ import androidx.core.animation.addListener
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.transform
 import androidx.core.util.TypedValueCompat
-import com.studiomath.pencilnotes.document.page.DrawDocumentData
+import com.studiomath.pencilnotes.document.page.Page
 import com.studiomath.pencilnotes.document.page.px
 import kotlin.math.abs
 import kotlin.math.sqrt
@@ -39,7 +39,7 @@ class CalcPage(
      * caratteristiche della pagina
      */
     fun calcPagesRectOnWindow(
-        pages: MutableList<DrawDocumentData.Page>,
+        pages: MutableList<Page>,
         windowRect: RectF,
         pagePositionOnWindowOption: PagePositionOnWindowOption
     ) {

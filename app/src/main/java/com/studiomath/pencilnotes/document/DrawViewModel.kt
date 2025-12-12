@@ -1,5 +1,6 @@
 package com.studiomath.pencilnotes.document
 
+import android.content.Context
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Path
@@ -16,16 +17,15 @@ import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes
 import androidx.lifecycle.ViewModel
 import com.studiomath.pencilnotes.document.page.Dimension.Companion.Length
-import com.studiomath.pencilnotes.document.page.DrawDocumentData
+import com.studiomath.pencilnotes.document.page.DrawDocumentRepository
 import com.studiomath.pencilnotes.document.page.PageMaker
 import com.studiomath.pencilnotes.document.page.pt
 import com.studiomath.pencilnotes.document.page.px
-import com.studiomath.pencilnotes.file.DrawDatabase
 import kotlinx.serialization.Serializable
 import java.io.File
 
 class DrawViewModel(
-    val filesDir: File,
+    val context: Context,
     var filePath: String,
     var displayMetrics: DisplayMetrics,
     var configuration: ViewConfiguration
@@ -34,8 +34,10 @@ class DrawViewModel(
     var drawManager = DrawManager(this, displayMetrics)
     val pageMaker = PageMaker(displayMetrics)
 
-//    var db: DrawDatabase = DrawDatabase.getInstance(filesDir)
-    var data: DrawDocumentData = DrawDocumentData(filesDir, filePath, displayMetrics, this)
+    // Using DrawDocumentRepository instead of DrawDocumentData
+    var repository: DrawDocumentRepository = DrawDocumentRepository(context, filePath, this)
+    // Alias for compatibility if needed, but better to migrate consumers
+    val data: DrawDocumentRepository get() = repository
 
 
     @Serializable
@@ -84,11 +86,6 @@ class DrawViewModel(
     var activeBrush = penTool.getBrush(0)
     fun getActiveBrushScaled() = activeBrush.copy(
         size = drawManager.dimToPx(activeBrush.size.pt),
-//        epsilon = data.document.pages[data.pageIndexNow].dimension!!.calcPxFromDim(
-//            activeBrush.epsilon.mm,
-//            redrawPageRect.width().px,
-//            Length.WIDTH
-//        )
     )
 
     /**
@@ -106,9 +103,9 @@ class DrawViewModel(
     }
 
     fun addStroke(pageIndex: Int, stroke: androidx.ink.strokes.Stroke, transformToPage: Matrix) {
-        if (pageIndex < 0 || pageIndex >= data.document.pages.size) return
+        if (pageIndex < 0 || pageIndex >= repository.document.pages.size) return
         
-        val page = data.document.pages[pageIndex]
+        val page = repository.document.pages[pageIndex]
         val zIndex = page.strokeData.size
 
         // We need to transform the stroke to Page Coordinates.
@@ -140,7 +137,7 @@ class DrawViewModel(
         
         val transformedStroke = androidx.ink.strokes.Stroke(stroke.brush, batch)
         
-        val newStroke = DrawDocumentData.Stroke(zIndex).apply {
+        val newStroke = com.studiomath.pencilnotes.document.page.Stroke(zIndex).apply {
             this.stroke = transformedStroke
             toSerializedStroke()
         }
@@ -148,22 +145,10 @@ class DrawViewModel(
         page.strokeData.add(newStroke)
         
         // Incremental Update Logic
-        // We draw the new stroke directly onto the cached bitmap
         if (page.bitmapPage != null) {
             val canvas = android.graphics.Canvas(page.bitmapPage!!)
-            // Create a transformation matrix if needed. 
-            // The serialized stroke inputs are already transformed to Page Coordinates (pixels) 
-            // by our manual transformation above.
-            // So we can draw them directly with Identity matrix.
-             
-            // Wait, we need to convert serialized stroke back to Ink Stroke or use renderer on it.
-            // Sfortunatamente `newStroke` è DrawDocumentData.Stroke, non androidx.ink.strokes.Stroke 
-            // per il rendering diretto con CanvasStrokeRenderer se non è già stato fatto.
-            // Ma abbiamo `newStroke.stroke` che è l'Ink Stroke trasformato!
-            
             val inkStroke = newStroke.stroke
             if (inkStroke != null) {
-                // Ensure pageMaker uses proper renderer
                  pageMaker.canvasStrokeRenderer.draw(
                     stroke = inkStroke,
                     canvas = canvas,
@@ -173,9 +158,9 @@ class DrawViewModel(
         }
 
         // Trigger Incremental Update
-        // We increment version to signal change, but wrap it in Incremental trigger
         page.version++
-        page.updateTrigger = DrawDocumentData.Page.UpdateTrigger.Incremental(page.version)
+        page.updateTrigger = com.studiomath.pencilnotes.document.page.Page.UpdateTrigger.Incremental(page.version)
+        page.isModified = true // Mark dirty
 
         // Request generic update for non-compose parts (legacy View support if any remain)
         drawManager.calcPage.needToBeUpdated = true
@@ -186,7 +171,7 @@ class DrawViewModel(
         )
         
         // Mark for saving
-        data.saveDocument()
+        repository.saveDocument()
     }
 
     var startStrokeInProgress: ((event: MotionEvent, pointerId: Int, brush: Brush) -> InProgressStrokeId)? = null

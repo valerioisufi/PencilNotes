@@ -101,7 +101,7 @@ import com.studiomath.pencilnotes.document.DrawManager.DrawAttachments
 import com.studiomath.pencilnotes.document.DrawViewModel
 import com.studiomath.pencilnotes.document.DrawViewModel.ToolUtilities
 import com.studiomath.pencilnotes.document.page.Dimension
-import com.studiomath.pencilnotes.document.page.DrawDocumentData.Page
+import com.studiomath.pencilnotes.document.page.Page
 import com.studiomath.pencilnotes.document.page.pt
 import com.studiomath.pencilnotes.ui.composeComponents.ColorWheel
 import com.studiomath.pencilnotes.ui.composeComponents.PresetToolButton
@@ -140,8 +140,8 @@ class DrawActivity : ComponentActivity() {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return DrawViewModel(
+                        context = applicationContext,
                         filePath = "$filePath",
-                        filesDir = filesDir,
                         displayMetrics = resources.displayMetrics,
                         configuration = ViewConfiguration.get(this@DrawActivity)
                     ) as T

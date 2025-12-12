@@ -20,7 +20,9 @@ import androidx.ink.strokes.Stroke
 import com.studiomath.pencilnotes.document.DrawManager.DrawAttachments.DrawMode
 import com.studiomath.pencilnotes.document.page.Dimension
 import com.studiomath.pencilnotes.document.page.Dimension.Companion.Length
-import com.studiomath.pencilnotes.document.page.DrawDocumentData
+import androidx.ink.strokes.Stroke as InkStroke
+import com.studiomath.pencilnotes.document.page.Stroke as PageStroke
+import com.studiomath.pencilnotes.document.page.Page
 //import com.studiomath.pencilnotes.document.page.DrawMatrix
 import com.studiomath.pencilnotes.document.page.Measure
 import com.studiomath.pencilnotes.document.page.pt
@@ -87,7 +89,7 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
     }
 
     @UiThread
-    override fun onStrokesFinished(strokes: Map<InProgressStrokeId, Stroke>) {
+    override fun onStrokesFinished(strokes: Map<InProgressStrokeId, InkStroke>) {
 
         scope.launch {
             for (pageRectWithIndex in pagesRectOnWindow){
@@ -97,7 +99,7 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
 
                 drawViewModel.data.documentMutex.withLock{
                     strokes.values.forEach{ stroke ->
-                        var serializedStroke = DrawDocumentData.Stroke(0).apply {
+                        var serializedStroke = PageStroke(0).apply {
                             this.stroke = stroke
                             toSerializedStroke()
                             inputs.forEach{ input ->
