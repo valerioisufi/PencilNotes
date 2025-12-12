@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -78,6 +79,7 @@ fun LazyDrawDocumentViewer(
         Box(
             modifier = modifier
                 .fillMaxSize()
+                .systemGestureExclusion()
                 .then(arbitrationModifier)
                 .detectDocumentGestures(
                     transformableState = transformableState,
