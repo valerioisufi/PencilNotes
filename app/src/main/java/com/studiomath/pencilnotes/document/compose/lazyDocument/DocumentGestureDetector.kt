@@ -55,7 +55,7 @@ fun Modifier.detectDocumentGestures(
 
                     // Aggiungi gli eventi al velocity tracker per calcolare la velocità finale.
                     event.changes.forEach {
-                        if (it.positionChanged()) {
+                        if (it.position != it.previousPosition) {
                             velocityTracker.addPointerInputChange(it)
                             // Consume the change if we are handling it
                             it.consume()
