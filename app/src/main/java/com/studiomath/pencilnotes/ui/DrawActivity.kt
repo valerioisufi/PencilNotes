@@ -39,11 +39,14 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.waterfall
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Redo
 import androidx.compose.material.icons.automirrored.outlined.Undo
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Draw
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
@@ -101,6 +104,7 @@ import com.studiomath.pencilnotes.document.page.Dimension
 import com.studiomath.pencilnotes.document.page.DrawDocumentData.Page
 import com.studiomath.pencilnotes.document.page.pt
 import com.studiomath.pencilnotes.ui.composeComponents.ColorWheel
+import com.studiomath.pencilnotes.ui.composeComponents.PresetToolButton
 import com.studiomath.pencilnotes.ui.composeComponents.SizeSlider
 import com.studiomath.pencilnotes.ui.theme.PencilNotesTheme
 import com.studiomath.pencilnotes.R
@@ -527,13 +531,68 @@ fun DrawActivity(
                         )
                     }
 
+
                     VerticalDivider(
                         modifier = Modifier
                             .padding(8.dp),
                         thickness = 2.dp
                     )
 
+                    // Presets Section
+                    Row(
+                        modifier = Modifier
+                            .weight(1f) // Take remaining space
+                            .horizontalScroll(rememberScrollState()),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        drawViewModel.toolPresets.forEach { preset ->
+                            val isSelected = drawViewModel.selectedTool == preset.toolType &&
+                                    drawViewModel.activeBrush.colorIntArgb == preset.color &&
+                                    drawViewModel.activeBrush.size == preset.size
 
+                            PresetToolButton(
+                                preset = preset,
+                                isSelected = isSelected,
+                                onClick = {
+                                    // Apply settings
+                                    drawViewModel.activeBrush = drawViewModel.activeBrush.copyWithColorIntArgb(
+                                        size = preset.size,
+                                        colorIntArgb = preset.color
+                                    )
+                                    drawViewModel.selectedTool = preset.toolType
+                                },
+                                onUpdate = { updatedPreset ->
+                                    // Update the specific preset in the list
+                                    val index = drawViewModel.toolPresets.indexOfFirst { it.id == updatedPreset.id }
+                                    if (index != -1) {
+                                        drawViewModel.toolPresets[index] = updatedPreset
+                                        // Also apply if it was just clicked/modified?
+                                        drawViewModel.activeBrush = drawViewModel.activeBrush.copyWithColorIntArgb(
+                                            size = drawViewModel.drawManager.dimToPx(updatedPreset.size.pt),
+                                            colorIntArgb = updatedPreset.color
+                                        )
+                                        drawViewModel.selectedTool = updatedPreset.toolType
+                                    }
+                                },
+                                onRemove = {
+                                    drawViewModel.removePreset(preset)
+                                },
+                                windowInsetsController = windowInsetsController
+                            )
+                        }
+
+                        // Add Button
+                        ToolButton(
+                            onClick = {
+                                drawViewModel.addPreset()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Add,
+                                contentDescription = "Add Preset"
+                            )
+                        }
+                    }
                 }
 
                 HorizontalDivider()

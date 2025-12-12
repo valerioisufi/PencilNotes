@@ -1,6 +1,7 @@
 package com.studiomath.pencilnotes.document.compose
 
 import android.graphics.Matrix
+import android.util.Log
 import androidx.compose.ui.graphics.Matrix as ComposeMatrix
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -115,7 +116,7 @@ fun LazyDrawDocumentViewer(
             ) {
                 items(
                     items = drawViewModel.data.pagesState,
-                    key = { page -> page.index },
+                    key = { page -> page.index; Log.d("Lazy", "LazyDrawDocumentViewer: ${page.index}") },
                     itemSize = { page -> page.dimension!! }
                 ) { page ->
                     PageComposable(

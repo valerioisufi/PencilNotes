@@ -170,4 +170,23 @@ class DrawViewModel(
     var maskPath: ((path: Path) -> Unit)? = null
 
     var finishActivity: (() -> Unit)? = null
+
+    @Serializable
+    data class ToolPreset(
+        val id: String = java.util.UUID.randomUUID().toString(),
+        var toolType: ToolUtilities.Tool,
+        var color: Int,
+        var size: Float // in pt
+    )
+
+    var toolPresets = androidx.compose.runtime.mutableStateListOf<ToolPreset>()
+
+    fun addPreset() {
+        // Default new preset: Black Pen, Size 5pt
+        toolPresets.add(ToolPreset(toolType = ToolUtilities.Tool.INK_PEN, color = Color.BLACK, size = 5f))
+    }
+
+    fun removePreset(preset: ToolPreset) {
+        toolPresets.remove(preset)
+    }
 }

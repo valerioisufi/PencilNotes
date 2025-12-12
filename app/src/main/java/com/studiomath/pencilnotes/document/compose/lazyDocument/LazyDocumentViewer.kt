@@ -1,5 +1,6 @@
 package com.studiomath.pencilnotes.document.compose.lazyDocument
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -344,6 +345,7 @@ fun rememberLazyDocumentViewerMeasurePolicy(
                              width = if (isVertical) scaledCrossInt else scaledMainInt,
                              height = if (isVertical) scaledMainInt else scaledCrossInt
                          )
+                         Log.d("lazy2", "rememberLazyDocumentViewerMeasurePolicy: $i")
                          
                          val placeables = measure(i, childConstraints) 
                          
