@@ -27,43 +27,74 @@ fun PageComposable(
     pageMaker: PageMaker
 ) {
     // Observe version to trigger recomposition when strokes are added
-    val version = page.version 
-    var bitmap by remember(page, version) { mutableStateOf(page.bitmapPage) }
+    // Observe updateTrigger to distinguish between Full and Incremental updates
+    val updateTrigger = page.updateTrigger
+    var bitmap by remember { mutableStateOf(page.bitmapPage) }
+    // Key to force recomposition of Image even if bitmap reference stays same (for mutable bitmaps)
+    var redrawKey by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
 
-    LaunchedEffect(page, version) {
-        // We move preparation to Default dispatcher to avoid blocking UI if prepare() is heavy
-        // although prepare() in DrawDocumentData uses createBitmap which is somewhat fast but better safe.
-        // makePage uses withContext(Dispatchers.Default) internally, but we need the bitmap BEFORE calling it
-        // if we want to reuse it.
-        
-        withContext(Dispatchers.Default) {
-             if (!page.isPrepared) {
-                 page.prepare()
-             }
-        }
-        
-        val cachedBitmap = page.bitmapPage
-        if (cachedBitmap != null) {
-            // Use the cached bitmap as source. PageMaker will draw onto it.
-            // We pass the bitmap's dimensions as the rect, ensuring a match.
-            val result = pageMaker.makePage(
-                bitmapRect = Rect(0, 0, cachedBitmap.width, cachedBitmap.height),
-                bitmapSource = cachedBitmap,
-                page = page
-            )
-            
-            bitmap = result
-            page.bitmapPage = result
+    LaunchedEffect(page, updateTrigger) {
+        when(updateTrigger) {
+            is DrawDocumentData.Page.UpdateTrigger.Full -> {
+                 withContext(Dispatchers.Default) {
+                     if (!page.isPrepared) {
+                         page.prepare()
+                     }
+                     val cachedBitmap = page.bitmapPage
+                     if (cachedBitmap != null) {
+                        val result = pageMaker.makePage(
+                            bitmapRect = Rect(0, 0, cachedBitmap.width, cachedBitmap.height),
+                            bitmapSource = cachedBitmap,
+                            page = page
+                        )
+                        page.bitmapPage = result
+                     }
+                 }
+                 bitmap = page.bitmapPage
+                 redrawKey++
+            }
+            is DrawDocumentData.Page.UpdateTrigger.Incremental -> {
+                // The bitmap has already been modified in place (canvas draw).
+                // We just need to ensure the UI refreshes.
+                // If bitmap reference changed (rare for incremental), update it.
+                if (bitmap != page.bitmapPage) {
+                    bitmap = page.bitmapPage
+                }
+                redrawKey++
+            }
+            DrawDocumentData.Page.UpdateTrigger.None -> {
+                // Initial load if bitmap is missing
+                if (bitmap == null) {
+                    withContext(Dispatchers.Default) {
+                         if (!page.isPrepared) {
+                             page.prepare()
+                         }
+                         val cachedBitmap = page.bitmapPage
+                          if (cachedBitmap != null) {
+                            val result = pageMaker.makePage(
+                                bitmapRect = Rect(0, 0, cachedBitmap.width, cachedBitmap.height),
+                                bitmapSource = cachedBitmap,
+                                page = page
+                            )
+                            page.bitmapPage = result
+                         }
+                    }
+                    bitmap = page.bitmapPage
+                    redrawKey++
+                }
+            }
         }
     }
 
     Box(modifier = modifier) {
         if (bitmap != null) {
-            Image(
-                bitmap = bitmap!!.asImageBitmap(), // Create new ImageBitmap wrapper forces redraw if bitmap content changed
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize()
-            )
+            androidx.compose.runtime.key(redrawKey) {
+                Image(
+                    bitmap = bitmap!!.asImageBitmap(), // Create new ImageBitmap wrapper forces redraw if bitmap content changed
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }

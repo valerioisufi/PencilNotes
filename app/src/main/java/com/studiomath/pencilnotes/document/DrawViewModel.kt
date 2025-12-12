@@ -147,9 +147,37 @@ class DrawViewModel(
         
         page.strokeData.add(newStroke)
         
-        // Trigger generic update (bitmap redraw might be needed if we want to "bake" it, 
-        // but for now we just add it to the model. 
-        // We probably want to request a redraw of the page.)
+        // Incremental Update Logic
+        // We draw the new stroke directly onto the cached bitmap
+        if (page.bitmapPage != null) {
+            val canvas = android.graphics.Canvas(page.bitmapPage!!)
+            // Create a transformation matrix if needed. 
+            // The serialized stroke inputs are already transformed to Page Coordinates (pixels) 
+            // by our manual transformation above.
+            // So we can draw them directly with Identity matrix.
+             
+            // Wait, we need to convert serialized stroke back to Ink Stroke or use renderer on it.
+            // Sfortunatamente `newStroke` è DrawDocumentData.Stroke, non androidx.ink.strokes.Stroke 
+            // per il rendering diretto con CanvasStrokeRenderer se non è già stato fatto.
+            // Ma abbiamo `newStroke.stroke` che è l'Ink Stroke trasformato!
+            
+            val inkStroke = newStroke.stroke
+            if (inkStroke != null) {
+                // Ensure pageMaker uses proper renderer
+                 pageMaker.canvasStrokeRenderer.draw(
+                    stroke = inkStroke,
+                    canvas = canvas,
+                    strokeToScreenTransform = Matrix() // Data is already in Page Pixel coordinates
+                )
+            }
+        }
+
+        // Trigger Incremental Update
+        // We increment version to signal change, but wrap it in Incremental trigger
+        page.version++
+        page.updateTrigger = DrawDocumentData.Page.UpdateTrigger.Incremental(page.version)
+
+        // Request generic update for non-compose parts (legacy View support if any remain)
         drawManager.calcPage.needToBeUpdated = true
         drawManager.requestDraw(
             DrawManager.DrawAttachments(DrawManager.DrawAttachments.DrawMode.UPDATE).apply {

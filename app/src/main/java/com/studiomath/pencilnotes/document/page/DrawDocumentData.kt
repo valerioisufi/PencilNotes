@@ -212,6 +212,15 @@ class DrawDocumentData(
         var bitmapPage: Bitmap? = null
 
         // TODO: introdurre una variabile mutableStateOf di tipo boolean che avverta se bitmapPage è aggiornato o meno
+        
+        sealed class UpdateTrigger {
+            object None : UpdateTrigger()
+            data class Incremental(val version: Int) : UpdateTrigger()
+            data class Full(val version: Int) : UpdateTrigger()
+        }
+
+        @Transient
+        var updateTrigger by mutableStateOf<UpdateTrigger>(UpdateTrigger.None)
 
         /**
          * grafica contenuta nella pagina
