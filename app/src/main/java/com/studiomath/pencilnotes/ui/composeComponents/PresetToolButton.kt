@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +59,38 @@ fun PresetToolButton(
     windowInsetsController: WindowInsetsControllerCompat? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
+
+    val currentPreset by rememberUpdatedState(preset)
+    val currentOnUpdate by rememberUpdatedState(onUpdate)
+    val currentOnRemove by rememberUpdatedState(onRemove)
+
+    val handleToolTypeChange = remember {
+        { newType: ToolUtilities.Tool ->
+            currentOnUpdate(currentPreset.copy(toolType = newType))
+        }
+    }
+
+    val handleColorChange = remember {
+        { newColor: Color ->
+            currentOnUpdate(currentPreset.copy(color = newColor.toArgb()))
+        }
+    }
+
+    val handleSizeChange = remember {
+        { newSize: com.studiomath.pencilnotes.document.page.Measure ->
+            currentOnUpdate(currentPreset.copy(size = newSize.pt))
+        }
+    }
+
+    val handleDelete = remember {
+        {
+            currentOnRemove()
+            expanded = false
+        }
+    }
+
+    // Stable Color for ColorWheel to prevent it from recomposing during its own drag interactions
+    val stableColor = remember(preset.id) { Color(preset.color) }
 
     Box {
         val selectedModifier = if (isSelected) {
@@ -128,14 +161,14 @@ fun PresetToolButton(
                     ) // Add more if needed
                     
                     tools.forEach { (type, res) ->
-                        val isTypeSelected = preset.toolType == type
+                        val isTypeSelected = currentPreset.toolType == type
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .background(if (isTypeSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                                 .combinedClickable(onClick = { 
-                                    onUpdate(preset.copy(toolType = type))
+                                    handleToolTypeChange(type)
                                 }),
                             contentAlignment = Alignment.Center
                         ){
@@ -150,10 +183,8 @@ fun PresetToolButton(
                 Text(text = "Colore", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
                 ColorWheel(
-                    color = Color(preset.color),
-                    onColorChanged = {
-                        onUpdate(preset.copy(color = it.toArgb()))
-                    }
+                    color = stableColor,
+                    onColorChanged = handleColorChange
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -161,24 +192,18 @@ fun PresetToolButton(
                 // Size Selection
                 Text(text = "Dimensione", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-                // Local state for slider to be smooth, update model on finish? 
-                // Or just direct update. ToolButton in DrawActivity used direct update.
+                
                 SizeSlider(
                     modifier = Modifier.padding(8.dp),
-                    size = preset.size.pt,
-                    onSizeChanged = {
-                        onUpdate(preset.copy(size = it.pt))
-                    }
+                    size = currentPreset.size.pt,
+                    onSizeChanged = handleSizeChange
                 )
                 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
                 
                 // Delete Button
                 TextButton(
-                    onClick = { 
-                        onRemove()
-                        expanded = false
-                    },
+                    onClick = handleDelete,
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
                     Icon(Icons.Outlined.Delete, contentDescription = null)
