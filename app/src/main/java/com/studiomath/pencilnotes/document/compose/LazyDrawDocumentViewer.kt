@@ -116,7 +116,7 @@ fun LazyDrawDocumentViewer(
             ) {
                 items(
                     items = drawViewModel.data.pagesState,
-                    key = { page -> page.index; Log.d("Lazy", "LazyDrawDocumentViewer: ${page.index}") },
+                    key = { page -> page.index },
                     itemSize = { page -> page.dimension!! }
                 ) { page ->
                     PageComposable(

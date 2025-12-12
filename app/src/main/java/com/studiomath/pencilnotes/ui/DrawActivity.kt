@@ -299,8 +299,9 @@ fun DrawActivity(
                     }
                     ToolButton(
                         onClick = {
+                            val newIndex = (drawViewModel.data.pagesState.maxOfOrNull { it.index } ?: -1) + 1
                             drawViewModel.data.addPage(
-                                Page(1).apply {
+                                Page(newIndex).apply {
                                     dimension = Dimension.A4()
                                     width = dimension!!.width.mm
                                     height = dimension!!.height.mm
