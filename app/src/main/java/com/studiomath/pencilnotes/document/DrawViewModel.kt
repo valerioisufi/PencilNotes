@@ -26,7 +26,7 @@ import java.io.File
 
 class DrawViewModel(
     val context: Context,
-    var filePath: String,
+    var documentId: Int,
     var displayMetrics: DisplayMetrics,
     var configuration: ViewConfiguration
 ) : ViewModel() {
@@ -35,7 +35,7 @@ class DrawViewModel(
     val pageMaker = PageMaker(displayMetrics)
 
     // Using DrawDocumentRepository instead of DrawDocumentData
-    var repository: DrawDocumentRepository = DrawDocumentRepository(context, filePath, this)
+    var repository: DrawDocumentRepository = DrawDocumentRepository(context, documentId, this)
     // Alias for compatibility if needed, but better to migrate consumers
     val data: DrawDocumentRepository get() = repository
 

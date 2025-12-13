@@ -19,7 +19,7 @@ import com.studiomath.pencilnotes.file.Page as DbPage
 
 class DrawDocumentRepository(
     context: Context,
-    val documentName: String,
+    var documentId: Int,
     var drawViewModel: DrawViewModel
 ) {
     private val db: DrawDatabase = DrawDatabase.getInstance(context)
@@ -28,7 +28,6 @@ class DrawDocumentRepository(
     private val resourceDao = db.resourceDao()
 
     lateinit var document: Document
-    var documentId: Int = -1
     
     // Mutex for document modifications
     var documentMutex = Mutex()
@@ -49,14 +48,15 @@ class DrawDocumentRepository(
     private fun loadDocument() {
         documentJob = documentScope.launch {
             try {
-                // 1. Find or Create Document
-                var dbDocument = documentDao.getRootDocumentByName(documentName)
+                // 1. Find Document by ID
+                var dbDocument = documentDao.getDocumentById(documentId)
+                
                 if (dbDocument == null) {
-                    val newDoc = com.studiomath.pencilnotes.file.Document(name = documentName, folderId = null)
-                    val id = documentDao.insert(newDoc)
-                    dbDocument = newDoc.copy(id = id.toInt())
+                   // Handle error: Document not found
+                   // For now, we just return, maybe we should close activity or show toast via VM?
+                   Log.e("DrawDocumentRepository", "Document with id $documentId not found")
+                   return@launch
                 }
-                documentId = dbDocument.id
 
                 // 2. Load pages and resources
                 val dbPages = pageDao.getPagesForDocument(documentId)

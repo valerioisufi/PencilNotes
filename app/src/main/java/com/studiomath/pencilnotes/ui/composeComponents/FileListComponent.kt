@@ -167,8 +167,8 @@ fun ListItem(
             if (dataFile.type == FileExplorerViewModel.FileType.FILE) {
                 val intent = Intent(mContext, DrawActivity::class.java)
                 intent.putExtra(
-                    "filePath",
-                    fileExplorerViewModel.fileLocation(fileName = dataFile.name.value)
+                    "documentId",
+                    dataFile.id
                 )
                 mContext.startActivity(intent)
             } else if (dataFile.type == FileExplorerViewModel.FileType.FOLDER) {

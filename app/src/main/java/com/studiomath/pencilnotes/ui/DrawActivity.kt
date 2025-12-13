@@ -134,14 +134,14 @@ class DrawActivity : ComponentActivity() {
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
 
         val intent = intent
-        val filePath = intent.getStringExtra("filePath")
+        val documentId = intent.getIntExtra("documentId", -1)
 
         drawViewModel = viewModels<DrawViewModel> {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return DrawViewModel(
                         context = applicationContext,
-                        filePath = "$filePath",
+                        documentId = documentId,
                         displayMetrics = resources.displayMetrics,
                         configuration = ViewConfiguration.get(this@DrawActivity)
                     ) as T
