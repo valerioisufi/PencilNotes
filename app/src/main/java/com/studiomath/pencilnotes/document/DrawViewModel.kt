@@ -39,6 +39,9 @@ class DrawViewModel(
     // Alias for compatibility if needed, but better to migrate consumers
     val data: DrawDocumentRepository get() = repository
 
+    private val sharedPreferences = context.getSharedPreferences("pencil_notes_prefs", Context.MODE_PRIVATE)
+    private val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+
 
     @Serializable
     data class ToolUtilities(val toolType: Tool){
@@ -83,7 +86,7 @@ class DrawViewModel(
     val lazoTool = ToolUtilities(ToolUtilities.Tool.LAZO)
 
     var selectedTool by mutableStateOf(ToolUtilities.Tool.INK_PEN)
-    var activeBrush = penTool.getBrush(0)
+    var activeBrush by mutableStateOf(penTool.getBrush(0))
     fun getActiveBrushScaled() = activeBrush.copy(
         size = drawManager.dimToPx(activeBrush.size.pt),
     )
@@ -192,14 +195,102 @@ class DrawViewModel(
         var size: Float // in pt
     )
 
-    var toolPresets = androidx.compose.runtime.mutableStateListOf<ToolPreset>()
+    var penPresets = androidx.compose.runtime.mutableStateListOf<ToolPreset>()
+    var highlighterPresets = androidx.compose.runtime.mutableStateListOf<ToolPreset>()
 
-    fun addPreset() {
-        // Default new preset: Black Pen, Size 5pt
-        toolPresets.add(ToolPreset(toolType = ToolUtilities.Tool.INK_PEN, color = Color.BLACK, size = 5f))
+    var activePenPresetId: String? = null
+    var activeHighlighterPresetId: String? = null
+
+    init {
+        loadPresets()
+    }
+
+    private fun loadPresets() {
+        // Load Pen Presets
+        val penJson = sharedPreferences.getString("pen_presets", null)
+        activePenPresetId = sharedPreferences.getString("active_pen_preset_id", null)
+        if (penJson != null) {
+            try {
+                val list = json.decodeFromString<List<ToolPreset>>(penJson)
+                penPresets.addAll(list)
+            } catch (e: Exception) { e.printStackTrace() }
+        } else {
+            // Defaults
+            penPresets.add(ToolPreset(toolType = ToolUtilities.Tool.INK_PEN, color = Color.BLACK, size = 3f))
+            penPresets.add(ToolPreset(toolType = ToolUtilities.Tool.INK_PEN, color = Color.BLUE, size = 3f))
+            penPresets.add(ToolPreset(toolType = ToolUtilities.Tool.INK_PEN, color = Color.RED, size = 3f))
+            activePenPresetId = penPresets.first().id
+        }
+
+        // Load Highlighter Presets
+        val highlighterJson = sharedPreferences.getString("highlighter_presets", null)
+        activeHighlighterPresetId = sharedPreferences.getString("active_highlighter_preset_id", null)
+        if (highlighterJson != null) {
+            try {
+                val list = json.decodeFromString<List<ToolPreset>>(highlighterJson)
+                highlighterPresets.addAll(list)
+            } catch (e: Exception) { e.printStackTrace() }
+        } else {
+             // Defaults
+            highlighterPresets.add(ToolPreset(toolType = ToolUtilities.Tool.INK_HIGHLIGHTER, color = Color.YELLOW, size = 15f))
+            highlighterPresets.add(ToolPreset(toolType = ToolUtilities.Tool.INK_HIGHLIGHTER, color = Color.GREEN, size = 15f))
+            activeHighlighterPresetId = highlighterPresets.first().id
+        }
+    }
+
+    private fun savePresets() {
+        val penJson = json.encodeToString(penPresets.toList())
+        val highlighterJson = json.encodeToString(highlighterPresets.toList())
+        sharedPreferences.edit()
+            .putString("pen_presets", penJson)
+            .putString("highlighter_presets", highlighterJson)
+            .putString("active_pen_preset_id", activePenPresetId)
+            .putString("active_highlighter_preset_id", activeHighlighterPresetId)
+            .apply()
+    }
+
+    fun setActivePreset(preset: ToolPreset) {
+        if (preset.toolType == ToolUtilities.Tool.INK_PEN) {
+            activePenPresetId = preset.id
+        } else if (preset.toolType == ToolUtilities.Tool.INK_HIGHLIGHTER) {
+            activeHighlighterPresetId = preset.id
+        }
+        
+        // Also update the active brush immediately
+        activeBrush = activeBrush.copyWithColorIntArgb(
+             size = preset.size,
+             colorIntArgb = preset.color
+        )
+        savePresets()
+    }
+
+    fun addPreset(type: ToolUtilities.Tool) {
+        val newPreset = if (type == ToolUtilities.Tool.INK_PEN) {
+             ToolPreset(toolType = ToolUtilities.Tool.INK_PEN, color = Color.BLACK, size = 5f)
+        } else {
+             ToolPreset(toolType = ToolUtilities.Tool.INK_HIGHLIGHTER, color = Color.YELLOW, size = 15f)
+        }
+        
+        if (type == ToolUtilities.Tool.INK_PEN) penPresets.add(newPreset)
+        else highlighterPresets.add(newPreset)
+        
+        savePresets()
+    }
+
+    fun updatePreset(preset: ToolPreset) {
+         if (preset.toolType == ToolUtilities.Tool.INK_PEN) {
+             val index = penPresets.indexOfFirst { it.id == preset.id }
+             if (index != -1) penPresets[index] = preset
+         } else {
+             val index = highlighterPresets.indexOfFirst { it.id == preset.id }
+             if (index != -1) highlighterPresets[index] = preset
+         }
+         savePresets()
     }
 
     fun removePreset(preset: ToolPreset) {
-        toolPresets.remove(preset)
+        if (preset.toolType == ToolUtilities.Tool.INK_PEN) penPresets.remove(preset)
+        else highlighterPresets.remove(preset)
+        savePresets()
     }
 }

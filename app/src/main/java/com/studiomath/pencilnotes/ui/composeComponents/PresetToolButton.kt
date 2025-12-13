@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.ButtonDefaults
@@ -64,12 +65,6 @@ fun PresetToolButton(
     val currentOnUpdate by rememberUpdatedState(onUpdate)
     val currentOnRemove by rememberUpdatedState(onRemove)
 
-    val handleToolTypeChange = remember {
-        { newType: ToolUtilities.Tool ->
-            currentOnUpdate(currentPreset.copy(toolType = newType))
-        }
-    }
-
     val handleColorChange = remember {
         { newColor: Color ->
             currentOnUpdate(currentPreset.copy(color = newColor.toArgb()))
@@ -89,50 +84,34 @@ fun PresetToolButton(
         }
     }
 
-    // Stable Color for ColorWheel to prevent it from recomposing during its own drag interactions
+    // Stable Color for ColorWheel
     val stableColor = remember(preset.id) { Color(preset.color) }
 
     Box {
-        val selectedModifier = if (isSelected) {
-            Modifier.background(MaterialTheme.colorScheme.primaryContainer)
-        } else {
-            Modifier
-        }
-        
+        // Main Button UI
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(40.dp) // Slightly larger for better touch target
+                .padding(4.dp)
                 .clip(CircleShape)
+                .background(Color(preset.color))
                 .combinedClickable(
                     onClick = { onClick() },
                     onLongClick = { expanded = true },
                     role = Role.Button,
                 )
-                .then(selectedModifier)
-                .padding(4.dp), 
+                .then(
+                     if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.onBackground, CircleShape) else Modifier
+                ),
             contentAlignment = Alignment.Center
         ) {
-            // Main Tool Icon
-            val iconRes = when (preset.toolType) {
-                ToolUtilities.Tool.INK_PEN -> R.drawable.icon_ink_pen
-                ToolUtilities.Tool.INK_HIGHLIGHTER -> R.drawable.icon_ink_highlighter
-                ToolUtilities.Tool.ERASER -> R.drawable.icon_ink_eraser
-                ToolUtilities.Tool.LAZO -> R.drawable.icon_lasso_select
-                ToolUtilities.Tool.TEXT -> R.drawable.icon_text_fields
-                ToolUtilities.Tool.PAN -> R.drawable.icon_pan_tool
-            }
-            
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = null,
-                tint = Color(preset.color),
-                modifier = Modifier.size(24.dp)
-            )
-
-            // Size Indicator (Small dot at the bottom right)
-            if (preset.toolType != ToolUtilities.Tool.ERASER && preset.toolType != ToolUtilities.Tool.PAN && preset.toolType != ToolUtilities.Tool.LAZO) {
-               // Optional: Add a visual indicator for size, but the icon tint is good for now.
-               // Maybe a small circle stroke?
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.Check, // Need to make sure this import exists or use a resource
+                    contentDescription = null,
+                    tint = if (androidx.core.graphics.ColorUtils.calculateLuminance(preset.color) > 0.5) Color.Black else Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
 
@@ -147,38 +126,6 @@ fun PresetToolButton(
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Tool Type Selector
-                Text(text = "Strumento", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                   modifier = Modifier.fillMaxWidth(),
-                   horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    val tools = listOf(
-                        ToolUtilities.Tool.INK_PEN to R.drawable.icon_ink_pen,
-                        ToolUtilities.Tool.INK_HIGHLIGHTER to R.drawable.icon_ink_highlighter, 
-                        ToolUtilities.Tool.ERASER to R.drawable.icon_ink_eraser
-                    ) // Add more if needed
-                    
-                    tools.forEach { (type, res) ->
-                        val isTypeSelected = currentPreset.toolType == type
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(if (isTypeSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                                .combinedClickable(onClick = { 
-                                    handleToolTypeChange(type)
-                                }),
-                            contentAlignment = Alignment.Center
-                        ){
-                            Icon(painter = painterResource(id = res), contentDescription = null)
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-
                 // Color Selection
                 Text(text = "Colore", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))

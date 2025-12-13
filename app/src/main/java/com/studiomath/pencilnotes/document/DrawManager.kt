@@ -66,13 +66,20 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
     var pagesRectOnWindow = mutableSetOf<CalcPage.PageRectWithIndex>() // TODO: magari lo si può spostare in DrawAttachments, insieme a moveMatrix 
 
     fun dimToPx(dimension: Measure): Float {
-        if (pagesRectOnWindow.isEmpty()) {
-             // Fallback to default density-based conversion (approx Scale 1.0)
-             // 1 pt = 1/72 inch. 1 inch = xdpi pixels.
-             val pxPerPt = drawViewModel.displayMetrics.xdpi / 72f
-             return dimension.pt * pxPerPt
+        if (pagesRectOnWindow.isNotEmpty()) {
+            val pageRect = pagesRectOnWindow.first()
+            val docPage = drawViewModel.data.document.pages.getOrNull(pageRect.index)
+            if (docPage?.dimension != null) {
+                return dimension.pt * (pageRect.rect.width() / docPage.dimension!!.width.pt)
+            }
         }
-        return dimension.pt * (pagesRectOnWindow.first().rect.width() / drawViewModel.data.document.pages[pagesRectOnWindow.first().index].dimension!!.width.pt)
+        
+        // Fallback: estimate based on density and matrix scale
+        val pxPerPt = drawViewModel.displayMetrics.xdpi / 72f
+        val values = FloatArray(9)
+        moveMatrix.getValues(values)
+        val scale = values[Matrix.MSCALE_X]
+        return dimension.pt * pxPerPt * scale
     }
 
     fun getMaskPath(): Path {

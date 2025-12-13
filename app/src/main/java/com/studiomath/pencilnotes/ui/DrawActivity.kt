@@ -323,61 +323,21 @@ fun DrawActivity(
                         thickness = 2.dp
                     )
 
-                    var penSettingsExpanded by remember { mutableStateOf(false) }
+
                     ToolButton(
                         onClick = {
-                            if (drawViewModel.selectedTool == ToolUtilities.Tool.INK_PEN) {
-                                penSettingsExpanded = true
-                            } else {
-                                drawViewModel.activeBrush = drawViewModel.penTool.getBrush(0)
+                            if (drawViewModel.selectedTool != ToolUtilities.Tool.INK_PEN) {
                                 drawViewModel.selectedTool = ToolUtilities.Tool.INK_PEN
+                                // Restore last used preset
+                                val lastPresetId = drawViewModel.activePenPresetId
+                                val preset = drawViewModel.penPresets.find { it.id == lastPresetId } ?: drawViewModel.penPresets.firstOrNull()
+                                
+                                if (preset != null) {
+                                    drawViewModel.setActivePreset(preset)
+                                }
                             }
                         },
-                        onLongClick = {
-                            drawViewModel.activeBrush = drawViewModel.penTool.getBrush(0)
-                            drawViewModel.selectedTool = ToolUtilities.Tool.INK_PEN
-                            penSettingsExpanded = true
-                        },
-                        selected = drawViewModel.selectedTool == ToolUtilities.Tool.INK_PEN,
-                        dropDownMenu = {
-                            var size by remember { mutableFloatStateOf(drawViewModel.activeBrush.size) }
-
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(text = "Seleziona il colore", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                ColorWheel(
-                                    color = Color(drawViewModel.activeBrush.colorIntArgb),
-                                    onColorChanged = {
-                                        drawViewModel.activeBrush = drawViewModel.activeBrush.copyWithColorIntArgb(
-                                            colorIntArgb = it.toArgb()
-                                        )
-                                    }
-                                )
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                Text(text = "Dimensione pennello", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                SizeSlider(
-                                    modifier = Modifier.padding(8.dp),
-                                    size = size.pt,
-                                    onSizeChanged = {
-                                        size = it.pt
-                                        drawViewModel.activeBrush = drawViewModel.activeBrush.copy(
-                                            size = it.pt
-                                        )
-                                    }
-                                )
-                            }
-                        },
-                        expanded = penSettingsExpanded,
-                        onDismissRequest = { penSettingsExpanded = false },
-                        windowInsetsController = windowInsetsController
+                        selected = drawViewModel.selectedTool == ToolUtilities.Tool.INK_PEN
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.icon_ink_pen),
@@ -385,61 +345,21 @@ fun DrawActivity(
                         )
                     }
 
-                    var highlighterSettingsExpanded by remember { mutableStateOf(false) }
+
                     ToolButton(
                         onClick = {
-                            if (drawViewModel.selectedTool == ToolUtilities.Tool.INK_HIGHLIGHTER) {
-                                highlighterSettingsExpanded = true
-                            } else {
-                                drawViewModel.activeBrush = drawViewModel.highlighterTool.getBrush(0)
+                            if (drawViewModel.selectedTool != ToolUtilities.Tool.INK_HIGHLIGHTER) {
                                 drawViewModel.selectedTool = ToolUtilities.Tool.INK_HIGHLIGHTER
+                                // Restore last used preset
+                                val lastPresetId = drawViewModel.activeHighlighterPresetId
+                                val preset = drawViewModel.highlighterPresets.find { it.id == lastPresetId } ?: drawViewModel.highlighterPresets.firstOrNull()
+                                
+                                if (preset != null) {
+                                    drawViewModel.setActivePreset(preset)
+                                }
                             }
                         },
-                        onLongClick = {
-                            drawViewModel.activeBrush = drawViewModel.highlighterTool.getBrush(0)
-                            drawViewModel.selectedTool = ToolUtilities.Tool.INK_HIGHLIGHTER
-                            highlighterSettingsExpanded = true
-                        },
-                        selected = drawViewModel.selectedTool == ToolUtilities.Tool.INK_HIGHLIGHTER,
-                        dropDownMenu = {
-                            var size by remember { mutableFloatStateOf(drawViewModel.activeBrush.size) }
-
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(text = "Seleziona il colore evidenziatore", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                ColorWheel(
-                                    color = Color(drawViewModel.activeBrush.colorIntArgb),
-                                    onColorChanged = {
-                                        drawViewModel.activeBrush = drawViewModel.activeBrush.copyWithColorIntArgb(
-                                            colorIntArgb = it.toArgb()
-                                        )
-                                    }
-                                )
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                Text(text = "Dimensione evidenziatore", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                SizeSlider(
-                                    modifier = Modifier.padding(8.dp),
-                                    size = size.pt,
-                                    onSizeChanged = {
-                                        size = it.pt
-                                        drawViewModel.activeBrush = drawViewModel.activeBrush.copy(
-                                            size = it.pt
-                                        )
-                                    }
-                                )
-                            }
-                        },
-                        expanded = highlighterSettingsExpanded,
-                        onDismissRequest = { highlighterSettingsExpanded = false },
-                        windowInsetsController = windowInsetsController
+                        selected = drawViewModel.selectedTool == ToolUtilities.Tool.INK_HIGHLIGHTER
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.icon_ink_highlighter),
@@ -546,33 +466,30 @@ fun DrawActivity(
                             .horizontalScroll(rememberScrollState()),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        drawViewModel.toolPresets.forEach { preset ->
-                            val isSelected = drawViewModel.selectedTool == preset.toolType &&
-                                    drawViewModel.activeBrush.colorIntArgb == preset.color &&
-                                    drawViewModel.activeBrush.size == preset.size
+                        val currentPresets = when(drawViewModel.selectedTool) {
+                             ToolUtilities.Tool.INK_PEN -> drawViewModel.penPresets
+                             ToolUtilities.Tool.INK_HIGHLIGHTER -> drawViewModel.highlighterPresets
+                             else -> emptyList()
+                        }
+                        
+                        val activePresetId = if (drawViewModel.selectedTool == ToolUtilities.Tool.INK_PEN) drawViewModel.activePenPresetId 
+                                             else if (drawViewModel.selectedTool == ToolUtilities.Tool.INK_HIGHLIGHTER) drawViewModel.activeHighlighterPresetId
+                                             else null
+
+                        currentPresets.forEach { preset ->
+                            val isSelected = activePresetId == preset.id
 
                             PresetToolButton(
                                 preset = preset,
                                 isSelected = isSelected,
                                 onClick = {
-                                    // Apply settings
-                                    drawViewModel.activeBrush = drawViewModel.activeBrush.copyWithColorIntArgb(
-                                        size = preset.size,
-                                        colorIntArgb = preset.color
-                                    )
-                                    drawViewModel.selectedTool = preset.toolType
+                                    drawViewModel.setActivePreset(preset)
                                 },
                                 onUpdate = { updatedPreset ->
-                                    // Update the specific preset in the list
-                                    val index = drawViewModel.toolPresets.indexOfFirst { it.id == updatedPreset.id }
-                                    if (index != -1) {
-                                        drawViewModel.toolPresets[index] = updatedPreset
-                                        // Also apply if it was just clicked/modified?
-                                        drawViewModel.activeBrush = drawViewModel.activeBrush.copyWithColorIntArgb(
-                                            size = drawViewModel.drawManager.dimToPx(updatedPreset.size.pt),
-                                            colorIntArgb = updatedPreset.color
-                                        )
-                                        drawViewModel.selectedTool = updatedPreset.toolType
+                                    drawViewModel.updatePreset(updatedPreset)
+                                    // If this was the active one, update brush too
+                                    if (isSelected) {
+                                        drawViewModel.setActivePreset(updatedPreset)
                                     }
                                 },
                                 onRemove = {
@@ -585,7 +502,9 @@ fun DrawActivity(
                         // Add Button
                         ToolButton(
                             onClick = {
-                                drawViewModel.addPreset()
+                                if (drawViewModel.selectedTool == ToolUtilities.Tool.INK_PEN || drawViewModel.selectedTool == ToolUtilities.Tool.INK_HIGHLIGHTER) {
+                                    drawViewModel.addPreset(drawViewModel.selectedTool)
+                                }
                             }
                         ) {
                             Icon(
