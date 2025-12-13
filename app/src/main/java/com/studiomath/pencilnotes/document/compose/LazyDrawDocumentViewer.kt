@@ -34,6 +34,13 @@ import com.studiomath.pencilnotes.document.DrawViewModel
 import com.studiomath.pencilnotes.document.compose.lazyDocument.LazyDocumentViewer
 import com.studiomath.pencilnotes.document.compose.lazyDocument.detectDocumentGestures
 import com.studiomath.pencilnotes.document.compose.lazyDocument.items
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.asImageBitmap
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.rememberLazyDocumentViewerState
 import com.studiomath.pencilnotes.document.compose.lazyDocument.state.rememberTrasformableState
 
@@ -77,9 +84,14 @@ fun LazyDrawDocumentViewer(
             }
         }
 
+        var viewportRect by remember { mutableStateOf(Rect.Zero) }
+
         Box(
             modifier = modifier
                 .fillMaxSize()
+                .onGloballyPositioned { layoutCoordinates ->
+                    viewportRect = layoutCoordinates.boundsInWindow()
+                }
                 .clipToBounds()
                 .systemGestureExclusion()
                 .then(arbitrationModifier)
@@ -112,7 +124,9 @@ fun LazyDrawDocumentViewer(
                         modifier = Modifier
                             .background(Color.White),
                         page = page,
-                        pageMaker = drawViewModel.pageMaker
+                        pageMaker = drawViewModel.pageMaker,
+                        viewportRect = viewportRect,
+                        scale = transformableState.scale
                     )
                 }
             }
