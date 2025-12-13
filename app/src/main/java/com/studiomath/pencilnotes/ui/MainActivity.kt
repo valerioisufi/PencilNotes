@@ -61,6 +61,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.studiomath.pencilnotes.R
 import com.studiomath.pencilnotes.file.FileExplorerViewModel
 import com.studiomath.pencilnotes.ui.composeComponents.FileListComponent
+import com.studiomath.pencilnotes.ui.composeComponents.HomeComponent
 import com.studiomath.pencilnotes.ui.theme.PencilNotesTheme
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -313,12 +314,15 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                         labelTextField = stringResource(id = R.string.request_name),
                         textConfirmButton = stringResource(id = R.string.button_confirm),
                         onDismissRequest = {openDialogNewFile = false},
+                        isAllowedInput = { text ->
+                            fileExplorerViewModel.validateFileName(text) ?: ""
+                        },
                         onConfirm = { text ->
                             fileExplorerViewModel.createFile(
-                                FileExplorerViewModel.FileType.FILE, text
+                                FileExplorerViewModel.FileType.FILE, text,
+                                onSuccess = { openDialogNewFile = false },
+                                onError = { /* Handled by validation usually, but could show snackbar */ }
                             )
-
-                            openDialogNewFile = false
                         }
                     )
                 }
@@ -329,11 +333,15 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                         labelTextField = stringResource(id = R.string.request_name),
                         textConfirmButton = stringResource(id = R.string.button_confirm),
                         onDismissRequest = {openDialogNewFolder = false},
+                        isAllowedInput = { text ->
+                            fileExplorerViewModel.validateFileName(text) ?: ""
+                        },
                         onConfirm = { text ->
                             fileExplorerViewModel.createFile(
-                                FileExplorerViewModel.FileType.FOLDER, text
+                                FileExplorerViewModel.FileType.FOLDER, text,
+                                onSuccess = { openDialogNewFolder = false },
+                                onError = { /* Handled by validation */ }
                             )
-                            openDialogNewFolder = false
                         }
                     )
                 }
@@ -424,7 +432,7 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                     targetState = navigationBarSelectedItem
                 ) { targetState ->
                     when (targetState) {
-                        NavigationBarItem.HOME.value -> Text(text = "Home")
+                        NavigationBarItem.HOME.value -> HomeComponent(fileExplorerViewModel = fileExplorerViewModel)
                         NavigationBarItem.SHARED.value -> Text(text = "Condivisi")
                         NavigationBarItem.FILE.value -> FileListComponent(
                             directoryFiles = fileExplorerViewModel.currentDirectoryFiles,

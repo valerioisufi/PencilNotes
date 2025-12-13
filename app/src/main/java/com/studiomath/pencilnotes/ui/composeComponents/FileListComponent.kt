@@ -98,19 +98,19 @@ fun FileListComponent(
             ) {
                 DropdownMenuItem(
                     text = { Text(stringResource(id = R.string.menu_dateCreated)) },
-                    onClick = { /* Handle edit! */ },
+                    onClick = { fileExplorerViewModel.setSortOption(FileExplorerViewModel.SortOption.DATE_CREATED) },
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(id = R.string.menu_lastModified)) },
-                    onClick = { /* Handle settings! */ }
+                    onClick = { fileExplorerViewModel.setSortOption(FileExplorerViewModel.SortOption.DATE_MODIFIED) }
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(id = R.string.menu_lastOpen)) },
-                    onClick = { /* Handle edit! */ },
+                    onClick = { fileExplorerViewModel.setSortOption(FileExplorerViewModel.SortOption.LAST_OPENED) },
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(id = R.string.menu_name)) },
-                    onClick = { /* Handle settings! */ }
+                    onClick = { fileExplorerViewModel.setSortOption(FileExplorerViewModel.SortOption.NAME) }
                 )
                 HorizontalDivider()
                 DropdownMenuItem(
@@ -165,6 +165,7 @@ fun ListItem(
         .clip(RoundedCornerShape(8.dp))
         .clickable {
             if (dataFile.type == FileExplorerViewModel.FileType.FILE) {
+                fileExplorerViewModel.openFile(dataFile.id) // Update last opened time in Background
                 val intent = Intent(mContext, DrawActivity::class.java)
                 intent.putExtra(
                     "documentId",
@@ -196,8 +197,10 @@ fun ListItem(
                 text = dataFile.name.value,
                 style = MaterialTheme.typography.bodyLarge
             )
+            val date = java.util.Date(dataFile.modifiedAt)
+            val format = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT)
             Text(
-                text = "Ultima modifica: 12/12/2023",
+                text = "Ultima modifica: ${format.format(date)}",
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -268,8 +271,10 @@ fun FileDetailsWithBottomSheet(
                             text = dataFile.name.value,
                             style = MaterialTheme.typography.bodyLarge
                         )
+                        val date = java.util.Date(dataFile.modifiedAt)
+                        val format = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT)
                         Text(
-                            text = "Ultima modifica: 12/12/2023",
+                            text = "Ultima modifica: ${format.format(date)}",
                             style = MaterialTheme.typography.bodySmall
                         )
                     }

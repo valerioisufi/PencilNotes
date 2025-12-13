@@ -133,7 +133,10 @@ class FileRepository(context: Context) {
         val id: Int,
         val name: String,
         val type: FileType,
-        val parentId: Int?
+        val parentId: Int?,
+        val createdAt: Long,
+        val modifiedAt: Long,
+        val lastOpenedAt: Long?
     )
 
     enum class FileType {
@@ -151,16 +154,40 @@ class FileRepository(context: Context) {
         }
         
         folders.forEach { folder ->
-            items.add(FileItem(folder.id, folder.name, FileType.FOLDER, folder.parentId))
+            items.add(FileItem(
+                id = folder.id, 
+                name = folder.name, 
+                type = FileType.FOLDER, 
+                parentId = folder.parentId,
+                createdAt = folder.createdAt,
+                modifiedAt = folder.modifiedAt,
+                lastOpenedAt = null // Folders don't have lastOpenedAt in our schema
+            ))
         }
         
         // Add documents
         val documents = getDocumentsInFolder(parentId)
         documents.forEach { document ->
-            items.add(FileItem(document.id, document.name, FileType.DOCUMENT, parentId))
+            items.add(FileItem(
+                id = document.id, 
+                name = document.name, 
+                type = FileType.DOCUMENT, 
+                parentId = parentId,
+                createdAt = document.createdAt,
+                modifiedAt = document.modifiedAt,
+                lastOpenedAt = document.lastOpenedAt
+            ))
         }
         
         return items
+    }
+
+    suspend fun updateLastOpened(documentId: Int) {
+        documentDao.updateLastOpened(documentId)
+    }
+
+    suspend fun getRecentDocuments(limit: Int): List<Document> {
+        return documentDao.getRecentDocuments(limit)
     }
 
     suspend fun getFolderById(folderId: Int): Folder? {

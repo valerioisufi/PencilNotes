@@ -70,7 +70,16 @@ fun RequestNameDialog(
                 var text by remember { mutableStateOf("") }
                 OutlinedTextField(value = text,
                     onValueChange = { text = it; validInputError = isAllowedInput(it) },
-                    label = { Text(labelTextField) }
+                    label = { Text(labelTextField) },
+                    isError = validInputError.isNotEmpty(),
+                    supportingText = {
+                        if (validInputError.isNotEmpty()) {
+                            Text(
+                                text = validInputError,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 )
                 TextButton(
                     modifier = Modifier.align(Alignment.End),

@@ -5,7 +5,7 @@ import androidx.room.*
 
 @Database(
     entities = [Folder::class, Document::class, Page::class, Resource::class],
-    version = 1
+    version = 2
 )
 abstract class DrawDatabase : RoomDatabase() {
     abstract fun folderDao(): FolderDao
@@ -17,13 +17,28 @@ abstract class DrawDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: DrawDatabase? = null
 
+        val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(database: androidx.sqlite.db.SupportSQLiteDatabase) {
+                // Add columns to folders
+                database.execSQL("ALTER TABLE folders ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE folders ADD COLUMN modifiedAt INTEGER NOT NULL DEFAULT 0")
+
+                // Add columns to documents
+                database.execSQL("ALTER TABLE documents ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE documents ADD COLUMN modifiedAt INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE documents ADD COLUMN lastOpenedAt INTEGER")
+            }
+        }
+
         fun getInstance(context: Context): DrawDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     DrawDatabase::class.java,
                     "draw_database"
-                ).fallbackToDestructiveMigration(false) // For development, we can use destructive migration
+                )
+                .addMigrations(MIGRATION_1_2)
+                .fallbackToDestructiveMigration(false) 
                 .build()
                 INSTANCE = instance
                 instance
@@ -40,14 +55,19 @@ abstract class DrawDatabase : RoomDatabase() {
 data class Folder(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
-    val parentId: Int? // Se null, è una cartella di primo livello
+    val parentId: Int?, // Se null, è una cartella di primo livello
+    val createdAt: Long = System.currentTimeMillis(),
+    val modifiedAt: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "documents")
 data class Document(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
-    val folderId: Int? = null // A quale cartella appartiene - null per documenti root
+    val folderId: Int? = null, // A quale cartella appartiene - null per documenti root
+    val createdAt: Long = System.currentTimeMillis(),
+    val modifiedAt: Long = System.currentTimeMillis(),
+    val lastOpenedAt: Long? = null
 )
 
 @Entity(
@@ -101,8 +121,8 @@ interface FolderDao {
     @Query("SELECT * FROM folders WHERE name = :name AND parentId = :parentId")
     suspend fun getFolderByNameAndParent(name: String, parentId: Int?): Folder?
 
-    @Query("UPDATE folders SET name = :newName WHERE id = :folderId")
-    suspend fun renameFolder(folderId: Int, newName: String)
+    @Query("UPDATE folders SET name = :newName, modifiedAt = :timestamp WHERE id = :folderId")
+    suspend fun renameFolder(folderId: Int, newName: String, timestamp: Long = System.currentTimeMillis())
 }
 
 @Dao
@@ -134,11 +154,17 @@ interface DocumentDao {
     @Query("SELECT * FROM documents WHERE name = :name AND folderId IS NULL")
     suspend fun getRootDocumentByName(name: String): Document?
 
-    @Query("UPDATE documents SET name = :newName WHERE id = :documentId")
-    suspend fun renameDocument(documentId: Int, newName: String)
+    @Query("UPDATE documents SET name = :newName, modifiedAt = :timestamp WHERE id = :documentId")
+    suspend fun renameDocument(documentId: Int, newName: String, timestamp: Long = System.currentTimeMillis())
 
-    @Query("UPDATE documents SET folderId = :newFolderId WHERE id = :documentId")
-    suspend fun moveDocument(documentId: Int, newFolderId: Int?)
+    @Query("UPDATE documents SET folderId = :newFolderId, modifiedAt = :timestamp WHERE id = :documentId")
+    suspend fun moveDocument(documentId: Int, newFolderId: Int?, timestamp: Long = System.currentTimeMillis())
+
+    @Query("UPDATE documents SET lastOpenedAt = :timestamp WHERE id = :documentId")
+    suspend fun updateLastOpened(documentId: Int, timestamp: Long = System.currentTimeMillis())
+
+    @Query("SELECT * FROM documents ORDER BY lastOpenedAt DESC LIMIT :limit")
+    suspend fun getRecentDocuments(limit: Int): List<Document>
 }
 
 @Dao

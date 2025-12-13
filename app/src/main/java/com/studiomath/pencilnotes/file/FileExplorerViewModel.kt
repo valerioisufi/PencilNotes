@@ -14,6 +14,13 @@ class FileExplorerViewModel(
 ) : ViewModel() {
     private val fileRepository = FileRepository(context)
 
+    fun openFile(id: Int) {
+        viewModelScope.launch {
+            fileRepository.updateLastOpened(id)
+            loadRecentFiles() // Refresh recents
+        }
+    }
+
     /**
      * DATA
      */
@@ -24,8 +31,19 @@ class FileExplorerViewModel(
     data class Files(
         var type: FileType, 
         var name: MutableState<String> = mutableStateOf(""),
-        var id: Int = 0 // Added to track database IDs
+        var id: Int = 0, // Added to track database IDs
+        val createdAt: Long = 0,
+        val modifiedAt: Long = 0,
+        val lastOpenedAt: Long? = null
     )
+
+    enum class SortOption {
+        NAME, DATE_CREATED, DATE_MODIFIED, LAST_OPENED
+    }
+
+    var sortOption = mutableStateOf(SortOption.NAME)
+    var recentFiles = mutableStateListOf<Files>()
+
 
     data class DirectoryFiles(var directoryPath: String) {
         var filesList = mutableStateListOf<Files>()
@@ -55,6 +73,31 @@ class FileExplorerViewModel(
 
     init {
         loadCurrentDirectory()
+        loadRecentFiles()
+    }
+
+    private fun loadRecentFiles() {
+        viewModelScope.launch {
+            recentFiles.clear()
+            val recents = fileRepository.getRecentDocuments(10)
+            recents.forEach { doc ->
+                recentFiles.add(
+                    Files(
+                        type = FileType.FILE,
+                        name = mutableStateOf(doc.name),
+                        id = doc.id,
+                        createdAt = doc.createdAt,
+                        modifiedAt = doc.modifiedAt,
+                        lastOpenedAt = doc.lastOpenedAt
+                    )
+                )
+            }
+        }
+    }
+
+    fun setSortOption(option: SortOption) {
+        sortOption.value = option
+        loadCurrentDirectory()
     }
 
     private fun loadCurrentDirectory() {
@@ -77,19 +120,55 @@ class FileExplorerViewModel(
                     FileRepository.FileType.DOCUMENT -> FileType.FILE
                 }
                 
-                filesExplorer[currentPath]!!.filesList.add(
-                    Files(
+                val file = Files(
                         type = fileType,
                         name = mutableStateOf(item.name),
-                        id = item.id
+                        id = item.id,
+                        createdAt = item.createdAt,
+                        modifiedAt = item.modifiedAt,
+                        lastOpenedAt = item.lastOpenedAt
                     )
-                )
+                filesExplorer[currentPath]!!.filesList.add(file)
             }
+
+            // Sort the list
+            val sortedList = filesExplorer[currentPath]!!.filesList.sortedWith(
+                when (sortOption.value) {
+                    SortOption.NAME -> compareBy { it.name.value.lowercase() }
+                    SortOption.DATE_CREATED -> compareByDescending { it.createdAt }
+                    SortOption.DATE_MODIFIED -> compareByDescending { it.modifiedAt }
+                    SortOption.LAST_OPENED -> compareByDescending { it.lastOpenedAt ?: 0L }
+                }
+            )
+            
+            // Re-populate with sorted items (keeping folders on top logic if desired, but for now simple sort)
+            // Usually folders on top is preferred. Let's add that.
+            val folders = sortedList.filter { it.type == FileType.FOLDER }
+            val files = sortedList.filter { it.type == FileType.FILE }
+            
+            filesExplorer[currentPath]!!.filesList.clear()
+            filesExplorer[currentPath]!!.filesList.addAll(folders)
+            filesExplorer[currentPath]!!.filesList.addAll(files)
+
         }
     }
 
-    fun createFile(type: FileType, name: String): Boolean {
+    fun validateFileName(name: String): String? {
+        if (name.isBlank()) return "Name cannot be empty"
+        if (name.contains("/") || name.contains("\\")) return "Name cannot contain slashes"
+        if (existNameInDirectory(name = name)) return "Name already exists"
+        return null
+    }
+
+    fun createFile(type: FileType, name: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}): Boolean {
         if (existNameInDirectory(name = name)) {
+            onError("Name already exists")
+            return false
+        }
+        
+        val validationError = validateFileName(name)
+        if (validationError != null) {
+            onError(validationError)
             return false
         }
         
@@ -101,6 +180,9 @@ class FileExplorerViewModel(
             
             if (success) {
                 loadCurrentDirectory() // Refresh the view
+                onSuccess()
+            } else {
+                onError("Failed to create file")
             }
         }
         return true // Return true optimistically for UI responsiveness
