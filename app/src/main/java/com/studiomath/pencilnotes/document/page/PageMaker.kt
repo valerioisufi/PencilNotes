@@ -151,28 +151,8 @@ class PageMaker(
             /**
              * make images
              */
-//            for (image in document.pages[pageIndex].imageData) {
-//                if (image.bitmap == null) {
-////                    val inputFile = FileManager(context, drawFile.head[image.id]?.get("path")!!)
-////                    val inputStream = inputFile.file.inputStream()
-////
-////                    image.bitmap = BitmapFactory.decodeStream(inputStream)
-//                }
-//
-//                val pageMatrix = Matrix().apply {
-//                    setRectToRect(image.rectPage, rect, Matrix.ScaleToFit.CENTER)
-//                }
-//                val rectVisualizzazione = RectF(image.rectVisualizzazione).apply {
-//                    transform(pageMatrix)
-//                }
-//                val imageRect =
-//                    RectF(0f, 0f, image.bitmap!!.width.toFloat(), image.bitmap!!.height.toFloat())
-//                val imageMatrix = Matrix().apply {
-//                    setRectToRect(imageRect, rectVisualizzazione, Matrix.ScaleToFit.CENTER)
-//                }
-//
-//                canvas.drawBitmap(image.bitmap!!, imageMatrix, null)
-//            }
+            // TODO: convert image rendering to new system if needed
+            // for (image in document.pages[pageIndex].imageData) { ... }
 
             /**
              * make tracciati

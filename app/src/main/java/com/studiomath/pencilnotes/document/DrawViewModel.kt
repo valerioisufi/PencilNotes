@@ -31,7 +31,7 @@ class DrawViewModel(
     var configuration: ViewConfiguration
 ) : ViewModel() {
 
-    var drawManager = DrawManager(this, displayMetrics)
+
     val pageMaker = PageMaker(displayMetrics)
 
     // Using DrawDocumentRepository instead of DrawDocumentData
@@ -87,9 +87,7 @@ class DrawViewModel(
 
     var selectedTool by mutableStateOf(ToolUtilities.Tool.INK_PEN)
     var activeBrush by mutableStateOf(penTool.getBrush(0))
-    fun getActiveBrushScaled() = activeBrush.copy(
-        size = drawManager.dimToPx(activeBrush.size.pt),
-    )
+
 
     /**
      * Returns the active brush with size scaled to World Pixels (Scale 1.0).
@@ -165,25 +163,13 @@ class DrawViewModel(
         page.updateTrigger = com.studiomath.pencilnotes.document.page.Page.UpdateTrigger.Incremental(page.version)
         page.isModified = true // Mark dirty
 
-        // Request generic update for non-compose parts (legacy View support if any remain)
-        drawManager.calcPage.needToBeUpdated = true
-        drawManager.requestDraw(
-            DrawManager.DrawAttachments(DrawManager.DrawAttachments.DrawMode.UPDATE).apply {
-                update = DrawManager.DrawAttachments.Update.DRAW_BITMAP
-            }
-        )
+
         
         // Mark for saving
         repository.saveDocument()
     }
 
-    var startStrokeInProgress: ((event: MotionEvent, pointerId: Int, brush: Brush) -> InProgressStrokeId)? = null
-    var addToStrokeInProgress: ((event: MotionEvent, pointerId: Int, strokeId: InProgressStrokeId, predictedEvent: MotionEvent?) -> Unit)? = null
-    var finishStrokeInProgress: ((event: MotionEvent, pointerId: Int, strokeId: InProgressStrokeId) -> Unit)? = null
-    var cancelStrokeInProgress: ((strokeId: InProgressStrokeId, event: MotionEvent) -> Unit)? = null
-    var removeFinishedStrokes: ((strokeKeys: Set<InProgressStrokeId>) -> Unit)? = null
 
-    var maskPath: ((path: Path) -> Unit)? = null
 
     var finishActivity: (() -> Unit)? = null
 

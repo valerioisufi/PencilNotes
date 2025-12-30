@@ -95,9 +95,7 @@ import androidx.ink.brush.BrushFamily
 import androidx.ink.brush.StockBrushes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.studiomath.pencilnotes.document.DrawComponent
-import com.studiomath.pencilnotes.document.DrawManager
-import com.studiomath.pencilnotes.document.DrawManager.DrawAttachments
+
 import com.studiomath.pencilnotes.document.DrawViewModel
 import com.studiomath.pencilnotes.document.DrawViewModel.ToolUtilities
 import com.studiomath.pencilnotes.document.page.Dimension
@@ -119,7 +117,7 @@ import kotlin.apply
 import kotlin.let
 
 class DrawActivity : ComponentActivity() {
-    private lateinit var inProgressStrokesView: InProgressStrokesView
+
     private lateinit var drawViewModel: DrawViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -149,14 +147,12 @@ class DrawActivity : ComponentActivity() {
             }
         }.value
 
-        inProgressStrokesView = InProgressStrokesView(this)
-        inProgressStrokesView.addFinishedStrokesListener(drawViewModel.drawManager)
-        inProgressStrokesView.eagerInit()
+
 
 
         setContent {
             PencilNotesTheme {
-                DrawActivity(drawViewModel = drawViewModel, inProgressStrokesView = inProgressStrokesView, windowInsetsController = windowInsetsController)
+                DrawActivity(drawViewModel = drawViewModel, windowInsetsController = windowInsetsController)
             }
         }
 
@@ -184,7 +180,6 @@ class DrawActivity : ComponentActivity() {
 fun DrawActivity(
     modifier: Modifier = Modifier,
     drawViewModel: DrawViewModel,
-    inProgressStrokesView: InProgressStrokesView,
     windowInsetsController: WindowInsetsControllerCompat? = null
 ) {
     Column(
@@ -527,10 +522,7 @@ fun DrawActivity(
             drawViewModel = drawViewModel
         )
 //        LazyDocumentViewerPreview()
-//        DrawComponent(
-//            drawViewModel = drawViewModel,
-//            inProgressStrokesView = inProgressStrokesView
-//        )
+
     }
 
 }

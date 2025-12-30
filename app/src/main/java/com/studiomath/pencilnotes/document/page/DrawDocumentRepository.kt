@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.ink.authoring.InProgressStrokeId
 import android.view.MotionEvent
-import com.studiomath.pencilnotes.document.DrawManager
+
 import com.studiomath.pencilnotes.document.DrawViewModel
 import com.studiomath.pencilnotes.file.DrawDatabase
 import kotlinx.coroutines.*
@@ -111,17 +111,7 @@ class DrawDocumentRepository(
                     pagesState.addAll(document.pages)
                     isDocumentLoaded = true
                     
-                    // 4. Request UI Draw
-                    drawViewModel.drawManager.requestDraw(
-                        DrawManager.DrawAttachments(DrawManager.DrawAttachments.DrawMode.UPDATE).apply {
-                            update = DrawManager.DrawAttachments.Update.DRAW_BITMAP
-                        }
-                    )
-                    drawViewModel.drawManager.requestDraw(
-                        DrawManager.DrawAttachments(DrawManager.DrawAttachments.DrawMode.UPDATE).apply {
-                            update = DrawManager.DrawAttachments.Update.CACHE_ALL
-                        }
-                    )
+
                 }
             } catch (e: Exception) {
                 Log.e("DrawDocumentRepository", "Error loading document", e)
@@ -190,13 +180,7 @@ class DrawDocumentRepository(
                 document.pages.add(page)
                 pagesState.add(page)
                 
-                // Trigger VM update
-                drawViewModel.drawManager.calcPage.needToBeUpdated = true
-                drawViewModel.drawManager.requestDraw(
-                    DrawManager.DrawAttachments(drawMode = DrawManager.DrawAttachments.DrawMode.UPDATE).apply {
-                        update = DrawManager.DrawAttachments.Update.DRAW_BITMAP
-                    }
-                )
+
             }
         }
     }
@@ -211,12 +195,7 @@ class DrawDocumentRepository(
                     document.pages.removeAt(index)
                     pagesState.removeAt(index)
                     
-                    drawViewModel.drawManager.calcPage.needToBeUpdated = true
-                    drawViewModel.drawManager.requestDraw(
-                        DrawManager.DrawAttachments(drawMode = DrawManager.DrawAttachments.DrawMode.UPDATE).apply {
-                            update = DrawManager.DrawAttachments.Update.DRAW_BITMAP
-                        }
-                    )
+
                 }
             }
         }
@@ -225,9 +204,7 @@ class DrawDocumentRepository(
     
     // Additional methods from DrawDocumentData
 
-    fun cancelStrokeData(currentStrokeId: InProgressStrokeId, event: MotionEvent){
-        drawViewModel.cancelStrokeInProgress?.let { it(currentStrokeId, event) }
-    }
+
 
     fun addColorResource(color: Int) {
         val resourceId = (document.resources.lastIndex + 1).toString()
