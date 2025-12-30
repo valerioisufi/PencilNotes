@@ -1,3 +1,4 @@
+/*
 package com.studiomath.pencilnotes.document
 
 import android.graphics.Bitmap
@@ -45,13 +46,15 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
     lateinit var scroller: OverScroller
     var contentConstraintsOnWindow = RectF()
 
-    /**
+    */
+/**
      * definisco onDrawBitmapMatrix e moveMatrix come matrici rappresentative dell'applicazione
      * che a windowRect ( Rect() che rappresenta la view) associa
      * pageRect ( Rect() che rapppresenta la pagina, con coordinate relative alla view)
      *
      * moveMatrix in particolare viene utilizzato durante lo scale e il translate della pagina
-     */
+     *//*
+
     var onDrawBitmapMatrix = Matrix() // matrix del contenuto visualizzato nella view
     var moveMatrix: Matrix = Matrix()
 
@@ -59,9 +62,11 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
     var startAnimateMatrix = Matrix()
     var elasticMatrix = Matrix()
 
-    /**
+    */
+/**
      * funzioni il cui compito è quello di disegnare il contenuto della View
-     */
+     *//*
+
     lateinit var windowRect: RectF
     var pagesRectOnWindow = mutableSetOf<CalcPage.PageRectWithIndex>() // TODO: magari lo si può spostare in DrawAttachments, insieme a moveMatrix 
 
@@ -167,9 +172,11 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
 
     }
 
-    /**
+    */
+/**
      * onDrawBitmap = bitmap temp per richieste di disegno
-     */
+     *//*
+
     lateinit var onDrawBitmap: Bitmap
 
     lateinit var jobOnDrawBitmap: Job
@@ -220,9 +227,11 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
                                     CalcPage.PagePositionOnWindowOption()
                                 )
                                 contentConstraintsOnWindow = calcPage.getContentConstraintsOnWindow(windowRect)
-                                /*
+                                */
+/*
                                 applico i bounds alla matrice di trasformazione e ricalcolo pagesRectOnWindow e contentRect
-                                 */
+                                 *//*
+
                                 calcPage.applyBounds(moveMatrix, calcPage.contentRect, windowRect)
                                 calcPage.calcPagesRectOnWindow(
                                     drawViewModel.data.document.pages,
@@ -258,9 +267,11 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
 
                             drawViewModel.maskPath?.invoke(getMaskPath())
 
-                            /**
+                            */
+/**
                              * disegno la pagina sulla Bitmap
-                             */
+                             *//*
+
                             onDrawBitmap = drawViewModel.pageMaker.makePagesOnBitmap(
                                 Rect().apply {
                                     left = 0
@@ -340,9 +351,11 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
 
     }
 
-    /**
+    */
+/**
      * invalidate drawView when onDrawBitmap change
-     */
+     *//*
+
     var invalidateRequest: (() -> Unit)? = null
     var postInvalidateRequest: (() -> Unit)? = null
     var postInvalidateOnAnimationRequest: (() -> Unit)? = null
@@ -368,9 +381,11 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
         }
     }
 
-    /**
+    */
+/**
      * draw directly on view canvas
-     */
+     *//*
+
     var lastDrawAttachments: DrawAttachments? = null
     fun onDrawView(canvas: Canvas){
         isInitialized = true
@@ -412,17 +427,21 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
                 drawViewModel.removeFinishedStrokes?.let { it(drawAttachments.strokesIdToRemove!!) }
             }
             DrawMode.SCALE_TRANSLATE -> {
-                /**
+                */
+/**
                  * make il colore di fondo della view
-                 */
+                 *//*
+
                 drawViewModel.pageMaker.makeWindowBackground(canvas, pagesRectOnWindow, moveMatrix)
                 for (pageRectWithIndex in pagesRectOnWindow){
                     drawViewModel.pageMaker.makePageBackground(canvas, pageRectWithIndex.rect, windowRect)
                 }
 
-                /**
+                */
+/**
                  * trasformo e disegno la pagina intera memorizzata nella cache
-                 */
+                 *//*
+
                 for (pageRectWithIndex in pagesRectOnWindow){
                     if (! drawViewModel.data.document.pages[pageRectWithIndex.index].isPrepared){
                         // TODO: da rivedere se mantenere o se inserire direttamente chiamata a prepare() quando viene aggiunta una pagina
@@ -489,17 +508,21 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
                     else -> {}
                 }
 
-                /**
+                */
+/**
                  * make il colore di fondo della view
-                 */
+                 *//*
+
                 drawViewModel.pageMaker.makeWindowBackground(canvas, pagesRectOnWindow, moveMatrix)
                 for (pageRectWithIndex in pagesRectOnWindow){
                     drawViewModel.pageMaker.makePageBackground(canvas, pageRectWithIndex.rect, windowRect)
                 }
 
-                /**
+                */
+/**
                  * trasformo e disegno la pagina intera memorizzata nella cache
-                 */
+                 *//*
+
                 for (pageRectWithIndex in pagesRectOnWindow){
                     if (! drawViewModel.data.document.pages[pageRectWithIndex.index].isPrepared){
                         // TODO: da rivedere se mantenere o se inserire direttamente chiamata a prepare() quando viene aggiunta una pagina
@@ -526,9 +549,11 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
         isDrawing = false
     }
 
-    /**
+    */
+/**
      * onSizeChanged
-     */
+     *//*
+
     fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
 
         if (::onDrawBitmap.isInitialized) onDrawBitmap.recycle()
@@ -551,4 +576,4 @@ class DrawManager(var drawViewModel: DrawViewModel, displayMetrics: DisplayMetri
         }
 
     }
-}
+}*/

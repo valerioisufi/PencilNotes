@@ -1,34 +1,30 @@
 package com.studiomath.pencilnotes.ui.composeComponents
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material3.AlertDialogDefaults
-import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CreateNewFolder
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.studiomath.pencilnotes.R
+import com.studiomath.pencilnotes.file.FileExplorerViewModel
+import com.studiomath.pencilnotes.file.FileRepository
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RequestNameDialog(
     title: String = "",
@@ -39,64 +35,56 @@ fun RequestNameDialog(
     isAllowedInput: (inputText: String) -> String = { "" }
 ){
     var validInputError by remember { mutableStateOf("") }
+    var text by remember { mutableStateOf("") }
 
-    BasicAlertDialog(
-        onDismissRequest = {
-            // Dismiss the dialog when the user clicks outside the dialog or on the back
-            // button. If you want to disable that functionality, simply use an empty
-            // onDismissRequest.
-            onDismissRequest()
-        }
-    ) {
-        Surface(
-            modifier = Modifier
-                .wrapContentWidth()
-                .wrapContentHeight(),
-            shape = MaterialTheme.shapes.large,
-            tonalElevation = AlertDialogDefaults.TonalElevation
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                var text by remember { mutableStateOf("") }
-                OutlinedTextField(value = text,
-                    onValueChange = { text = it; validInputError = isAllowedInput(it) },
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        icon = { Icon(Icons.Filled.CreateNewFolder, contentDescription = null) },
+        title = { Text(text = title) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { 
+                        text = it
+                        validInputError = isAllowedInput(it) 
+                    },
                     label = { Text(labelTextField) },
+                    singleLine = true,
                     isError = validInputError.isNotEmpty(),
                     supportingText = {
                         if (validInputError.isNotEmpty()) {
                             Text(
                                 text = validInputError,
-                                color = MaterialTheme.colorScheme.error
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
-                    }
-                )
-                TextButton(
-                    modifier = Modifier.align(Alignment.End),
-                    onClick = {
-                        onConfirm(text)
                     },
-                    enabled = validInputError.isEmpty()
-                ) {
-                    Text(text = textConfirmButton)
-                }
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
-        }
-    }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(text) },
+                enabled = text.isNotBlank() && validInputError.isEmpty()
+            ) {
+                Text(text = textConfirmButton)
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismissRequest
+            ) {
+                Text(stringResource(R.string.menu_cancel))
+            }
+        },
+        shape = MaterialTheme.shapes.extraLarge
+    )
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfirmActionDialog(
     title: String = "",
@@ -106,56 +94,153 @@ fun ConfirmActionDialog(
     onDismissRequest: () -> Unit,
     onConfirm: () -> Unit
 ){
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text(text = title) },
+        text = { Text(text = textDescription) },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm
+            ) {
+                Text(text = textConfirmButton, color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismissRequest
+            ) {
+                Text(text = textCancelButton)
+            }
+        },
+        shape = MaterialTheme.shapes.extraLarge
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MoveFileDialog(
+    fileExplorerViewModel: FileExplorerViewModel,
+    onDismissRequest: () -> Unit,
+    onConfirm: (targetFolderId: Int?) -> Unit
+) {
+    // Navigation state inside the dialog
+    var currentFolderId by remember { mutableStateOf<Int?>(null) } // null = root
+    var breadcrumbs by remember { mutableStateOf(listOf<Pair<String, Int?>>("Home" to null)) }
+    
+    var subFolders by remember { mutableStateOf(emptyList<FileRepository.FileItem>()) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(currentFolderId) {
+        subFolders = fileExplorerViewModel.getSubFolders(currentFolderId)
+    }
 
     BasicAlertDialog(
-        onDismissRequest = {
-            onDismissRequest()
-        }
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
             modifier = Modifier
-                .wrapContentWidth()
-                .wrapContentHeight(),
+                .fillMaxWidth(0.9f)
+                .fillMaxHeight(0.8f),
             shape = MaterialTheme.shapes.large,
-            tonalElevation = AlertDialogDefaults.TonalElevation
+            tonalElevation = 6.dp
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    textAlign = TextAlign.Center,
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // Header with navigation
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    if (currentFolderId != null) {
+                        IconButton(onClick = {
+                            // Go back
+                            if (breadcrumbs.size > 1) {
+                                breadcrumbs = breadcrumbs.dropLast(1)
+                                currentFolderId = breadcrumbs.last().second
+                            }
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                    
+                    Text(
+                        text = breadcrumbs.last().first,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 8.dp).weight(1f)
+                    )
+                }
+                
+                HorizontalDivider()
+                
+                // Content
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 8.dp)
+                ) {
+                    items(subFolders) { folder ->
+                        
+                        // Disable folder if it is one of the selected items (cannot move folder into itself)
+                        // But for better UX, maybe just show it disabled or hide it?
+                        // If checking simple validity:
+                        val isSelected = fileExplorerViewModel.selectedItems.any { it.id == folder.id && it.type == FileExplorerViewModel.FileType.FOLDER }
+                        val isEnabled = !isSelected
+                        
+                        ListItem(
+                            headlineContent = { Text(folder.name) },
+                            leadingContent = { 
+                                Icon(
+                                    Icons.Default.Folder, 
+                                    contentDescription = null,
+                                    tint = if (isEnabled) MaterialTheme.colorScheme.primary else Color.Gray
+                                ) 
+                            },
+                            colors = ListItemDefaults.colors(
+                                containerColor = Color.Transparent
+                            ),
+                            modifier = Modifier
+                                .clickable(enabled = isEnabled) {
+                                    currentFolderId = folder.id
+                                    breadcrumbs = breadcrumbs + (folder.name to folder.id)
+                                }
+                        )
+                    }
+                    
+                    if (subFolders.isEmpty()) {
+                        item {
+                            Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("Nessuna cartella", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                            }
+                        }
+                    }
+                }
+                
+                HorizontalDivider()
+                
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = textDescription,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                )
-                Row (
-                    modifier = Modifier.align(Alignment.End),
+                        .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(
-                        onClick = {
-                            onDismissRequest()
-                        }
-                    ) {
-                        Text(text = textCancelButton)
+                    TextButton(onClick = onDismissRequest) {
+                        Text(stringResource(R.string.menu_cancel))
                     }
-
-                    TextButton(
-                        onClick = {
-                            onConfirm()
-                        }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = { 
+                            if (fileExplorerViewModel.isValidMove(currentFolderId)) {
+                                onConfirm(currentFolderId)
+                            }
+                        },
+                        enabled = fileExplorerViewModel.isValidMove(currentFolderId)
                     ) {
-                    Text(text = textConfirmButton)
+                        Text("Sposta qui")
+                    }
                 }
-                }
-
             }
         }
     }

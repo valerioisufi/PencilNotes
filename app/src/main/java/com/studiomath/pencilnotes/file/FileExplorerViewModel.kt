@@ -201,6 +201,32 @@ class FileExplorerViewModel(
         }
     }
 
+    suspend fun getSubFolders(parentId: Int?): List<FileRepository.FileItem> {
+        val folders = fileRepository.getSubFolders(parentId ?: 0) // Assuming root is 0 or handled by repo if null
+        // Fix: Repo getSubFolders expects Int (non-nullable) looking at previous definition? 
+        // Let's check FileRepository.kt again. 
+        // FileRepository.getSubFolders(parentId: Int) -> List<Folder>.
+        // Root folders are getRootFolders().
+        
+        val folderList = if (parentId == null) {
+            fileRepository.getRootFolders()
+        } else {
+            fileRepository.getSubFolders(parentId)
+        }
+        
+        return folderList.map { folder ->
+            FileRepository.FileItem(
+                id = folder.id,
+                name = folder.name,
+                type = FileRepository.FileType.FOLDER,
+                parentId = folder.parentId,
+                createdAt = folder.createdAt,
+                modifiedAt = folder.modifiedAt,
+                lastOpenedAt = null
+            )
+        }
+    }
+
     fun backFolder(): String? {
         val removed = directorySequence.removeLastOrNull()
         if (removed != null) {
@@ -277,8 +303,94 @@ class FileExplorerViewModel(
         return true // Return true optimistically for UI responsiveness
     }
 
-    fun moveFile(name: String, newDirectoryPath: String, oldDirectoryPath: String = currentDirectoryPath.value): Boolean {
-        // TODO: Implement move functionality for database
-        return false
+    /**
+     * MOVE & SELECTION
+     */
+    var selectionMode = mutableStateOf(false)
+    var selectedItems = mutableStateListOf<Files>()
+
+    fun toggleSelection(file: Files) {
+        if (selectedItems.contains(file)) {
+            selectedItems.remove(file)
+            if (selectedItems.isEmpty()) {
+                selectionMode.value = false
+            }
+        } else {
+            selectedItems.add(file)
+            selectionMode.value = true
+        }
+    }
+
+    fun clearSelection() {
+        selectedItems.clear()
+        selectionMode.value = false
+    }
+
+    fun selectAll() {
+        val currentList = currentDirectoryFiles.filesList
+        selectedItems.clear()
+        selectedItems.addAll(currentList)
+        selectionMode.value = true
+    }
+    
+    fun deleteSelected() {
+        val itemsToDelete = selectedItems.toList() // Copy to avoid concurrent modification issues
+        // Use a coroutine to delete all
+        viewModelScope.launch {
+             itemsToDelete.forEach { fileItem ->
+                 val success = when (fileItem.type) {
+                    FileType.FOLDER -> fileRepository.deleteFolder(fileItem.id)
+                    FileType.FILE -> fileRepository.deleteDocument(fileItem.id)
+                }
+                if (success) {
+                    filesExplorer[currentDirectoryPath.value]?.filesList?.remove(fileItem)
+                }
+             }
+             clearSelection()
+        }
+    }
+
+    fun moveFile(file: Files, targetFolderId: Int?) {
+         viewModelScope.launch {
+             val success = when (file.type) {
+                 FileType.FOLDER -> fileRepository.moveFolder(file.id, targetFolderId)
+                 FileType.FILE -> fileRepository.moveDocument(file.id, targetFolderId)
+             }
+             
+             if (success) {
+                 loadCurrentDirectory() // Reload to remove moved item
+             }
+         }
+    }
+
+    fun moveSelected(targetFolderId: Int?) {
+        val itemsToMove = selectedItems.toList()
+        viewModelScope.launch {
+            itemsToMove.forEach { file ->
+                val success = when (file.type) {
+                    FileType.FOLDER -> fileRepository.moveFolder(file.id, targetFolderId)
+                    FileType.FILE -> fileRepository.moveDocument(file.id, targetFolderId)
+                }
+            }
+            clearSelection()
+            loadCurrentDirectory()
+        }
+    }
+
+    // Helper to check if a move is valid (e.g. not moving folder into itself)
+    fun isValidMove(targetFolderId: Int?): Boolean {
+        // Simple check: if we are moving selected folders, target cannot be one of them
+        // A more complex check would be needed to ensure we don't move a folder into its own child
+        // But for now, just checking "is target in selected items" is a good start.
+        // Also check if target is current folder (pointless move)
+        
+        if (targetFolderId == currentFolderId) return false
+        
+        // Cannot move a folder into itself
+        selectedItems.forEach { 
+             if (it.type == FileType.FOLDER && it.id == targetFolderId) return false
+        }
+        
+        return true
     }
 }

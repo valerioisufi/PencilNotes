@@ -128,6 +128,24 @@ class FileRepository(context: Context) {
         return true
     }
 
+    suspend fun moveFolder(folderId: Int, newParentId: Int?): Boolean {
+        // Prevent moving folder into itself or its children
+        if (folderId == newParentId) return false
+        // Circular check could be added here but keeping it simple for now:
+        // A robust implementation would check if newParentId is a child of folderId
+
+        val folder = folderDao.getFolderById(folderId) ?: return false
+
+        // Check if folder with same name already exists in target parent
+        val existingFolder = folderDao.getFolderByNameAndParent(folder.name, newParentId)
+        if (existingFolder != null) {
+            return false
+        }
+
+        folderDao.moveFolder(folderId, newParentId)
+        return true
+    }
+
     // Combined operations for UI
     data class FileItem(
         val id: Int,

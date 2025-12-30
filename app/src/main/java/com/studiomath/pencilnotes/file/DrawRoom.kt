@@ -123,6 +123,9 @@ interface FolderDao {
 
     @Query("UPDATE folders SET name = :newName, modifiedAt = :timestamp WHERE id = :folderId")
     suspend fun renameFolder(folderId: Int, newName: String, timestamp: Long = System.currentTimeMillis())
+
+    @Query("UPDATE folders SET parentId = :newParentId, modifiedAt = :timestamp WHERE id = :folderId")
+    suspend fun moveFolder(folderId: Int, newParentId: Int?, timestamp: Long = System.currentTimeMillis())
 }
 
 @Dao
