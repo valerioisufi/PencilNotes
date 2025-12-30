@@ -32,6 +32,11 @@ import androidx.compose.ui.unit.toSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.roundToInt
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.sync.withLock
+import android.graphics.Color
 
 @Composable
 fun PageComposable(
@@ -59,25 +64,30 @@ fun PageComposable(
         when(updateTrigger) {
             is Page.UpdateTrigger.Full -> {
                  withContext(Dispatchers.Default) {
-                     if (!page.isPrepared) {
-                         page.prepare()
-                     }
-                     val cachedBitmap = page.bitmapPage
-                     if (cachedBitmap != null) {
-                        val result = pageMaker.makePage(
-                            bitmapRect = AndroidRect(0, 0, cachedBitmap.width, cachedBitmap.height),
-                            bitmapSource = cachedBitmap,
-                            page = page
-                        )
-                        page.bitmapPage = result
+                     page.mutex.withLock {
+                         if (!page.isPrepared) {
+                             page.prepare()
+                         }
+                         val cachedBitmap = page.bitmapPage
+                         if (cachedBitmap != null) {
+                            val result = pageMaker.makePage(
+                                bitmapRect = AndroidRect(0, 0, cachedBitmap.width, cachedBitmap.height),
+                                bitmapSource = cachedBitmap,
+                                page = page
+                            )
+                            page.bitmapPage = result
+                         }
                      }
                  }
                  bitmap = page.bitmapPage
                  redrawKey++
             }
             is Page.UpdateTrigger.Incremental -> {
-                if (bitmap != page.bitmapPage) {
-                    bitmap = page.bitmapPage
+                // If bitmap was modified in-place, the reference might be the same.
+                // We force update and rely on redrawKey to trigger recomposition.
+                val newBitmap = page.bitmapPage
+                if (bitmap !== newBitmap) {
+                    bitmap = newBitmap
                 }
                 redrawKey++
             }
@@ -106,47 +116,58 @@ fun PageComposable(
 
     // Logic for High Def Layer
     LaunchedEffect(viewportRect, scale, layoutCoordinates, updateTrigger, page) {
-        val coords = layoutCoordinates ?: return@LaunchedEffect
-        if (viewportRect.isEmpty) return@LaunchedEffect
-        
-        // Use current size for calculations
-        val pageWidthScaledPx = coords.size.width.toFloat()
-        val pageHeightScaledPx = coords.size.height.toFloat()
+        // Debounce using snapshotFlow
+        snapshotFlow {
+            Triple(viewportRect, scale, layoutCoordinates)
+        }
+        .debounce(150) // Wait for scroll to settle
+        .collectLatest { (viewport, currentScale, coords) ->
 
-        // Calculate Intersection
-        val pageBoundsInWindow = coords.boundsInWindow()
-        val visibleBounds = pageBoundsInWindow.intersect(viewportRect)
-
-        if (!visibleBounds.isEmpty) {
-             val visibleSize = visibleBounds.size
-
-             // Map visibleBounds (Window Coords) to Page Local Coordinates (Px)
-             // This offset represents where the visible rect starts relative to the Page's (0,0)
-             val localTopLeft = coords.windowToLocal(visibleBounds.topLeft)
-             
-             // Setup clipRect for PageMaker
-             // We map the Page (0,0 -> W_mm, H_mm) to the Bitmap's coordinate space.
-             // We want the point `localTopLeft` on the scaled page to map to (0,0) on the bitmap.
-             // The Page is scaled to `pageWidthScaledPx`.
-             // So:
-             val dstRectF = RectF(
-                 -localTopLeft.x,
-                 -localTopLeft.y,
-                 -localTopLeft.x + pageWidthScaledPx,
-                 -localTopLeft.y + pageHeightScaledPx
-             )
-             
-             withContext(Dispatchers.Default) {
-                 val hdBitmap = pageMaker.makePage(
-                     bitmapRect = AndroidRect(0, 0, visibleSize.width.roundToInt(), visibleSize.height.roundToInt()),
-                     bitmapSource = null,
-                     page = page,
-                     clipRect = dstRectF
+            if (coords == null || viewport.isEmpty) return@collectLatest
+            
+            // Use current size for calculations
+            val pageWidthScaledPx = coords.size.width.toFloat()
+            val pageHeightScaledPx = coords.size.height.toFloat()
+    
+            // Calculate Intersection
+            val pageBoundsInWindow = coords.boundsInWindow()
+            val visibleBounds = pageBoundsInWindow.intersect(viewport)
+    
+            if (!visibleBounds.isEmpty) {
+                 val visibleSize = visibleBounds.size
+    
+                 // Map visibleBounds (Window Coords) to Page Local Coordinates (Px)
+                 // This offset represents where the visible rect starts relative to the Page's (0,0)
+                 val localTopLeft = coords.windowToLocal(visibleBounds.topLeft)
+                 
+                 // Setup clipRect for PageMaker
+                 // We map the Page (0,0 -> W_mm, H_mm) to the Bitmap's coordinate space.
+                 // We want the point `localTopLeft` on the scaled page to map to (0,0) on the bitmap.
+                 // The Page is scaled to `pageWidthScaledPx`.
+                 // So:
+                 val dstRectF = RectF(
+                     -localTopLeft.x,
+                     -localTopLeft.y,
+                     -localTopLeft.x + pageWidthScaledPx,
+                     -localTopLeft.y + pageHeightScaledPx
                  )
-                 highDefBitmap = hdBitmap
-                 highDefOffset = IntOffset(localTopLeft.x.roundToInt(), localTopLeft.y.roundToInt())
-                 generationPageWidth = pageWidthScaledPx
-             }
+                 
+                 withContext(Dispatchers.Default) {
+                     // Reuse existing bitmap if possible to avoid allocation churn
+                     val recycleBitmap = highDefBitmap
+                     
+                     val hdBitmap = pageMaker.makePage(
+                         bitmapRect = AndroidRect(0, 0, visibleSize.width.roundToInt(), visibleSize.height.roundToInt()),
+                         bitmapSource = null,
+                         page = page,
+                         clipRect = dstRectF,
+                         reuseBitmap = recycleBitmap
+                     )
+                     highDefBitmap = hdBitmap
+                     highDefOffset = IntOffset(localTopLeft.x.roundToInt(), localTopLeft.y.roundToInt())
+                     generationPageWidth = pageWidthScaledPx
+                 }
+            }
         }
     }
 
@@ -182,7 +203,7 @@ private fun HighDefLayer(
     offset: IntOffset,
     scale: Float
 ) {
-    androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
         drawIntoCanvas { canvas ->
              canvas.withSave {
                  // 1. Translate to the scaled position

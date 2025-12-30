@@ -56,13 +56,25 @@ class PageMaker(
         bitmapRect: Rect,
         bitmapSource: Bitmap?,
         page: Page,
-        clipRect: RectF? = null
+        clipRect: RectF? = null,
+        reuseBitmap: Bitmap? = null
     ): Bitmap =
         withContext(Dispatchers.Default) {
-            if (!page.isPrepared){
-                page.prepare()
+             page.mutex.withLock {
+                if (!page.isPrepared){
+                    page.prepare()
+                }
+             }
+            
+            var bitmap: Bitmap
+            if (bitmapSource != null) {
+                bitmap = bitmapSource
+            } else if (reuseBitmap != null && reuseBitmap.width == bitmapRect.width() && reuseBitmap.height == bitmapRect.height()) {
+                bitmap = reuseBitmap
+                bitmap.eraseColor(Color.TRANSPARENT)
+            } else {
+                 bitmap = createBitmap(bitmapRect.width(), bitmapRect.height())
             }
-            var bitmap: Bitmap = bitmapSource ?: createBitmap(bitmapRect.width(), bitmapRect.height())
             val canvas = Canvas(bitmap)
 
             /**
