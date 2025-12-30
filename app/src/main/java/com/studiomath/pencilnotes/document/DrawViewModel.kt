@@ -16,12 +16,15 @@ import androidx.ink.authoring.InProgressStrokeId
 import androidx.ink.brush.Brush
 import androidx.ink.brush.StockBrushes
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.studiomath.pencilnotes.document.page.Dimension.Companion.Length
 import com.studiomath.pencilnotes.document.page.DrawDocumentRepository
 import com.studiomath.pencilnotes.document.page.PageMaker
 import com.studiomath.pencilnotes.document.page.pt
 import com.studiomath.pencilnotes.document.page.px
 import kotlinx.serialization.Serializable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import java.io.File
 
 class DrawViewModel(
@@ -104,69 +107,71 @@ class DrawViewModel(
     }
 
     fun addStroke(pageIndex: Int, stroke: androidx.ink.strokes.Stroke, transformToPage: Matrix) {
-        if (pageIndex < 0 || pageIndex >= repository.document.pages.size) return
-        
-        val page = repository.document.pages[pageIndex]
-        val zIndex = page.strokeData.size
+        viewModelScope.launch {
+            repository.documentMutex.withLock {
+                if (pageIndex < 0 || pageIndex >= repository.document.pages.size) return@launch
 
-        // We need to transform the stroke to Page Coordinates.
-        // Since androidx.ink.strokes.Stroke is immutable in its inputs, we recreate it.
-        val inputs = stroke.inputs
-        val batch = androidx.ink.strokes.MutableStrokeInputBatch()
-        val scratchInput = androidx.ink.strokes.StrokeInput()
-        
-        // Matrix helper array
-        val points = FloatArray(2)
+                val page = repository.document.pages[pageIndex]
+                val zIndex = page.strokeData.size
 
-        for (i in 0 until inputs.size) {
-            inputs.populate(i, scratchInput)
-            points[0] = scratchInput.x
-            points[1] = scratchInput.y
-            transformToPage.mapPoints(points)
-            
-            batch.add(
-                type = inputs.getToolType(), // Assuming stroke has uniform tool type
-                x = points[0],
-                y = points[1],
-                elapsedTimeMillis = scratchInput.elapsedTimeMillis,
-                strokeUnitLengthCm = scratchInput.strokeUnitLengthCm,
-                pressure = scratchInput.pressure,
-                tiltRadians = scratchInput.tiltRadians,
-                orientationRadians = scratchInput.orientationRadians
-            )
-        }
-        
-        val transformedStroke = androidx.ink.strokes.Stroke(stroke.brush, batch)
-        
-        val newStroke = com.studiomath.pencilnotes.document.page.Stroke(zIndex).apply {
-            this.stroke = transformedStroke
-            toSerializedStroke()
-        }
-        
-        page.strokeData.add(newStroke)
-        
-        // Incremental Update Logic
-        if (page.bitmapPage != null) {
-            val canvas = android.graphics.Canvas(page.bitmapPage!!)
-            val inkStroke = newStroke.stroke
-            if (inkStroke != null) {
-                 pageMaker.canvasStrokeRenderer.draw(
-                    stroke = inkStroke,
-                    canvas = canvas,
-                    strokeToScreenTransform = Matrix() // Data is already in Page Pixel coordinates
-                )
+                // We need to transform the stroke to Page Coordinates.
+                // Since androidx.ink.strokes.Stroke is immutable in its inputs, we recreate it.
+                val inputs = stroke.inputs
+                val batch = androidx.ink.strokes.MutableStrokeInputBatch()
+                val scratchInput = androidx.ink.strokes.StrokeInput()
+
+                // Matrix helper array
+                val points = FloatArray(2)
+
+                for (i in 0 until inputs.size) {
+                    inputs.populate(i, scratchInput)
+                    points[0] = scratchInput.x
+                    points[1] = scratchInput.y
+                    transformToPage.mapPoints(points)
+
+                    batch.add(
+                        type = inputs.getToolType(), // Assuming stroke has uniform tool type
+                        x = points[0],
+                        y = points[1],
+                        elapsedTimeMillis = scratchInput.elapsedTimeMillis,
+                        strokeUnitLengthCm = scratchInput.strokeUnitLengthCm,
+                        pressure = scratchInput.pressure,
+                        tiltRadians = scratchInput.tiltRadians,
+                        orientationRadians = scratchInput.orientationRadians
+                    )
+                }
+
+                val transformedStroke = androidx.ink.strokes.Stroke(stroke.brush, batch)
+
+                val newStroke = com.studiomath.pencilnotes.document.page.Stroke(zIndex).apply {
+                    this.stroke = transformedStroke
+                    toSerializedStroke()
+                }
+
+                page.strokeData.add(newStroke)
+
+                // Incremental Update Logic
+                if (page.bitmapPage != null) {
+                    val canvas = android.graphics.Canvas(page.bitmapPage!!)
+                    val inkStroke = newStroke.stroke
+                    if (inkStroke != null) {
+                        pageMaker.canvasStrokeRenderer.draw(
+                            stroke = inkStroke,
+                            canvas = canvas,
+                            strokeToScreenTransform = Matrix() // Data is already in Page Pixel coordinates
+                        )
+                    }
+                }
+
+                // Trigger Incremental Update
+                page.version++
+                page.updateTrigger =
+                    com.studiomath.pencilnotes.document.page.Page.UpdateTrigger.Incremental(page.version)
+                page.isModified = true // Mark dirty
             }
+            // Mark for saving (after lock is released)
+            repository.saveDocument()
         }
-
-        // Trigger Incremental Update
-        page.version++
-        page.updateTrigger = com.studiomath.pencilnotes.document.page.Page.UpdateTrigger.Incremental(page.version)
-        page.isModified = true // Mark dirty
-
-
-        
-        // Mark for saving
-        repository.saveDocument()
     }
 
 

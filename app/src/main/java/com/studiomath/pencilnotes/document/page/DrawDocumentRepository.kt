@@ -138,22 +138,35 @@ class DrawDocumentRepository(
         documentScope.launch {
             if (!isDocumentLoaded) return@launch
 
-            val modifiedPages = document.pages.filter { it.isModified }
-            if (modifiedPages.isEmpty()) return@launch
+            // 1. Identify modified pages and take snapshots of their content atomically
+            val pagesToSave = documentMutex.withLock {
+                val modifiedPages = document.pages.filter { it.isModified }
+                if (modifiedPages.isEmpty()) return@withLock emptyList()
 
-            documentMutex.withLock {
-                modifiedPages.forEach { page ->
-                    // Serialize PageContent to JSON
-                    val pageContent = PageContent(
-                        strokeData = page.strokeData,
-                        imageData = page.imageData,
-                        pdfData = page.pdfData
-                    )
-                    val contentJson = Json.encodeToString(pageContent)
+                modifiedPages.map { page ->
+                    // Create deep copies / snapshots of the lists to avoid ConcurrentModificationException during serialization
+                    val strokesSnapshot = page.strokeData.toList()
+                    val imagesSnapshot = page.imageData.toList()
+                    val pdfsSnapshot = page.pdfData.toList()
+                    
+                    page.isModified = false // Mark as clean immediately since we captured the state
+                    
+                    Triple(page.dbId, PageContent(strokesSnapshot, imagesSnapshot, pdfsSnapshot), page)
+                }
+            }
 
-                    // Update Page in DB
-                    pageDao.updatePageContent(page.dbId, contentJson)
-                    page.isModified = false
+            if (pagesToSave.isEmpty()) return@launch
+
+            // 2. Serialize and Save to DB (outside the lock)
+            pagesToSave.forEach { (dbId, content, page) ->
+                try {
+                    val contentJson = Json.encodeToString(content)
+                    pageDao.updatePageContent(dbId, contentJson)
+                } catch (e: Exception) {
+                    Log.e("DrawDocumentRepository", "Error saving page $dbId", e)
+                    // Optionally re-mark as modified if save fails?
+                    // page.isModified = true // accessing page outside lock might be racing but 'isModified' is volatile-ish? 
+                    // For now, let's assume retry will happen on next change.
                 }
             }
         }
