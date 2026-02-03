@@ -52,6 +52,22 @@ class PageMaker(
         return bitmap
     }
 
+
+    /**
+     * Renders a single `Page` object onto a `Bitmap`.
+     *
+     * This function prepares the page for rendering if it hasn't been already, sets up a `Bitmap` and `Canvas`,
+     * clips the drawing area, and then draws all the strokes from the `Page` onto the canvas, scaled to fit
+     * the specified `clipRect`. It can create a new bitmap, draw onto a provided one, or reuse a bitmap
+     * to improve performance.
+     *
+     * @param bitmapRect The dimensions of the target `Bitmap` to be created if `bitmapSource` or a suitable `reuseBitmap` are not provided.
+     * @param bitmapSource An optional `Bitmap` to draw onto directly. If provided, `reuseBitmap` and `bitmapRect` are ignored.
+     * @param page The `Page` object containing the data (e.g., strokes) to be rendered.
+     * @param clipRect The rectangular area on the canvas where the page content should be drawn and clipped. If `null`, it defaults to the full size of the bitmap.
+     * @param reuseBitmap An optional `Bitmap` that can be cleared and reused if it matches the required `bitmapRect` dimensions, avoiding new bitmap allocation.
+     * @return The `Bitmap` with the rendered page content.
+     */
     suspend fun makePage(
         bitmapRect: Rect,
         bitmapSource: Bitmap?,
