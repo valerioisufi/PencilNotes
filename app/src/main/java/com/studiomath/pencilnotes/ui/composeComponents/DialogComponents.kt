@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CreateNewFolder
@@ -14,16 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.studiomath.drawview.data.repository.FileRepository
 import com.studiomath.pencilnotes.R
 import com.studiomath.pencilnotes.file.FileExplorerViewModel
-import com.studiomath.pencilnotes.file.FileRepository
-import kotlinx.coroutines.launch
 
 @Composable
 fun RequestNameDialog(
@@ -119,19 +115,22 @@ fun ConfirmActionDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoveFileDialog(
-    fileExplorerViewModel: FileExplorerViewModel,
+    // SOSTITUIAMO IL VIEWMODEL CON LE LAMBDA (State Hoisting)
+    getSubFolders: suspend (Int?) -> List<FileRepository.FileItem>,
+    isFolderSelected: (folderId: Int) -> Boolean,
+    isValidMove: (targetFolderId: Int?) -> Boolean,
     onDismissRequest: () -> Unit,
     onConfirm: (targetFolderId: Int?) -> Unit
 ) {
     // Navigation state inside the dialog
     var currentFolderId by remember { mutableStateOf<Int?>(null) } // null = root
     var breadcrumbs by remember { mutableStateOf(listOf<Pair<String, Int?>>("Home" to null)) }
-    
-    var subFolders by remember { mutableStateOf(emptyList<FileRepository.FileItem>()) }
-    val scope = rememberCoroutineScope()
 
+    var subFolders by remember { mutableStateOf(emptyList<FileRepository.FileItem>()) }
+
+    // Ricarica le cartelle ogni volta che navighiamo
     LaunchedEffect(currentFolderId) {
-        subFolders = fileExplorerViewModel.getSubFolders(currentFolderId)
+        subFolders = getSubFolders(currentFolderId)
     }
 
     BasicAlertDialog(
@@ -164,7 +163,7 @@ fun MoveFileDialog(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     }
-                    
+
                     Text(
                         text = breadcrumbs.last().first,
                         style = MaterialTheme.typography.titleMedium,
@@ -172,31 +171,29 @@ fun MoveFileDialog(
                         modifier = Modifier.padding(start = 8.dp).weight(1f)
                     )
                 }
-                
+
                 HorizontalDivider()
-                
+
                 // Content
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
                         .padding(vertical = 8.dp)
                 ) {
-                    items(subFolders) { folder ->
-                        
-                        // Disable folder if it is one of the selected items (cannot move folder into itself)
-                        // But for better UX, maybe just show it disabled or hide it?
-                        // If checking simple validity:
-                        val isSelected = fileExplorerViewModel.selectedItems.any { it.id == folder.id && it.type == FileExplorerViewModel.FileType.FOLDER }
+                    items(items = subFolders, key = { it.id }) { folder ->
+
+                        // Usiamo la funzione passata dall'esterno per controllare se è selezionata
+                        val isSelected = isFolderSelected(folder.id)
                         val isEnabled = !isSelected
-                        
+
                         ListItem(
                             headlineContent = { Text(folder.name) },
-                            leadingContent = { 
+                            leadingContent = {
                                 Icon(
-                                    Icons.Default.Folder, 
+                                    imageVector = Icons.Default.Folder,
                                     contentDescription = null,
                                     tint = if (isEnabled) MaterialTheme.colorScheme.primary else Color.Gray
-                                ) 
+                                )
                             },
                             colors = ListItemDefaults.colors(
                                 containerColor = Color.Transparent
@@ -208,7 +205,7 @@ fun MoveFileDialog(
                                 }
                         )
                     }
-                    
+
                     if (subFolders.isEmpty()) {
                         item {
                             Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
@@ -217,9 +214,9 @@ fun MoveFileDialog(
                         }
                     }
                 }
-                
+
                 HorizontalDivider()
-                
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -231,12 +228,13 @@ fun MoveFileDialog(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
-                        onClick = { 
-                            if (fileExplorerViewModel.isValidMove(currentFolderId)) {
+                        // Usiamo la funzione passata dall'esterno per la validazione
+                        onClick = {
+                            if (isValidMove(currentFolderId)) {
                                 onConfirm(currentFolderId)
                             }
                         },
-                        enabled = fileExplorerViewModel.isValidMove(currentFolderId)
+                        enabled = isValidMove(currentFolderId)
                     ) {
                         Text("Sposta qui")
                     }

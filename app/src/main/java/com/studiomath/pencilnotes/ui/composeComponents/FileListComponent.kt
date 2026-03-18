@@ -312,7 +312,8 @@ fun ListItem(
                         intent.putExtra("documentId", dataFile.id)
                         mContext.startActivity(intent)
                     } else if (dataFile.type == FileExplorerViewModel.FileType.FOLDER) {
-                        fileExplorerViewModel.enterFolder(dataFile.name.value)
+                        // CORREZIONE: Passiamo l'intero oggetto Files
+                        fileExplorerViewModel.enterFolder(dataFile)
                     }
                 }
             },
@@ -481,7 +482,8 @@ fun FileDetailsWithBottomSheet(
                         textConfirmButton = stringResource(id = R.string.button_confirm),
                         onDismissRequest = {showRenameDialog = false},
                         onConfirm = { text ->
-                            fileExplorerViewModel.renameFile(dataFile.name.value, text)
+                            // CORREZIONE QUI: Passiamo dataFile invece di dataFile.name.value
+                            fileExplorerViewModel.renameFile(dataFile, text)
                             showRenameDialog = false
                         }
                     )
@@ -495,7 +497,8 @@ fun FileDetailsWithBottomSheet(
                         textConfirmButton = stringResource(id = R.string.button_confirm),
                         onDismissRequest = {showDeleteConfirmDialog = false},
                         onConfirm = {
-                            fileExplorerViewModel.deleteFile(dataFile.name.value)
+                            // CORREZIONE QUI: Passiamo dataFile al posto del nome stringa
+                            fileExplorerViewModel.deleteFile(dataFile)
                             showDeleteConfirmDialog = false
                         }
                     )

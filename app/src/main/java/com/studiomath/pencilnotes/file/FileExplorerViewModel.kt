@@ -6,13 +6,14 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.studiomath.drawview.data.DataModule
+import com.studiomath.drawview.data.repository.FileRepository
 import kotlinx.coroutines.launch
-import java.io.File
 
 class FileExplorerViewModel(
     context: Context
 ) : ViewModel() {
-    private val fileRepository = FileRepository(context)
+    private val fileRepository = DataModule.getFileRepository(context)
 
     fun openFile(id: Int) {
         viewModelScope.launch {
@@ -160,71 +161,46 @@ class FileExplorerViewModel(
         return null
     }
 
-    fun createFile(type: FileType, name: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}): Boolean {
+    fun createFile(type: FileType, name: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
         if (existNameInDirectory(name = name)) {
             onError("Name already exists")
-            return false
+            return
         }
         
         val validationError = validateFileName(name)
         if (validationError != null) {
             onError(validationError)
-            return false
+            return
         }
-        
+
         viewModelScope.launch {
             val success = when (type) {
                 FileType.FOLDER -> fileRepository.createFolder(name, currentFolderId)
                 FileType.FILE -> fileRepository.createDocument(name, currentFolderId)
             }
-            
             if (success) {
-                loadCurrentDirectory() // Refresh the view
+                loadCurrentDirectory()
                 onSuccess()
             } else {
-                onError("Failed to create file")
+                onError("Errore durante la creazione")
             }
         }
-        return true // Return true optimistically for UI responsiveness
     }
 
-    fun enterFolder(name: String) {
-        // Find the folder ID
-        val folder = filesExplorer[currentDirectoryPath.value]?.filesList?.find { 
-            it.name.value == name && it.type == FileType.FOLDER 
-        }
-        
-        if (folder != null) {
-            directorySequence.add(name)
+    fun enterFolder(folder: Files) {
+        if (folder.type == FileType.FOLDER) {
+            directorySequence.add(folder.name.value)
             directoryIdSequence.add(folder.id)
             loadCurrentDirectory()
         }
     }
 
     suspend fun getSubFolders(parentId: Int?): List<FileRepository.FileItem> {
-        val folders = fileRepository.getSubFolders(parentId ?: 0) // Assuming root is 0 or handled by repo if null
-        // Fix: Repo getSubFolders expects Int (non-nullable) looking at previous definition? 
-        // Let's check FileRepository.kt again. 
-        // FileRepository.getSubFolders(parentId: Int) -> List<Folder>.
-        // Root folders are getRootFolders().
-        
-        val folderList = if (parentId == null) {
-            fileRepository.getRootFolders()
-        } else {
-            fileRepository.getSubFolders(parentId)
-        }
-        
-        return folderList.map { folder ->
-            FileRepository.FileItem(
-                id = folder.id,
-                name = folder.name,
-                type = FileRepository.FileType.FOLDER,
-                parentId = folder.parentId,
-                createdAt = folder.createdAt,
-                modifiedAt = folder.modifiedAt,
-                lastOpenedAt = null
-            )
-        }
+        // Otteniamo tutti gli elementi in quella cartella
+        val allItems = fileRepository.getItemsInFolder(parentId)
+
+        // Filtriamo per restituire SOLO le cartelle (come richiede il MoveDialog)
+        return allItems.filter { it.type == FileRepository.FileType.FOLDER }
     }
 
     fun backFolder(): String? {
@@ -236,11 +212,6 @@ class FileExplorerViewModel(
         return removed
     }
 
-    fun fileLocation(fileName: String, directoryPath: String = currentDirectoryPath.value): String {
-        // For database-based system, we construct the path for compatibility
-        return "/documenti/${directoryPath}${fileName}.json"
-    }
-
     fun existNameInDirectory(directoryPath: String = currentDirectoryPath.value, name: String): Boolean {
         for (element in filesExplorer[directoryPath]?.filesList ?: emptyList()) {
             if (element.name.value == name) {
@@ -250,57 +221,39 @@ class FileExplorerViewModel(
         return false
     }
 
-    fun renameFile(oldName: String, newName: String, directoryPath: String = currentDirectoryPath.value): Boolean {
-        val fileItem = filesExplorer[directoryPath]?.filesList?.find { 
-            it.name.value == oldName 
-        } ?: return false
-
+    fun renameFile(fileItem: Files, newName: String) {
+        // Visto che usiamo l'oggetto Files passato dalla UI, non dobbiamo più "cercarlo" per nome.
         viewModelScope.launch {
             val success = when (fileItem.type) {
                 FileType.FOLDER -> fileRepository.renameFolder(fileItem.id, newName)
                 FileType.FILE -> fileRepository.renameDocument(fileItem.id, newName)
             }
-            
+
             if (success) {
+                // Aggiorniamo il nome nella UI (grazie a MutableState, si aggiornerà in tempo reale)
                 fileItem.name.value = newName
-                // Also handle any physical file renaming for compatibility
-                val from = File(fileLocation(oldName, directoryPath))
-                if (from.exists()) {
-                    val to = File(fileLocation(newName, directoryPath))
-                    from.renameTo(to)
+
+                // Se l'utente sta visualizzando la lista in ordine alfabetico,
+                // forziamo un ricaricamento per rimettere il file nella posizione giusta!
+                if (sortOption.value == SortOption.NAME) {
+                    loadCurrentDirectory()
                 }
             }
         }
-        return true // Return true optimistically for UI responsiveness
     }
 
-    fun deleteFile(name: String, directoryPath: String = currentDirectoryPath.value): Boolean {
-        val fileItem = filesExplorer[directoryPath]?.filesList?.find { 
-            it.name.value == name 
-        } ?: return false
-
+    fun deleteFile(fileItem: Files) {
         viewModelScope.launch {
             val success = when (fileItem.type) {
                 FileType.FOLDER -> fileRepository.deleteFolder(fileItem.id)
                 FileType.FILE -> fileRepository.deleteDocument(fileItem.id)
             }
-            
+
             if (success) {
-                // Remove from UI
-                filesExplorer[directoryPath]?.filesList?.removeIf { it.name.value == name }
-                
-                // Also handle any physical file deletion for compatibility
-                val fileToDelete = File(fileLocation(name, directoryPath))
-                if (fileToDelete.exists()) {
-                    if (fileToDelete.isDirectory) {
-                        fileToDelete.deleteRecursively()
-                    } else {
-                        fileToDelete.delete()
-                    }
-                }
+                // Rimuoviamo fisicamente l'elemento dalla lista che alimenta la UI
+                filesExplorer[currentDirectoryPath.value]?.filesList?.remove(fileItem)
             }
         }
-        return true // Return true optimistically for UI responsiveness
     }
 
     /**
