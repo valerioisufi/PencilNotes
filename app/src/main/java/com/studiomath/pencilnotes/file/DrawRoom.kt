@@ -10,34 +10,18 @@ import androidx.room.*
 abstract class DrawDatabase : RoomDatabase() {
     abstract fun folderDao(): FolderDao
     abstract fun documentDao(): DocumentDao
-    abstract fun pageDao(): PageDao
-    abstract fun resourceDao(): ResourceDao
 
     companion object {
         @Volatile
         private var INSTANCE: DrawDatabase? = null
-
-        val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
-            override fun migrate(database: androidx.sqlite.db.SupportSQLiteDatabase) {
-                // Add columns to folders
-                database.execSQL("ALTER TABLE folders ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
-                database.execSQL("ALTER TABLE folders ADD COLUMN modifiedAt INTEGER NOT NULL DEFAULT 0")
-
-                // Add columns to documents
-                database.execSQL("ALTER TABLE documents ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
-                database.execSQL("ALTER TABLE documents ADD COLUMN modifiedAt INTEGER NOT NULL DEFAULT 0")
-                database.execSQL("ALTER TABLE documents ADD COLUMN lastOpenedAt INTEGER")
-            }
-        }
 
         fun getInstance(context: Context): DrawDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     DrawDatabase::class.java,
-                    "draw_database"
+                    "pencil_notes_database"
                 )
-                .addMigrations(MIGRATION_1_2)
                 .fallbackToDestructiveMigration(false) 
                 .build()
                 INSTANCE = instance
@@ -68,27 +52,6 @@ data class Document(
     val createdAt: Long = System.currentTimeMillis(),
     val modifiedAt: Long = System.currentTimeMillis(),
     val lastOpenedAt: Long? = null
-)
-
-@Entity(
-    tableName = "pages",
-    indices = [Index(value = ["documentId", "pageNumber"])]
-)
-data class Page(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val documentId: Int, // A quale documento appartiene
-    val pageNumber: Int, // Numero della pagina
-    val width: Float,
-    val height: Float,
-    val content: String // Può essere un riferimento a una risorsa o testo
-)
-
-@Entity(tableName = "resources")
-data class Resource(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val documentId: Int, // A quale documento appartiene
-    val type: String, // "image", "pdf"
-    val uri: String // Percorso del file
 )
 
 
@@ -168,28 +131,4 @@ interface DocumentDao {
 
     @Query("SELECT * FROM documents ORDER BY lastOpenedAt DESC LIMIT :limit")
     suspend fun getRecentDocuments(limit: Int): List<Document>
-}
-
-@Dao
-interface PageDao {
-    @Insert
-    suspend fun insert(page: Page): Long
-
-    @Query("SELECT * FROM pages WHERE documentId = :documentId ORDER BY pageNumber")
-    fun getPagesForDocument(documentId: Int): List<Page>
-
-    @Query("UPDATE pages SET content = :content WHERE id = :pageId")
-    suspend fun updatePageContent(pageId: Int, content: String)
-
-    @Query("DELETE FROM pages WHERE id = :pageId")
-    suspend fun deleteById(pageId: Int)
-}
-
-@Dao
-interface ResourceDao {
-    @Insert
-    suspend fun insert(resource: Resource): Long
-
-    @Query("SELECT * FROM resources WHERE documentId = :documentId")
-    suspend fun getResourcesForDocument(documentId: Int): List<Resource>
 }
