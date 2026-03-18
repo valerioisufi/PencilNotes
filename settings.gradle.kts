@@ -18,4 +18,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "PencilNotes"
 include(":app")
- 
+include(":draw-view")
