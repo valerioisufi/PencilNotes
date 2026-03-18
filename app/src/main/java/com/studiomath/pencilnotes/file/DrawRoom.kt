@@ -5,7 +5,7 @@ import androidx.room.*
 
 @Database(
     entities = [Folder::class, Document::class, Page::class, Resource::class],
-    version = 2
+    version = 1
 )
 abstract class DrawDatabase : RoomDatabase() {
     abstract fun folderDao(): FolderDao
@@ -17,19 +17,6 @@ abstract class DrawDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: DrawDatabase? = null
 
-        val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
-            override fun migrate(database: androidx.sqlite.db.SupportSQLiteDatabase) {
-                // Add columns to folders
-                database.execSQL("ALTER TABLE folders ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
-                database.execSQL("ALTER TABLE folders ADD COLUMN modifiedAt INTEGER NOT NULL DEFAULT 0")
-
-                // Add columns to documents
-                database.execSQL("ALTER TABLE documents ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
-                database.execSQL("ALTER TABLE documents ADD COLUMN modifiedAt INTEGER NOT NULL DEFAULT 0")
-                database.execSQL("ALTER TABLE documents ADD COLUMN lastOpenedAt INTEGER")
-            }
-        }
-
         fun getInstance(context: Context): DrawDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -37,7 +24,6 @@ abstract class DrawDatabase : RoomDatabase() {
                     DrawDatabase::class.java,
                     "draw_database"
                 )
-                .addMigrations(MIGRATION_1_2)
                 .fallbackToDestructiveMigration(false) 
                 .build()
                 INSTANCE = instance
