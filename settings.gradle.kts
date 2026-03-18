@@ -19,3 +19,4 @@ dependencyResolutionManagement {
 rootProject.name = "PencilNotes"
 include(":app")
 include(":draw-view")
+project(":draw-view").projectDir = file("draw-view/draw-view")

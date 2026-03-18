@@ -21,6 +21,7 @@ lifecycleRuntimeKtx = "2.10.0"
 uiUnit = "1.10.5"
 ui = "1.10.5"
 foundation = "1.10.5"
+inkVersion = "1.1.0-alpha01"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -49,10 +50,18 @@ ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-ui-unit = { group = "androidx.compose.ui", name = "ui-unit", version.ref = "uiUnit" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
+androidx-compose-ui-text-google-fonts = { module = "androidx.compose.ui:ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
+androidx-ink-authoring = { module = "androidx.ink:ink-authoring", version.ref = "inkVersion" }
+androidx-ink-brush = { module = "androidx.ink:ink-brush", version.ref = "inkVersion" }
+androidx-ink-geometry = { module = "androidx.ink:ink-geometry", version.ref = "inkVersion" }
+androidx-ink-nativeloader = { module = "androidx.ink:ink-nativeloader", version.ref = "inkVersion" }
+androidx-ink-rendering = { module = "androidx.ink:ink-rendering", version.ref = "inkVersion" }
+androidx-ink-strokes = { module = "androidx.ink:ink-strokes", version.ref = "inkVersion" }
+androidx-ink-storage = { group = "androidx.ink", name = "ink-storage", version.ref = "inkVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-android-library = { id = "com.android.library", version.ref = "agp" }
+android-library = { id = "com.android.library" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp"}
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

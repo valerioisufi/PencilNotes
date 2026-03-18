@@ -46,6 +46,8 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":draw-view"))
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui.unit)
     implementation(libs.androidx.ui)
