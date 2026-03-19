@@ -96,7 +96,27 @@ class FileExplorerViewModel(
         }
     }
 
+    // Nuovi stati per l'ordinamento
+    var sortAscending = mutableStateOf(true)
+    var keepFoldersOnTop = mutableStateOf(true)
+
+    // Funzioni per aggiornare gli stati e ricaricare la lista
+    fun toggleSortDirection() {
+        sortAscending.value = !sortAscending.value
+        loadCurrentDirectory()
+    }
+
+    fun toggleKeepFoldersOnTop() {
+        keepFoldersOnTop.value = !keepFoldersOnTop.value
+        loadCurrentDirectory()
+    }
+
+    // Opzionale: aggiorna setSortOption per forzare un senso logico di default
+    // (es. se scegli il Nome, parti dalla A, se scegli la Data, parti dalla più recente)
     fun setSortOption(option: SortOption) {
+        if (sortOption.value != option) {
+            sortAscending.value = option == SortOption.NAME
+        }
         sortOption.value = option
         loadCurrentDirectory()
     }
@@ -132,24 +152,30 @@ class FileExplorerViewModel(
                 filesExplorer[currentPath]!!.filesList.add(file)
             }
 
-            // Sort the list
+            // 1. Applica l'ordinamento dinamico (Crescente o Decrescente)
+            val ascending = sortAscending.value
             val sortedList = filesExplorer[currentPath]!!.filesList.sortedWith(
                 when (sortOption.value) {
-                    SortOption.NAME -> compareBy { it.name.value.lowercase() }
-                    SortOption.DATE_CREATED -> compareByDescending { it.createdAt }
-                    SortOption.DATE_MODIFIED -> compareByDescending { it.modifiedAt }
-                    SortOption.LAST_OPENED -> compareByDescending { it.lastOpenedAt ?: 0L }
+                    SortOption.NAME -> if (ascending) compareBy { it.name.value.lowercase() } else compareByDescending { it.name.value.lowercase() }
+                    SortOption.DATE_CREATED -> if (ascending) compareBy { it.createdAt } else compareByDescending { it.createdAt }
+                    SortOption.DATE_MODIFIED -> if (ascending) compareBy { it.modifiedAt } else compareByDescending { it.modifiedAt }
+                    SortOption.LAST_OPENED -> if (ascending) compareBy { it.lastOpenedAt ?: 0L } else compareByDescending { it.lastOpenedAt ?: 0L }
                 }
             )
-            
-            // Re-populate with sorted items (keeping folders on top logic if desired, but for now simple sort)
-            // Usually folders on top is preferred. Let's add that.
-            val folders = sortedList.filter { it.type == FileType.FOLDER }
-            val files = sortedList.filter { it.type == FileType.FILE }
-            
+
+            // 2. Svuota la lista attuale
             filesExplorer[currentPath]!!.filesList.clear()
-            filesExplorer[currentPath]!!.filesList.addAll(folders)
-            filesExplorer[currentPath]!!.filesList.addAll(files)
+
+            // 3. Applica la logica "Cartelle in alto"
+            if (keepFoldersOnTop.value) {
+                val folders = sortedList.filter { it.type == FileType.FOLDER }
+                val files = sortedList.filter { it.type == FileType.FILE }
+                filesExplorer[currentPath]!!.filesList.addAll(folders)
+                filesExplorer[currentPath]!!.filesList.addAll(files)
+            } else {
+                // Se l'opzione è disattivata, inserisci tutto l'elenco così com'è
+                filesExplorer[currentPath]!!.filesList.addAll(sortedList)
+            }
 
         }
     }

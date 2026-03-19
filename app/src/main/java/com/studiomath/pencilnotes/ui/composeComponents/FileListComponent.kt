@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.North
+import androidx.compose.material.icons.filled.South
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Checkbox
@@ -101,19 +102,37 @@ fun FileListComponent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     var expanded by remember { mutableStateOf(false) }
-                    val (checkedState, onStateChange) = remember { mutableStateOf(true) }
 
-                    TextButton(onClick = { expanded = true }) {
-                        Text(
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            text = "Nome",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Icon(
-                            imageVector = Icons.Default.North,
-                            contentDescription = "Ordine",
-                            modifier = Modifier.size(16.dp)
-                        )
+                    // Osserviamo gli stati dal ViewModel
+                    val currentSortOption by fileExplorerViewModel.sortOption
+                    val isAscending by fileExplorerViewModel.sortAscending
+                    val keepFoldersOnTop by fileExplorerViewModel.keepFoldersOnTop
+
+                    // Etichetta dinamica per il bottone
+                    val sortLabel = when(currentSortOption) {
+                        FileExplorerViewModel.SortOption.NAME -> stringResource(id = R.string.menu_name)
+                        FileExplorerViewModel.SortOption.DATE_CREATED -> stringResource(id = R.string.menu_dateCreated)
+                        FileExplorerViewModel.SortOption.DATE_MODIFIED -> stringResource(id = R.string.menu_lastModified)
+                        FileExplorerViewModel.SortOption.LAST_OPENED -> stringResource(id = R.string.menu_lastOpen)
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = { expanded = true }) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                text = sortLabel,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        // Pulsante separato per invertire l'ordine (Su/Giù)
+                        IconButton(onClick = { fileExplorerViewModel.toggleSortDirection() }) {
+                            Icon(
+                                imageVector = if (isAscending) Icons.Default.North else Icons.Default.South, // Assicurati di importare Icons.Default.South
+                                contentDescription = "Inverti ordine",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                     DropdownMenu(
                         expanded = expanded,
@@ -138,10 +157,13 @@ fun FileListComponent(
                         HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text(stringResource(id = R.string.menu_keepFoldersOnTop)) },
-                            onClick = { onStateChange(!checkedState) },
+                            onClick = {
+                                fileExplorerViewModel.toggleKeepFoldersOnTop()
+                                expanded = false
+                            },
                             leadingIcon = {
                                 Checkbox(
-                                    checked = checkedState,
+                                    checked = keepFoldersOnTop, // Usa lo stato del ViewModel
                                     onCheckedChange = null
                                 )
                             }
