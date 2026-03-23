@@ -7,7 +7,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.DriveFileMove
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreHoriz
@@ -53,7 +51,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -63,7 +60,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
@@ -357,8 +353,8 @@ fun ListItem(
                 modifier = Modifier
                     .padding(start = 16.dp)
                     .size(32.dp),
-                painter = if (dataFile.type == FileExplorerViewModel.FileType.FILE) painterResource(id = R.drawable.ruler) else painterResource(
-                    id = R.drawable.img_folder
+                painter = if (dataFile.type == FileExplorerViewModel.FileType.FILE) painterResource(id = R.drawable.icon_document) else painterResource(
+                    id = R.drawable.icon_folder
                 ),
                 contentDescription = ""
             )
@@ -383,39 +379,39 @@ fun ListItem(
             )
         }
         
-        // Drag Handle
-        Icon(
-            imageVector = Icons.Default.DragHandle,
-            contentDescription = "Drag",
-            modifier = Modifier
-                .padding(end = 16.dp)
-                .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragStart = { offset ->
-                            // Set initial offset to current Item position for the overlay
-                            // Since we don't have easy global access, we assume overlay starts at top.
-                            // We pass the globalYPosition as the starting Y reference + touch offset.
-                            // We construct a rough starting position.
-                            offsetX = 0f
-                            offsetY = globalYPosition
-                            onDragStart(androidx.compose.ui.geometry.Offset(0f, globalYPosition)) 
-                        },
-                        onDragEnd = {
-                            onDragEnd()
-                            checkDropTarget(offsetY)
-                            offsetX = 0f
-                            offsetY = 0f
-                        },
-                        onDrag = { change, dragAmount ->
-                            change.consume()
-                            offsetX += dragAmount.x
-                            offsetY += dragAmount.y
-                            onDrag(dragAmount)
-                        }
-                    )
-                },
-            tint = contentColor.copy(alpha = 0.5f)
-        )
+//        // Drag Handle
+//        Icon(
+//            imageVector = Icons.Default.DragHandle,
+//            contentDescription = "Drag",
+//            modifier = Modifier
+//                .padding(end = 16.dp)
+//                .pointerInput(Unit) {
+//                    detectDragGestures(
+//                        onDragStart = { offset ->
+//                            // Set initial offset to current Item position for the overlay
+//                            // Since we don't have easy global access, we assume overlay starts at top.
+//                            // We pass the globalYPosition as the starting Y reference + touch offset.
+//                            // We construct a rough starting position.
+//                            offsetX = 0f
+//                            offsetY = globalYPosition
+//                            onDragStart(androidx.compose.ui.geometry.Offset(0f, globalYPosition))
+//                        },
+//                        onDragEnd = {
+//                            onDragEnd()
+//                            checkDropTarget(offsetY)
+//                            offsetX = 0f
+//                            offsetY = 0f
+//                        },
+//                        onDrag = { change, dragAmount ->
+//                            change.consume()
+//                            offsetX += dragAmount.x
+//                            offsetY += dragAmount.y
+//                            onDrag(dragAmount)
+//                        }
+//                    )
+//                },
+//            tint = contentColor.copy(alpha = 0.5f)
+//        )
 
         if (!selectionMode) {
              FileDetailsWithBottomSheet(dataFile, fileExplorerViewModel)
@@ -465,9 +461,9 @@ fun FileDetailsWithBottomSheet(
                     Image(
                         modifier = Modifier.size(32.dp),
                         painter = if (dataFile.type == FileExplorerViewModel.FileType.FILE) painterResource(
-                            id = R.drawable.ruler
+                            id = R.drawable.icon_document
                         ) else painterResource(
-                            id = R.drawable.img_folder
+                            id = R.drawable.icon_folder
                         ),
                         contentDescription = ""
                     )

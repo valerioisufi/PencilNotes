@@ -124,47 +124,12 @@ enum class NavigationBarItem(val value: Int) {
 @Composable
 fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplorerViewModel) {
     val mContext = LocalContext.current
-//    val drawerState = rememberDrawerState(DrawerValue.Closed)
-//    val scope = rememberCoroutineScope()
-//
-//    val items = listOf("Account", "Impostazioni")
-//    val selectedItem = remember { mutableStateOf(items[0]) }
 
     val listState = rememberLazyListState()
     val fabVisible by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
 
     ModalNavigationDrawer(
-//        drawerState = drawerState,
-        drawerContent = {
-//            ModalDrawerSheet(
-//                drawerState = drawerState
-//            ) {
-//                /* Drawer content */
-//                Column(Modifier.verticalScroll(rememberScrollState())) {
-//                    Spacer(Modifier.height(12.dp))
-//                    Text("PencilNotes", modifier = Modifier.padding(16.dp))
-//                    items.forEach { item ->
-//                        NavigationDrawerItem(
-//                            icon = {
-//                                when(item){
-//                                    "Account" -> Icon(Icons.Filled.AccountCircle, contentDescription = null)
-//                                    "Impostazioni" -> Icon(Icons.Filled.Settings, contentDescription = null)
-//                                }
-//                            },
-//                            label = { Text(item) },
-//                            selected = item == selectedItem.value,
-//                            onClick = {
-//                                scope.launch { drawerState.close() }
-//                                selectedItem.value = item
-//                            },
-//                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-//                        )
-//                    }
-//                    HorizontalDivider()
-//                }
-//            }
-
-        },
+        drawerContent = {},
         gesturesEnabled = false
     ) {
         var navigationBarSelectedItem by remember { mutableIntStateOf(NavigationBarItem.FILE.value) }
@@ -284,15 +249,15 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                                     navigationIcon = {
                                     },
                                     actions = {
-                                        IconButton(onClick = {
-                                            val intent = Intent(mContext, SettingsActivity::class.java)
-                                            mContext.startActivity(intent)
-                                        }) {
-                                            Icon(
-                                                imageVector = Icons.Filled.Settings,
-                                                contentDescription = "Localized description"
-                                            )
-                                        }
+//                                        IconButton(onClick = {
+//                                            val intent = Intent(mContext, SettingsActivity::class.java)
+//                                            mContext.startActivity(intent)
+//                                        }) {
+//                                            Icon(
+//                                                imageVector = Icons.Filled.Settings,
+//                                                contentDescription = "Localized description"
+//                                            )
+//                                        }
                                     },
     //                          scrollBehavior = scrollBehavior
                                 )
@@ -324,35 +289,35 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                 }
             },
             bottomBar = {
-                val selectionMode by fileExplorerViewModel.selectionMode
-                if (!selectionMode) {
-                    val items = listOf(
-                        stringResource(id = R.string.button_home),
-//                    stringResource(id = R.string.button_shared),
-                        stringResource(id = R.string.button_file)
-                    )
-
-                    NavigationBar {
-                        items.forEachIndexed { index, item ->
-                            val actualIndex = if (index == 0) NavigationBarItem.HOME.value else NavigationBarItem.FILE.value
-                            NavigationBarItem(
-                                icon = {
-                                    Icon(
-                                        when (actualIndex) {
-                                            NavigationBarItem.HOME.value -> Icons.Filled.Home
-                                            NavigationBarItem.FILE.value -> Icons.Filled.Folder
-                                            else -> Icons.Filled.Favorite
-                                        },
-                                        contentDescription = item
-                                    )
-                                },
-                                label = { Text(item) },
-                                selected = navigationBarSelectedItem == actualIndex,
-                                onClick = { navigationBarSelectedItem = actualIndex }
-                            )
-                        }
-                    }
-                }
+//                val selectionMode by fileExplorerViewModel.selectionMode
+//                if (!selectionMode) {
+//                    val items = listOf(
+//                        stringResource(id = R.string.button_home),
+////                    stringResource(id = R.string.button_shared),
+//                        stringResource(id = R.string.button_file)
+//                    )
+//
+//                    NavigationBar {
+//                        items.forEachIndexed { index, item ->
+//                            val actualIndex = if (index == 0) NavigationBarItem.HOME.value else NavigationBarItem.FILE.value
+//                            NavigationBarItem(
+//                                icon = {
+//                                    Icon(
+//                                        when (actualIndex) {
+//                                            NavigationBarItem.HOME.value -> Icons.Filled.Home
+//                                            NavigationBarItem.FILE.value -> Icons.Filled.Folder
+//                                            else -> Icons.Filled.Favorite
+//                                        },
+//                                        contentDescription = item
+//                                    )
+//                                },
+//                                label = { Text(item) },
+//                                selected = navigationBarSelectedItem == actualIndex,
+//                                onClick = { navigationBarSelectedItem = actualIndex }
+//                            )
+//                        }
+//                    }
+//                }
             },
             floatingActionButton = {
                 val selectionMode by fileExplorerViewModel.selectionMode
