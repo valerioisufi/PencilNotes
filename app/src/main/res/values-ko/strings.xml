@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PencilNotes</string>
+
+    <string name="button_new">새로 만들기</string>
+    <string name="button_newNote">새 노트</string>
+    <string name="button_folder">폴더</string>
+    <string name="button_confirm">확인</string>
+    <string name="menu_cancel">취소</string>
+    <string name="common_action_edit">편집</string>
+    <string name="common_label_info">정보</string>
+
+    <string name="button_home">홈</string>
+    <string name="button_shared">공유됨</string>
+    <string name="navigation_shared">공유됨</string>
+    <string name="button_file">파일</string>
+    <string name="button_all">전체</string>
+    <string name="button_favorites">즐겨찾기</string>
+    <string name="button_recents">최근 항목</string>
+
+    <string name="appbar_selected_count">%1$d개 선택됨</string>
+    <string name="appbar_action_clear_selection">선택 취소</string>
+    <string name="appbar_action_select_all">모두 선택</string>
+    <string name="appbar_action_move">이동</string>
+    <string name="appbar_action_delete">삭제</string>
+    <string name="appbar_action_back">위로 탐색</string>
+
+    <string name="description_searchNotes">노트 검색</string>
+    <string name="document_list_label_last_modified">최근 수정일: %1$s</string>
+    <string name="menu_name">이름</string>
+    <string name="menu_dateCreated">생성일</string>
+    <string name="menu_lastModified">최근 수정일</string>
+    <string name="menu_lastOpen">최근 열어본 시간</string>
+    <string name="menu_sort_invert">순서 반전</string>
+    <string name="menu_keepFoldersOnTop">폴더를 항상 위에 표시</string>
+    <string name="menu_createFolder">폴더 만들기</string>
+    <string name="menu_importPDF">PDF 불러오기</string>
+    <string name="menu_importImages">이미지 불러오기</string>
+
+    <string name="menu_rename">이름 변경</string>
+    <string name="menu_moveTo">이동</string>
+    <string name="menu_delete">삭제</string>
+    <string name="menu_export">내보내기</string>
+
+    <string name="request_name">이름 선택</string>
+    <string name="dialog_deleteFileDescription">삭제된 항목은 복구할 수 없습니다.</string>
+    <string name="dialog_delete_multiple_description">%1$d개의 항목을 삭제하시겠습니까?</string>
+    <string name="move_dialog_empty_state">폴더를 찾을 수 없습니다</string>
+    <string name="move_dialog_action_move_here">여기로 이동</string>
+
+    <string name="menu_settings">설정</string>
+    <string name="menu_whatsnew">새로운 기능</string>
+    <string name="menu_help">도움말</string>
+    <string name="settings_general">일반</string>
+    <string name="settings_generalLanguage">언어</string>
+    <string name="settings_generalTheme">테마</string>
+    <string name="settings_notes">노트</string>
+    <string name="settings_notesKeepScreenOn">화면 켜짐 유지</string>
+    <string name="settings_notesKeepScreenOnDescription">노트가 열려 있는 동안 화면이 꺼지지 않습니다</string>
+    <string name="settings_notesContinueFromLastOpenedPage">마지막으로 열었던 페이지부터 계속</string>
+    <string name="settings_manageStorage">저장 공간 관리</string>
+    <string name="settings_storageNotes">여기에는 노트, 불러온 이미지 및 PDF 파일이 포함됩니다.</string>
+    <string name="settings_cache">캐시</string>
+    <string name="settings_storageCache">캐시는 앱 성능 향상에 도움이 됩니다.</string>
+
+    <string name="error_name_empty">이름은 비워 둘 수 없습니다</string>
+    <string name="error_name_invalid_chars">이름에 슬래시를 포함할 수 없습니다</string>
+    <string name="error_name_exists">이미 존재하는 이름입니다</string>
+    <string name="error_create_failed">생성 중 오류 발생</string>
+
+    <string name="fab_state_expanded">확장됨</string>
+    <string name="fab_state_collapsed">축소됨</string>
+    <string name="fab_action_toggle_menu">메뉴 전환</string>
+    <string name="fab_action_close_menu">메뉴 닫기</string>
+
+</resources>
