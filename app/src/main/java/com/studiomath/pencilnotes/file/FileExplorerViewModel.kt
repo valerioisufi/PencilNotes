@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.studiomath.drawview.data.DataModule
 import com.studiomath.drawview.data.repository.FileRepository
+import com.studiomath.pencilnotes.R
 import kotlinx.coroutines.launch
 
 class FileExplorerViewModel(
@@ -180,16 +181,16 @@ class FileExplorerViewModel(
         }
     }
 
-    fun validateFileName(name: String): String? {
-        if (name.isBlank()) return "Name cannot be empty"
-        if (name.contains("/") || name.contains("\\")) return "Name cannot contain slashes"
-        if (existNameInDirectory(name = name)) return "Name already exists"
+    fun validateFileName(name: String): Int? {
+        if (name.isBlank()) return return R.string.error_name_empty
+        if (name.contains("/") || name.contains("\\")) return R.string.error_name_invalid_chars
+        if (existNameInDirectory(name = name)) return R.string.error_name_exists
         return null
     }
 
-    fun createFile(type: FileType, name: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+    fun createFile(type: FileType, name: String, onSuccess: () -> Unit = {}, onError: (Int) -> Unit = {}) {
         if (existNameInDirectory(name = name)) {
-            onError("Name already exists")
+            onError(R.string.error_name_exists)
             return
         }
         
@@ -208,7 +209,7 @@ class FileExplorerViewModel(
                 loadCurrentDirectory()
                 onSuccess()
             } else {
-                onError("Errore durante la creazione")
+                onError(R.string.error_create_failed)
             }
         }
     }

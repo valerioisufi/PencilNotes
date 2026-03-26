@@ -125,7 +125,7 @@ fun FileListComponent(
                         IconButton(onClick = { fileExplorerViewModel.toggleSortDirection() }) {
                             Icon(
                                 imageVector = if (isAscending) Icons.Default.North else Icons.Default.South, // Assicurati di importare Icons.Default.South
-                                contentDescription = "Inverti ordine",
+                                contentDescription = stringResource(R.string.menu_sort_invert),
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -258,13 +258,13 @@ fun FileListComponent(
                  modifier = Modifier
                      .graphicsLayer {
                          translationX = dragOffset.x
-                         translationY = dragOffset.y 
+                         translationY = dragOffset.y
                          // Note: this assumes dragOffset is accumulated from (0,0) of this Box? 
                          // No, dragOffset in the state is accumulating deltas.
                          // But we need to start from the item's position.
                          // We don't know the item's initial position easily here.
                          // Okay, we will just use the delta and center it? No.
-                         
+
                          // Fix: Position at center of screen + offset? 
                          // Or just hide original and show this one?
                          // Let's just show a small Icon following the finger.
@@ -313,7 +313,7 @@ fun ListItem(
     Row(modifier = modifier
         .fillMaxWidth(1f)
         .onGloballyPositioned { coordinates ->
-             globalYPosition = coordinates.positionInWindow().y
+            globalYPosition = coordinates.positionInWindow().y
         }
         .background(
             backgroundColor, shape = RoundedCornerShape(8.dp)
@@ -325,7 +325,7 @@ fun ListItem(
                     fileExplorerViewModel.toggleSelection(dataFile)
                 } else {
                     if (dataFile.type == FileExplorerViewModel.FileType.FILE) {
-                         fileExplorerViewModel.openFile(dataFile.id)
+                        fileExplorerViewModel.openFile(dataFile.id)
                         val intent = Intent(mContext, DrawActivity::class.java)
                         intent.putExtra("documentId", dataFile.id)
                         mContext.startActivity(intent)
@@ -346,7 +346,9 @@ fun ListItem(
             Checkbox(
                 checked = isSelected,
                 onCheckedChange = { fileExplorerViewModel.toggleSelection(dataFile) },
-                modifier = Modifier.padding(start = 16.dp).size(24.dp)
+                modifier = Modifier
+                    .padding(start = 16.dp)
+                    .size(24.dp)
             )
         } else {
              Image(
@@ -373,7 +375,10 @@ fun ListItem(
             val date = java.util.Date(dataFile.modifiedAt)
             val format = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT)
             Text(
-                text = "Ultima modifica: ${format.format(date)}",
+                text = stringResource(
+                    R.string.document_list_label_last_modified,
+                    format.format(date)
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = contentColor.copy(alpha = 0.7f)
             )
@@ -433,7 +438,7 @@ fun FileDetailsWithBottomSheet(
     IconButton(onClick = {
         isSheetOpen = true
     }) {
-        Icon(imageVector = Icons.Default.MoreHoriz, contentDescription = "Info")
+        Icon(imageVector = Icons.Default.MoreHoriz, contentDescription = stringResource(R.string.common_label_info))
     }
 
 
@@ -480,7 +485,10 @@ fun FileDetailsWithBottomSheet(
                         val date = java.util.Date(dataFile.modifiedAt)
                         val format = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT)
                         Text(
-                            text = "Ultima modifica: ${format.format(date)}",
+                            text = stringResource(
+                                R.string.document_list_label_last_modified,
+                                format.format(date)
+                            ),
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -552,7 +560,7 @@ fun FileDetailsWithBottomSheet(
 @Composable
 fun OptionItem(
     icon: ImageVector = Icons.Outlined.Edit,
-    text: String = "Modifica",
+    text: String = stringResource(R.string.common_action_edit),
     onClick: () -> Unit = {}
 ) {
     Row(

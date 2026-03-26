@@ -23,7 +23,7 @@ fun HomeComponent(
             .padding(16.dp)
     ) {
         Text(
-            text = "Recenti", 
+            text = stringResource(R.string.button_recents),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(bottom = 16.dp)
         )

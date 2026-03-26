@@ -145,7 +145,10 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                      TopAppBar(
                         title = {
                             Text(
-                                text = "${selectedItems.size} Selezionati",
+                                text = stringResource(
+                                    R.string.appbar_selected_count,
+                                    selectedItems.size
+                                ),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -156,7 +159,7 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                             }) {
                                 Icon(
                                     imageVector = Icons.Filled.Close,
-                                    contentDescription = "Clear selection"
+                                    contentDescription = stringResource(R.string.appbar_action_clear_selection)
                                 )
                             }
                         },
@@ -165,7 +168,10 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                              if (showDeleteConfirmDialog) {
                                 ConfirmActionDialog(
                                     title = stringResource(id = R.string.menu_delete),
-                                    textDescription = "Vuoi eliminare ${selectedItems.size} elementi?",
+                                    textDescription = stringResource(
+                                        R.string.dialog_delete_multiple_description,
+                                        selectedItems.size
+                                    ),
                                     textConfirmButton = stringResource(id = R.string.button_confirm),
                                     onDismissRequest = {showDeleteConfirmDialog = false},
                                     onConfirm = {
@@ -204,13 +210,13 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                             }
                         
                             IconButton(onClick = { showMoveDialog = true }) {
-                                Icon(Icons.AutoMirrored.Filled.DriveFileMove, contentDescription = "Sposta")
+                                Icon(Icons.AutoMirrored.Filled.DriveFileMove, contentDescription = stringResource(R.string.appbar_action_move))
                             }
                             IconButton(onClick = { showDeleteConfirmDialog = true }) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Elimina")
+                                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.appbar_action_delete))
                             }
                             IconButton(onClick = { fileExplorerViewModel.selectAll() }) {
-                                Icon(Icons.Filled.SelectAll, contentDescription = "Seleziona tutto")
+                                Icon(Icons.Filled.SelectAll, contentDescription = stringResource(R.string.appbar_action_select_all))
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -277,7 +283,7 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                                         }) {
                                             Icon(
                                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                                contentDescription = "Localized description"
+                                                contentDescription = stringResource(R.string.appbar_action_back)
                                             )
                                         }
                                     },
@@ -331,7 +337,7 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                             textConfirmButton = stringResource(id = R.string.button_confirm),
                             onDismissRequest = {openDialogNewFile = false},
                             isAllowedInput = { text ->
-                                fileExplorerViewModel.validateFileName(text) ?: ""
+                                fileExplorerViewModel.validateFileName(text)
                             },
                             onConfirm = { text ->
                                 fileExplorerViewModel.createFile(
@@ -350,7 +356,7 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                             textConfirmButton = stringResource(id = R.string.button_confirm),
                             onDismissRequest = {openDialogNewFolder = false},
                             isAllowedInput = { text ->
-                                fileExplorerViewModel.validateFileName(text) ?: ""
+                                fileExplorerViewModel.validateFileName(text)
                             },
                             onConfirm = { text ->
                                 fileExplorerViewModel.createFile(
@@ -371,20 +377,28 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                             Icons.Filled.Folder to stringResource(id = R.string.button_folder),
                         )
 
+                    val stateExpandedStr = stringResource(id = R.string.fab_state_expanded)
+                    val stateCollapsedStr = stringResource(id = R.string.fab_state_collapsed)
+                    val toggleMenuStr = stringResource(id = R.string.fab_action_toggle_menu)
+                    val closeMenuStr = stringResource(id = R.string.fab_action_close_menu)
+
                     FloatingActionButtonMenu(
                         modifier = Modifier,
                         expanded = fabMenuExpanded,
                         button = {
                             ToggleFloatingActionButton(
                                 modifier =
-                                    Modifier.semantics {
-                                        traversalIndex = -1f
-                                        stateDescription = if (fabMenuExpanded) "Expanded" else "Collapsed"
-                                        contentDescription = "Toggle menu"
-                                    }.animateFloatingActionButton(
-                                        visible = fabVisible || fabMenuExpanded,
-                                        alignment = Alignment.BottomEnd,
-                                    ),
+                                    Modifier
+                                        .semantics {
+                                            traversalIndex = -1f
+                                            stateDescription =
+                                                if (fabMenuExpanded) stateExpandedStr else stateCollapsedStr
+                                            contentDescription = toggleMenuStr
+                                        }
+                                        .animateFloatingActionButton(
+                                            visible = fabVisible || fabMenuExpanded,
+                                            alignment = Alignment.BottomEnd,
+                                        ),
                                 checked = fabMenuExpanded,
                                 onCheckedChange = { fabMenuExpanded = !fabMenuExpanded },
 
@@ -414,7 +428,7 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                                             customActions =
                                                 listOf(
                                                     CustomAccessibilityAction(
-                                                        label = "Close menu",
+                                                        label = closeMenuStr,
                                                         action = {
                                                             fabMenuExpanded = false
                                                             true
@@ -450,7 +464,7 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                 ) { targetState ->
                     when (targetState) {
                         NavigationBarItem.HOME.value -> HomeComponent(fileExplorerViewModel = fileExplorerViewModel)
-                        NavigationBarItem.SHARED.value -> Text(text = "Condivisi")
+                        NavigationBarItem.SHARED.value -> Text(text = stringResource(R.string.navigation_shared))
                         NavigationBarItem.FILE.value -> FileListComponent(
                             directoryFiles = fileExplorerViewModel.currentDirectoryFiles,
                             fileExplorerViewModel = fileExplorerViewModel,

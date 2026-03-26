@@ -28,9 +28,9 @@ fun RequestNameDialog(
     textConfirmButton: String = "",
     onDismissRequest: () -> Unit,
     onConfirm: (inputText: String) -> Unit,
-    isAllowedInput: (inputText: String) -> String = { "" }
+    isAllowedInput: (inputText: String) -> Int? = { null }
 ){
-    var validInputError by remember { mutableStateOf("") }
+    var errorResId by remember { mutableStateOf<Int?>(null) }
     var text by remember { mutableStateOf("") }
 
     AlertDialog(
@@ -41,17 +41,17 @@ fun RequestNameDialog(
             Column {
                 OutlinedTextField(
                     value = text,
-                    onValueChange = { 
+                    onValueChange = {
                         text = it
-                        validInputError = isAllowedInput(it) 
+                        errorResId = isAllowedInput(it)
                     },
                     label = { Text(labelTextField) },
                     singleLine = true,
-                    isError = validInputError.isNotEmpty(),
+                    isError = errorResId != null,
                     supportingText = {
-                        if (validInputError.isNotEmpty()) {
+                        errorResId?.let { resId ->
                             Text(
-                                text = validInputError,
+                                text = stringResource(resId),
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -64,7 +64,7 @@ fun RequestNameDialog(
         confirmButton = {
             TextButton(
                 onClick = { onConfirm(text) },
-                enabled = text.isNotBlank() && validInputError.isEmpty()
+                enabled = text.isNotBlank() && errorResId == null
             ) {
                 Text(text = textConfirmButton)
             }
@@ -122,9 +122,10 @@ fun MoveFileDialog(
     onDismissRequest: () -> Unit,
     onConfirm: (targetFolderId: Int?) -> Unit
 ) {
+    val rootName = stringResource(id = R.string.button_home)
     // Navigation state inside the dialog
     var currentFolderId by remember { mutableStateOf<Int?>(null) } // null = root
-    var breadcrumbs by remember { mutableStateOf(listOf<Pair<String, Int?>>("Home" to null)) }
+    var breadcrumbs by remember(rootName) { mutableStateOf(listOf<Pair<String, Int?>>(rootName to null)) }
 
     var subFolders by remember { mutableStateOf(emptyList<FileRepository.FileItem>()) }
 
@@ -150,7 +151,9 @@ fun MoveFileDialog(
                 // Header with navigation
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
                 ) {
                     if (currentFolderId != null) {
                         IconButton(onClick = {
@@ -160,7 +163,7 @@ fun MoveFileDialog(
                                 currentFolderId = breadcrumbs.last().second
                             }
                         }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.studiomath.drawview.R.string.common_action_back))
                         }
                     }
 
@@ -168,7 +171,9 @@ fun MoveFileDialog(
                         text = breadcrumbs.last().first,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 8.dp).weight(1f)
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .weight(1f)
                     )
                 }
 
@@ -209,7 +214,7 @@ fun MoveFileDialog(
                     if (subFolders.isEmpty()) {
                         item {
                             Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("Nessuna cartella", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                                Text(stringResource(R.string.move_dialog_empty_state), style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
                             }
                         }
                     }
@@ -236,7 +241,7 @@ fun MoveFileDialog(
                         },
                         enabled = isValidMove(currentFolderId)
                     ) {
-                        Text("Sposta qui")
+                        Text(stringResource(R.string.move_dialog_action_move_here))
                     }
                 }
             }

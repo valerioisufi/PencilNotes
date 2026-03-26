@@ -43,4 +43,26 @@
     <string name="settings_generalLanguage">Language</string>
     <string name="settings_generalTheme">Theme</string>
     <string name="dialog_deleteFileDescription">Deleted items are not recoverable.</string>
+    <string name="appbar_selected_count">%1$d Selezionati</string>
+    <string name="appbar_action_clear_selection">Clear selection</string>
+    <string name="dialog_delete_multiple_description">Vuoi eliminare %1$d elementi?</string>
+    <string name="appbar_action_move">Sposta</string>
+    <string name="appbar_action_delete">Elimina</string>
+    <string name="appbar_action_select_all">Seleziona tutto</string>
+    <string name="appbar_action_back">Navigate up</string>
+    <string name="fab_state_expanded">Expanded</string>
+    <string name="fab_state_collapsed">Collapsed</string>
+    <string name="fab_action_toggle_menu">Toggle menu</string>
+    <string name="fab_action_close_menu">Close menu</string>
+    <string name="navigation_shared">Condivisi</string>
+    <string name="menu_sort_invert">Inverti ordine</string>
+    <string name="document_list_label_last_modified">Ultima modifica: %1$s</string>
+    <string name="common_label_info">Info</string>
+    <string name="common_action_edit">Modifica</string>
+    <string name="move_dialog_empty_state">Nessuna cartella</string>
+    <string name="move_dialog_action_move_here">Sposta qui</string>
+    <string name="error_name_empty">Name cannot be empty</string>
+    <string name="error_name_invalid_chars">Name cannot contain slashes</string>
+    <string name="error_name_exists">This name already exists</string>
+    <string name="error_create_failed">Error during creation</string>
 </resources>
