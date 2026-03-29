@@ -182,7 +182,7 @@ class FileExplorerViewModel(
     }
 
     fun validateFileName(name: String): Int? {
-        if (name.isBlank()) return return R.string.error_name_empty
+        if (name.isBlank()) return R.string.error_name_empty
         if (name.contains("/") || name.contains("\\")) return R.string.error_name_invalid_chars
         if (existNameInDirectory(name = name)) return R.string.error_name_exists
         return null

@@ -441,7 +441,6 @@ fun FileDetailsWithBottomSheet(
         Icon(imageVector = Icons.Default.MoreHoriz, contentDescription = stringResource(R.string.common_label_info))
     }
 
-
     if (isSheetOpen) {
         ModalBottomSheet(
             sheetState = sheetState,
@@ -508,7 +507,6 @@ fun FileDetailsWithBottomSheet(
                         textConfirmButton = stringResource(id = R.string.button_confirm),
                         onDismissRequest = {showRenameDialog = false},
                         onConfirm = { text ->
-                            // CORREZIONE QUI: Passiamo dataFile invece di dataFile.name.value
                             fileExplorerViewModel.renameFile(dataFile, text)
                             showRenameDialog = false
                         }
@@ -523,9 +521,33 @@ fun FileDetailsWithBottomSheet(
                         textConfirmButton = stringResource(id = R.string.button_confirm),
                         onDismissRequest = {showDeleteConfirmDialog = false},
                         onConfirm = {
-                            // CORREZIONE QUI: Passiamo dataFile al posto del nome stringa
                             fileExplorerViewModel.deleteFile(dataFile)
                             showDeleteConfirmDialog = false
+                        }
+                    )
+                }
+
+                var showMoveDialog by remember { mutableStateOf(false) }
+                if (showMoveDialog) {
+                    MoveFileDialog(
+                        onDismissRequest = { showMoveDialog = false },
+                        getSubFolders = { folderId ->
+                            fileExplorerViewModel.getSubFolders(folderId)
+                        },
+                        isFolderSelected = { folderId ->
+                            dataFile.id == folderId && dataFile.type == FileExplorerViewModel.FileType.FOLDER
+                        },
+                        isValidMove = { targetId ->
+                            !(dataFile.type == FileExplorerViewModel.FileType.FOLDER && dataFile.id == targetId)
+                        },
+                        onConfirm = { targetFolderId ->
+                            fileExplorerViewModel.clearSelection()
+                            fileExplorerViewModel.toggleSelection(dataFile)
+                            fileExplorerViewModel.moveSelected(targetFolderId)
+                            fileExplorerViewModel.clearSelection()
+
+                            showMoveDialog = false
+                            isSheetOpen = false
                         }
                     )
                 }
@@ -542,6 +564,9 @@ fun FileDetailsWithBottomSheet(
                 OptionItem(
                     icon = Icons.AutoMirrored.Filled.DriveFileMove,
                     text = stringResource(id = R.string.menu_moveTo),
+                    onClick = {
+                        showMoveDialog = true
+                    }
                 )
                 OptionItem(
                     icon = Icons.Filled.Delete,
