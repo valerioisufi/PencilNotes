@@ -1,64 +1,123 @@
 # PencilNotes
 
-PencilNotes is a native Android note-taking application designed for stylus input. It provides an intuitive interface and advanced tools for creating, editing, and managing digital documents.
+PencilNotes is a native **Android note‑taking app designed for stylus input**, built with **Jetpack Compose** and backed by a local database.  
+The project is currently structured as a multi-module Gradle build and includes **DrawView** (my drawing/document engine) as a **Git submodule**.
 
-This project started as a personal endeavor during high school, with the first version being independently developed and published on the Google Play Store. It is currently undergoing a complete architectural redesign to improve performance, and maintainability, and to add new features.
+> This repository includes `DrawView` as a submodule at `draw-view/` (see `.gitmodules`) and it is wired into Gradle as `:draw-view` (see `settings.gradle.kts`).
 
-## Key Features
+## Modules
 
-* **Freehand Drawing**: Utilize tools like a pen, highlighter, eraser, and lasso selection for a natural writing experience.
-* **Document Management**: Easily create, save, and manage multi-page documents.
-* **Tool Customization**: Adjust the color, size, and style of your drawing tools to fit your needs.
-* **Smooth Navigation**: Enjoy fluid zooming, panning, and page management with smooth animations.
-* **Automatic Saving**: Your documents are saved automatically to prevent data loss.
+- `:app` — the PencilNotes Android application
+- `:draw-view` — DrawView module (included from `draw-view/draw-view`), responsible for drawing/editing documents
 
-## Technologies Used
+## Features (current codebase)
 
-* **Kotlin** and **Java**
-* **Android SDK**
-* **Room Database** for local storage
-* **MVVM Architecture**
+- **Document & folder library** (create, rename, delete)
+- **Sort & organization**
+    - sort by name / created date / modified date / last opened
+    - ascending/descending toggle
+    - optional “keep folders on top”
+- **Multi-select actions** in the file list
+    - select all
+    - delete multiple items
+    - move items between folders
+- **Recents screen** (based on “last opened”)
+- **Drawing editor** (powered by DrawView)
+    - the app launches the editor via `DrawRoute(documentId = …)` from the `:draw-view` module
+- **Automatic persistence** (Room + serialization happen in the DrawView data layer)
 
-## Getting Started
+## Tech stack
 
-To get a local copy up and running, follow these simple steps.
+- **Kotlin**
+- **Jetpack Compose**
+- **Material 3**
+- **Room** (with KSP)
+- **kotlinx.serialization**
+- **AndroidX Ink** (through DrawView)
+- Gradle Wrapper: **9.4.0**
+- Android Gradle Plugin: **9.1.0**
+- Kotlin: **2.3.20**
+- `minSdk 29`, `targetSdk 36`, `compileSdk 36`
 
-### Prerequisites
+## Requirements
 
-* Android Studio
-* An Android device or emulator running Android 8.0 (API 26) or higher.
+- Android Studio (recent version recommended)
+- Android device/emulator on Android 10+ (API 29+)
 
-### Installation
+## Getting started
 
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/valerioisufi/PencilNotes.git
-    ```
-2.  Open the project in Android Studio.
-3.  Sync the Gradle dependencies.
-4.  Connect an Android device or start an emulator.
-5.  Run the application.
+### Clone (including the DrawView submodule)
 
-## Project Structure
+```bash
+git clone --recurse-submodules https://github.com/valerioisufi/PencilNotes.git
+```
 
-The project is organized as follows:
+If you already cloned without submodules:
 
-* `app/src/main/java/com/studiomath/pencilnotes/ui`: Contains the activities and UI components for the user interface.
-* `app/src/main/java/com/studiomath/pencilnotes/document`: Manages the data and logic for creating and modifying documents.
-* `app/src/main/java/com/studiomath/pencilnotes/ui/composeComponents`: Reusable components built with Jetpack Compose.
-* `app/src/main/java/com/studiomath/pencilnotes/file`: Handles file management and storage.
-* `app/src/main/java/com/studiomath/pencilnotes/ui/theme`: Defines the themes and styles for the app.
+```bash
+git submodule update --init --recursive
+```
+
+### Run
+
+1. Open the project in Android Studio.
+2. Sync Gradle.
+3. Run the `app` configuration.
+
+## App navigation (high level)
+
+The app declares three activities:
+
+- `MainActivity` — the launcher activity; hosts the main Compose UI (file explorer / recents)
+- `DrawActivity` — full-screen drawing editor host; opens a document by ID
+- `SettingsActivity` — settings screen (currently a scaffold placeholder in code)
+
+## How PencilNotes uses DrawView
+
+PencilNotes treats DrawView as an internal module:
+
+- Gradle includes it as `:draw-view` and the app depends on it:
+  ```kotlin
+  dependencies {
+      implementation(project(":draw-view"))
+  }
+  ```
+
+- Opening a note in the editor is delegated to DrawView’s route:
+  ```kotlin
+  DrawRoute(
+      documentId = documentId,
+      onNavigateBack = { finish() }
+  )
+  ```
+
+- File & document management in the PencilNotes UI is backed by DrawView’s data layer:
+    - `DataModule.getFileRepository(context)`
+    - `FileRepository` APIs for folders/documents and “recent documents”
+
+## Project structure (main pieces)
+
+- `app/src/main/java/com/studiomath/pencilnotes/ui/`
+    - `MainActivity.kt` — main UI, selection mode, actions (move/delete/select all), FAB new note/folder flow
+    - `DrawActivity.kt` — hosts DrawView editor
+    - `SettingsActivity.kt` — settings screen scaffold
+- `app/src/main/java/com/studiomath/pencilnotes/file/`
+    - `FileExplorerViewModel.kt` — folder navigation + sorting + selection + move/delete actions
+- `app/src/main/java/com/studiomath/pencilnotes/ui/composeComponents/`
+    - `FileListComponent.kt` — file list UI (+ drag/drop WIP logic)
+    - `HomeComponent.kt` — recents list UI
+    - `DialogComponents.kt` — dialogs (rename/create/confirm etc.)
+
+## Notes
+
+- The `draw-view` directory in this repo is a **Git submodule** pointing to the DrawView repository.
+- The `:draw-view` Gradle project is mapped to `draw-view/draw-view` (nested module inside the submodule).
+- Release builds enable R8 (`isMinifyEnabled = true`).
 
 ## Contributing
 
-Contributions, bug reports, and suggestions are welcome! To contribute:
-
-1.  Fork the Project.
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
-4.  Push to the Branch (`git push origin feature/AmazingFeature`).
-5.  Open a Pull Request.
+Issues and PRs are welcome. For larger changes, please open an issue first describing the feature/bug and the intended approach.
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+MIT — see `LICENSE`.
