@@ -82,7 +82,7 @@ fun SettingsActivity(modifier: Modifier) {
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Localized description"
+                            contentDescription = stringResource(R.string.appbar_action_back)
                         )
                     }
                 }

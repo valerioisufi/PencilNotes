@@ -9,96 +9,56 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.automirrored.filled.DriveFileMove
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButtonMenu
+import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleFloatingActionButton
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import com.studiomath.pencilnotes.R
-import com.studiomath.pencilnotes.file.FileExplorerViewModel
-import com.studiomath.pencilnotes.ui.composeComponents.FileListComponent
-import com.studiomath.pencilnotes.ui.theme.PencilNotesTheme
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Article
-import androidx.compose.material.icons.automirrored.filled.Note
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Article
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Note
-import androidx.compose.material.icons.filled.Undo
-import androidx.compose.material3.AlertDialogDefaults
-import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonMenu
-import androidx.compose.material3.FloatingActionButtonMenuItem
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.ToggleFloatingActionButton
-import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.animateFloatingActionButton
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
@@ -110,14 +70,20 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.core.view.WindowCompat
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.studiomath.drawview.data.repository.FileRepository
+import com.studiomath.pencilnotes.R
+import com.studiomath.pencilnotes.file.FileExplorerViewModel
+import com.studiomath.pencilnotes.ui.composeComponents.ConfirmActionDialog
+import com.studiomath.pencilnotes.ui.composeComponents.FileListComponent
+import com.studiomath.pencilnotes.ui.composeComponents.HomeComponent
+import com.studiomath.pencilnotes.ui.composeComponents.MoveFileDialog
 import com.studiomath.pencilnotes.ui.composeComponents.RequestNameDialog
-import com.studiomath.pencilnotes.ui.composeComponents.isScrollingUp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.studiomath.pencilnotes.ui.theme.PencilNotesTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -158,47 +124,12 @@ enum class NavigationBarItem(val value: Int) {
 @Composable
 fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplorerViewModel) {
     val mContext = LocalContext.current
-//    val drawerState = rememberDrawerState(DrawerValue.Closed)
-//    val scope = rememberCoroutineScope()
-//
-//    val items = listOf("Account", "Impostazioni")
-//    val selectedItem = remember { mutableStateOf(items[0]) }
 
     val listState = rememberLazyListState()
     val fabVisible by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
 
     ModalNavigationDrawer(
-//        drawerState = drawerState,
-        drawerContent = {
-//            ModalDrawerSheet(
-//                drawerState = drawerState
-//            ) {
-//                /* Drawer content */
-//                Column(Modifier.verticalScroll(rememberScrollState())) {
-//                    Spacer(Modifier.height(12.dp))
-//                    Text("PencilNotes", modifier = Modifier.padding(16.dp))
-//                    items.forEach { item ->
-//                        NavigationDrawerItem(
-//                            icon = {
-//                                when(item){
-//                                    "Account" -> Icon(Icons.Filled.AccountCircle, contentDescription = null)
-//                                    "Impostazioni" -> Icon(Icons.Filled.Settings, contentDescription = null)
-//                                }
-//                            },
-//                            label = { Text(item) },
-//                            selected = item == selectedItem.value,
-//                            onClick = {
-//                                scope.launch { drawerState.close() }
-//                                selectedItem.value = item
-//                            },
-//                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-//                        )
-//                    }
-//                    HorizontalDivider()
-//                }
-//            }
-
-        },
+        drawerContent = {},
         gesturesEnabled = false
     ) {
         var navigationBarSelectedItem by remember { mutableIntStateOf(NavigationBarItem.FILE.value) }
@@ -207,208 +138,316 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
         Scaffold(
             modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
-                AnimatedContent(
-                    targetState = fileExplorerViewModel.currentDirectoryPath.value
-                ){targetState ->
-                    when(targetState){
-                        "/" ->
-                            CenterAlignedTopAppBar(
-                                colors = TopAppBarDefaults.topAppBarColors(),
-                                title = {
-                                    Row (
-                                        modifier = Modifier
-                                            .padding(horizontal = 8.dp),
-                                    ){
-                                        Text(
-                                            text = stringResource(R.string.app_name),
+                val selectionMode by fileExplorerViewModel.selectionMode
+                val selectedItems = fileExplorerViewModel.selectedItems
+
+                if (selectionMode) {
+                     TopAppBar(
+                        title = {
+                            Text(
+                                text = stringResource(
+                                    R.string.appbar_selected_count,
+                                    selectedItems.size
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = {
+                                fileExplorerViewModel.clearSelection()
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Close,
+                                    contentDescription = stringResource(R.string.appbar_action_clear_selection)
+                                )
+                            }
+                        },
+                        actions = {
+                             var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+                             if (showDeleteConfirmDialog) {
+                                ConfirmActionDialog(
+                                    title = stringResource(id = R.string.menu_delete),
+                                    textDescription = stringResource(
+                                        R.string.dialog_delete_multiple_description,
+                                        selectedItems.size
+                                    ),
+                                    textConfirmButton = stringResource(id = R.string.button_confirm),
+                                    onDismissRequest = {showDeleteConfirmDialog = false},
+                                    onConfirm = {
+                                        fileExplorerViewModel.deleteSelected()
+                                        showDeleteConfirmDialog = false
+                                    }
+                                )
+                            }
+
+                            var showMoveDialog by remember { mutableStateOf(false) }
+                            if (showMoveDialog) {
+                                MoveFileDialog(
+                                    onDismissRequest = { showMoveDialog = false },
+
+                                    getSubFolders = { folderId ->
+                                        fileExplorerViewModel.getSubFolders(folderId)
+                                    },
+
+                                    isFolderSelected = { folderId ->
+                                        fileExplorerViewModel.selectedItems.any {
+                                            // CORREZIONE 1: Usiamo l'Enum del ViewModel, non del Repository!
+                                            it.id == folderId && it.type == FileExplorerViewModel.FileType.FOLDER
+                                        }
+                                    },
+
+                                    isValidMove = { targetId ->
+                                        fileExplorerViewModel.isValidMove(targetId)
+                                    },
+
+                                    onConfirm = { targetFolderId ->
+                                        // CORREZIONE 2: Il metodo corretto nel ViewModel si chiama moveSelected
+                                        fileExplorerViewModel.moveSelected(targetFolderId)
+                                        showMoveDialog = false
+                                    }
+                                )
+                            }
+                        
+                            IconButton(onClick = { showMoveDialog = true }) {
+                                Icon(Icons.AutoMirrored.Filled.DriveFileMove, contentDescription = stringResource(R.string.appbar_action_move))
+                            }
+                            IconButton(onClick = { showDeleteConfirmDialog = true }) {
+                                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.appbar_action_delete))
+                            }
+                            IconButton(onClick = { fileExplorerViewModel.selectAll() }) {
+                                Icon(Icons.Filled.SelectAll, contentDescription = stringResource(R.string.appbar_action_select_all))
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    )
+                } else {
+                    AnimatedContent(
+                        targetState = fileExplorerViewModel.currentDirectoryPath.value
+                    ){targetState ->
+                        when(targetState){
+                            "/" ->
+                                CenterAlignedTopAppBar(
+                                    colors = TopAppBarDefaults.topAppBarColors(),
+                                    title = {
+                                        Row (
                                             modifier = Modifier
-                                                .padding(8.dp, 0.dp, 16.dp, 0.dp)
-                                                .align(Alignment.CenterVertically),
+                                                .padding(horizontal = 8.dp),
+                                        ){
+                                            Text(
+                                                text = stringResource(R.string.app_name),
+                                                modifier = Modifier
+                                                    .padding(8.dp, 0.dp, 16.dp, 0.dp)
+                                                    .align(Alignment.CenterVertically),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                style = MaterialTheme.typography.titleLarge,
+                                                fontFamily = FontFamily(Font(resId = R.font.cherry_bomb_one, weight = FontWeight.W400, style = FontStyle.Normal))
+                                            )
+                                        }
+
+                                    },
+                                    navigationIcon = {
+                                    },
+                                    actions = {
+//                                        IconButton(onClick = {
+//                                            val intent = Intent(mContext, SettingsActivity::class.java)
+//                                            mContext.startActivity(intent)
+//                                        }) {
+//                                            Icon(
+//                                                imageVector = Icons.Filled.Settings,
+//                                                contentDescription = "Localized description"
+//                                            )
+//                                        }
+                                    },
+    //                          scrollBehavior = scrollBehavior
+                                )
+
+                            else ->
+                                TopAppBar(
+                                    title = {
+                                        Text(
+                                            text = if(fileExplorerViewModel.directorySequence.isNotEmpty()) fileExplorerViewModel.directorySequence.last() else "",
                                             maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            style = MaterialTheme.typography.titleLarge,
-                                            fontFamily = FontFamily(Font(resId = R.font.cherry_bomb_one, weight = FontWeight.W400, style = FontStyle.Normal))
+                                            overflow = TextOverflow.Ellipsis
                                         )
+                                    },
+                                    navigationIcon = {
+                                        IconButton(onClick = {
+                                            fileExplorerViewModel.backFolder()
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                contentDescription = stringResource(R.string.appbar_action_back)
+                                            )
+                                        }
+                                    },
+                                    actions = {
                                     }
-
-                                },
-                                navigationIcon = {
-                                },
-                                actions = {
-                                    IconButton(onClick = {
-                                        val intent = Intent(mContext, SettingsActivity::class.java)
-                                        mContext.startActivity(intent)
-                                    }) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Settings,
-                                            contentDescription = "Localized description"
-                                        )
-                                    }
-                                },
-//                          scrollBehavior = scrollBehavior
-                            )
-
-                        else ->
-                            TopAppBar(
-                                title = {
-                                    Text(
-                                        text = if(fileExplorerViewModel.directorySequence.isNotEmpty()) fileExplorerViewModel.directorySequence.last() else "",
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                },
-                                navigationIcon = {
-                                    IconButton(onClick = {
-                                        fileExplorerViewModel.backFolder()
-                                    }) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                            contentDescription = "Localized description"
-                                        )
-                                    }
-                                },
-                                actions = {
-                                }
-                            )
+                                )
+                        }
                     }
                 }
-
-
-
             },
             bottomBar = {
-                val items = listOf(
-                    stringResource(id = R.string.button_home),
-//                    stringResource(id = R.string.button_shared),
-                    stringResource(id = R.string.button_file)
-                )
-
-                NavigationBar {
-                    items.forEachIndexed { index, item ->
-                        NavigationBarItem(
-                            icon = {
-                                Icon(
-                                    when (index) {
-                                        NavigationBarItem.HOME.value -> Icons.Filled.Home
-                                        NavigationBarItem.SHARED.value -> Icons.Filled.Group
-                                        NavigationBarItem.FILE.value -> Icons.Filled.Folder
-                                        else -> Icons.Filled.Favorite
-                                    },
-                                    contentDescription = item
-                                )
-                            },
-                            label = { Text(item) },
-                            selected = navigationBarSelectedItem == index,
-                            onClick = { navigationBarSelectedItem = index }
-                        )
-                    }
-                }
+//                val selectionMode by fileExplorerViewModel.selectionMode
+//                if (!selectionMode) {
+//                    val items = listOf(
+//                        stringResource(id = R.string.button_home),
+////                    stringResource(id = R.string.button_shared),
+//                        stringResource(id = R.string.button_file)
+//                    )
+//
+//                    NavigationBar {
+//                        items.forEachIndexed { index, item ->
+//                            val actualIndex = if (index == 0) NavigationBarItem.HOME.value else NavigationBarItem.FILE.value
+//                            NavigationBarItem(
+//                                icon = {
+//                                    Icon(
+//                                        when (actualIndex) {
+//                                            NavigationBarItem.HOME.value -> Icons.Filled.Home
+//                                            NavigationBarItem.FILE.value -> Icons.Filled.Folder
+//                                            else -> Icons.Filled.Favorite
+//                                        },
+//                                        contentDescription = item
+//                                    )
+//                                },
+//                                label = { Text(item) },
+//                                selected = navigationBarSelectedItem == actualIndex,
+//                                onClick = { navigationBarSelectedItem = actualIndex }
+//                            )
+//                        }
+//                    }
+//                }
             },
             floatingActionButton = {
-
-                var openDialogNewFile by rememberSaveable { mutableStateOf(false) }
-                if (openDialogNewFile) {
-                    RequestNameDialog(
-                        title = stringResource(id = R.string.button_newNote),
-                        labelTextField = stringResource(id = R.string.request_name),
-                        textConfirmButton = stringResource(id = R.string.button_confirm),
-                        onDismissRequest = {openDialogNewFile = false},
-                        onConfirm = { text ->
-                            fileExplorerViewModel.createFile(
-                                FileExplorerViewModel.FileType.FILE, text
-                            )
-
-                            openDialogNewFile = false
-                        }
-                    )
-                }
-                var openDialogNewFolder by rememberSaveable { mutableStateOf(false) }
-                if (openDialogNewFolder) {
-                    RequestNameDialog(
-                        title = stringResource(id = R.string.menu_createFolder),
-                        labelTextField = stringResource(id = R.string.request_name),
-                        textConfirmButton = stringResource(id = R.string.button_confirm),
-                        onDismissRequest = {openDialogNewFolder = false},
-                        onConfirm = { text ->
-                            fileExplorerViewModel.createFile(
-                                FileExplorerViewModel.FileType.FOLDER, text
-                            )
-                            openDialogNewFolder = false
-                        }
-                    )
-                }
-
-                var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
-                BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
-
-                val items =
-                    listOf(
-                        Icons.AutoMirrored.Filled.Article to stringResource(id = R.string.button_file),
-                        Icons.Filled.Folder to stringResource(id = R.string.button_folder),
-                    )
-
-                FloatingActionButtonMenu(
-                    modifier = Modifier,
-                    expanded = fabMenuExpanded,
-                    button = {
-                        ToggleFloatingActionButton(
-                            modifier =
-                                Modifier.semantics {
-                                    traversalIndex = -1f
-                                    stateDescription = if (fabMenuExpanded) "Expanded" else "Collapsed"
-                                    contentDescription = "Toggle menu"
-                                }.animateFloatingActionButton(
-                                    visible = fabVisible || fabMenuExpanded,
-                                    alignment = Alignment.BottomEnd,
-                                ),
-                            checked = fabMenuExpanded,
-                            onCheckedChange = { fabMenuExpanded = !fabMenuExpanded },
-
-                        ) {
-                            val imageVector by remember {
-                                derivedStateOf {
-                                    if (checkedProgress > 0.5f) Icons.Filled.Close else Icons.Filled.Add
-                                }
+                val selectionMode by fileExplorerViewModel.selectionMode
+                
+                if (!selectionMode) {
+                    var openDialogNewFile by rememberSaveable { mutableStateOf(false) }
+                    if (openDialogNewFile) {
+                        RequestNameDialog(
+                            title = stringResource(id = R.string.button_newNote),
+                            labelTextField = stringResource(id = R.string.request_name),
+                            textConfirmButton = stringResource(id = R.string.button_confirm),
+                            onDismissRequest = {openDialogNewFile = false},
+                            isAllowedInput = { text ->
+                                fileExplorerViewModel.validateFileName(text)
+                            },
+                            onConfirm = { text ->
+                                fileExplorerViewModel.createFile(
+                                    FileExplorerViewModel.FileType.FILE, text,
+                                    onSuccess = { openDialogNewFile = false },
+                                    onError = { /* Handled by validation usually, but could show snackbar */ }
+                                )
                             }
-                            Icon(
-                                painter = rememberVectorPainter(imageVector),
-                                contentDescription = null,
-                                modifier = Modifier.animateIcon({ checkedProgress }),
-                            )
-                        }
+                        )
                     }
-                ) {
-                    items.forEachIndexed { i, item ->
-                        FloatingActionButtonMenuItem(
-                            modifier =
-                                Modifier.semantics {
-                                    isTraversalGroup = true
-                                    // Add a custom a11y action to allow closing the menu when focusing
-                                    // the last menu item, since the close button comes before the first
-                                    // menu item in the traversal order.
-                                    if (i == items.size - 1) {
-                                        customActions =
-                                            listOf(
-                                                CustomAccessibilityAction(
-                                                    label = "Close menu",
-                                                    action = {
-                                                        fabMenuExpanded = false
-                                                        true
-                                                    },
+                    var openDialogNewFolder by rememberSaveable { mutableStateOf(false) }
+                    if (openDialogNewFolder) {
+                        RequestNameDialog(
+                            title = stringResource(id = R.string.menu_createFolder),
+                            labelTextField = stringResource(id = R.string.request_name),
+                            textConfirmButton = stringResource(id = R.string.button_confirm),
+                            onDismissRequest = {openDialogNewFolder = false},
+                            isAllowedInput = { text ->
+                                fileExplorerViewModel.validateFileName(text)
+                            },
+                            onConfirm = { text ->
+                                fileExplorerViewModel.createFile(
+                                    FileExplorerViewModel.FileType.FOLDER, text,
+                                    onSuccess = { openDialogNewFolder = false },
+                                    onError = { /* Handled by validation */ }
+                                )
+                            }
+                        )
+                    }
+
+                    var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
+                    BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
+
+                    val items =
+                        listOf(
+                            Icons.AutoMirrored.Filled.Article to stringResource(id = R.string.button_file),
+                            Icons.Filled.Folder to stringResource(id = R.string.button_folder),
+                        )
+
+                    val stateExpandedStr = stringResource(id = R.string.fab_state_expanded)
+                    val stateCollapsedStr = stringResource(id = R.string.fab_state_collapsed)
+                    val toggleMenuStr = stringResource(id = R.string.fab_action_toggle_menu)
+                    val closeMenuStr = stringResource(id = R.string.fab_action_close_menu)
+
+                    FloatingActionButtonMenu(
+                        modifier = Modifier,
+                        expanded = fabMenuExpanded,
+                        button = {
+                            ToggleFloatingActionButton(
+                                modifier =
+                                    Modifier
+                                        .semantics {
+                                            traversalIndex = -1f
+                                            stateDescription =
+                                                if (fabMenuExpanded) stateExpandedStr else stateCollapsedStr
+                                            contentDescription = toggleMenuStr
+                                        }
+                                        .animateFloatingActionButton(
+                                            visible = fabVisible || fabMenuExpanded,
+                                            alignment = Alignment.BottomEnd,
+                                        ),
+                                checked = fabMenuExpanded,
+                                onCheckedChange = { fabMenuExpanded = !fabMenuExpanded },
+
+                            ) {
+                                val imageVector by remember {
+                                    derivedStateOf {
+                                        if (checkedProgress > 0.5f) Icons.Filled.Close else Icons.Filled.Add
+                                    }
+                                }
+                                Icon(
+                                    painter = rememberVectorPainter(imageVector),
+                                    contentDescription = null,
+                                    modifier = Modifier.animateIcon({ checkedProgress }),
+                                )
+                            }
+                        }
+                    ) {
+                        items.forEachIndexed { i, item ->
+                            FloatingActionButtonMenuItem(
+                                modifier =
+                                    Modifier.semantics {
+                                        isTraversalGroup = true
+                                        // Add a custom a11y action to allow closing the menu when focusing
+                                        // the last menu item, since the close button comes before the first
+                                        // menu item in the traversal order.
+                                        if (i == items.size - 1) {
+                                            customActions =
+                                                listOf(
+                                                    CustomAccessibilityAction(
+                                                        label = closeMenuStr,
+                                                        action = {
+                                                            fabMenuExpanded = false
+                                                            true
+                                                        },
+                                                    )
                                                 )
-                                            )
+                                        }
+                                    },
+                                onClick = {
+                                    fabMenuExpanded = false
+                                    when (i) {
+                                        0 -> openDialogNewFile = true
+                                        1 -> openDialogNewFolder = true
                                     }
                                 },
-                            onClick = {
-                                fabMenuExpanded = false
-                                when (i) {
-                                    0 -> openDialogNewFile = true
-                                    1 -> openDialogNewFolder = true
-                                }
-                            },
-                            icon = { Icon(item.first, contentDescription = null) },
-                            text = { Text(text = item.second) }
-                        )
+                                icon = { Icon(item.first, contentDescription = null) },
+                                text = { Text(text = item.second) }
+                            )
+                        }
                     }
                 }
             },
@@ -424,8 +463,8 @@ fun RootActivity(modifier: Modifier = Modifier, fileExplorerViewModel: FileExplo
                     targetState = navigationBarSelectedItem
                 ) { targetState ->
                     when (targetState) {
-                        NavigationBarItem.HOME.value -> Text(text = "Home")
-                        NavigationBarItem.SHARED.value -> Text(text = "Condivisi")
+                        NavigationBarItem.HOME.value -> HomeComponent(fileExplorerViewModel = fileExplorerViewModel)
+                        NavigationBarItem.SHARED.value -> Text(text = stringResource(R.string.navigation_shared))
                         NavigationBarItem.FILE.value -> FileListComponent(
                             directoryFiles = fileExplorerViewModel.currentDirectoryFiles,
                             fileExplorerViewModel = fileExplorerViewModel,

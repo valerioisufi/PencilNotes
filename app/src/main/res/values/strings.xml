@@ -1,46 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PencilNotes</string>
     <string name="title_activity_draw" translatable="false">DrawActivity</string>
-    <string name="menu_lastModified">Last Modified</string>
-    <string name="menu_lastOpen">Last open</string>
-    <string name="menu_dateCreated">Date created</string>
-    <string name="menu_name">Name</string>
-    <string name="menu_keepFoldersOnTop">Keep folders on top</string>
-    <string name="menu_rename">Rename</string>
-    <string name="menu_moveTo">Move to</string>
-    <string name="menu_delete">Delete</string>
-    <string name="menu_export">Export</string>
-    <string name="menu_cancel">Cancel</string>
-    <string name="menu_createFolder">Create folder</string>
-    <string name="menu_importPDF">Import PDF</string>
-    <string name="menu_importImages">Import images</string>
-    <string name="button_newNote">New note</string>
+    <string name="title_activity_settings" translatable="false">SettingsActivity</string>
+
     <string name="button_new">New</string>
+    <string name="button_newNote">New note</string>
+    <string name="button_folder">Folder</string>
+    <string name="button_confirm">Confirm</string>
+    <string name="menu_cancel">Cancel</string>
+    <string name="common_action_edit">Edit</string>
+    <string name="common_label_info">Info</string>
+
     <string name="button_home">Home</string>
     <string name="button_shared">Shared</string>
+    <string name="navigation_shared">Shared</string>
     <string name="button_file">File</string>
     <string name="button_all">All</string>
     <string name="button_favorites">Favorites</string>
     <string name="button_recents">Recents</string>
+
+    <string name="appbar_selected_count">%1$d Selected</string>
+    <string name="appbar_action_clear_selection">Clear selection</string>
+    <string name="appbar_action_select_all">Select all</string>
+    <string name="appbar_action_move">Move</string>
+    <string name="appbar_action_delete">Delete</string>
+    <string name="appbar_action_back">Navigate up</string>
+
     <string name="description_searchNotes">Search your notes</string>
+    <string name="document_list_label_last_modified">Last modified: %1$s</string>
+    <string name="menu_name">Name</string>
+    <string name="menu_dateCreated">Date created</string>
+    <string name="menu_lastModified">Last modified</string>
+    <string name="menu_lastOpen">Last open</string>
+    <string name="menu_sort_invert">Invert order</string>
+    <string name="menu_keepFoldersOnTop">Keep folders on top</string>
+    <string name="menu_createFolder">Create folder</string>
+    <string name="menu_importPDF">Import PDF</string>
+    <string name="menu_importImages">Import images</string>
+
+    <string name="menu_rename">Rename</string>
+    <string name="menu_moveTo">Move to</string>
+    <string name="menu_delete">Delete</string>
+    <string name="menu_export">Export</string>
+
+    <string name="request_name">Choose a name</string>
+    <string name="dialog_deleteFileDescription">Deleted items are not recoverable.</string>
+    <string name="dialog_delete_multiple_description">Do you want to delete %1$d items?</string>
+    <string name="move_dialog_empty_state">No folders found</string>
+    <string name="move_dialog_action_move_here">Move here</string>
+
     <string name="menu_settings">Settings</string>
     <string name="menu_whatsnew">What\'s new</string>
     <string name="menu_help">Help</string>
-
-    <string name="request_name">Choose a name</string>
-    <string name="title_activity_settings" translatable="false">SettingsActivity</string>
-    <string name="button_confirm">Confirm</string>
-    <string name="button_folder">Folder</string>
     <string name="settings_general">General</string>
-    <string name="settings_notes">Notes</string>
-    <string name="settings_manageStorage">Manage storage</string>
-    <string name="settings_storageNotes">This includes your note, imported images and pdf files.</string>
-    <string name="settings_cache">Cache</string>
-    <string name="settings_storageCache">Cache helps improve app performance.</string>
-    <string name="settings_notesKeepScreenOn">Keep screen on</string>
-    <string name="settings_notesKeepScreenOnDescription">Screen will stay awake when notes are open</string>
-    <string name="settings_notesContinueFromLastOpenedPage">Continue from last opend page</string>
     <string name="settings_generalLanguage">Language</string>
     <string name="settings_generalTheme">Theme</string>
-    <string name="dialog_deleteFileDescription">Deleted items are not recoverable.</string>
+    <string name="settings_notes">Notes</string>
+    <string name="settings_notesKeepScreenOn">Keep screen on</string>
+    <string name="settings_notesKeepScreenOnDescription">Screen will stay awake when notes are open</string>
+    <string name="settings_notesContinueFromLastOpenedPage">Continue from last opened page</string>
+    <string name="settings_manageStorage">Manage storage</string>
+    <string name="settings_storageNotes">This includes your notes, imported images, and PDF files.</string>
+    <string name="settings_cache">Cache</string>
+    <string name="settings_storageCache">Cache helps improve app performance.</string>
+
+    <string name="error_name_empty">Name cannot be empty</string>
+    <string name="error_name_invalid_chars">Name cannot contain slashes</string>
+    <string name="error_name_exists">This name already exists</string>
+    <string name="error_create_failed">Error during creation</string>
+
+    <string name="fab_state_expanded">Expanded</string>
+    <string name="fab_state_collapsed">Collapsed</string>
+    <string name="fab_action_toggle_menu">Toggle menu</string>
+    <string name="fab_action_close_menu">Close menu</string>
+
 </resources>

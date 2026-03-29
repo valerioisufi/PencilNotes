@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PencilNotes</string>
+
+    <string name="button_new">Nouveau</string>
+    <string name="button_newNote">Nouvelle note</string>
+    <string name="button_folder">Dossier</string>
+    <string name="button_confirm">Confirmer</string>
+    <string name="menu_cancel">Annuler</string>
+    <string name="common_action_edit">Modifier</string>
+    <string name="common_label_info">Info</string>
+
+    <string name="button_home">Accueil</string>
+    <string name="button_shared">Partagés</string>
+    <string name="navigation_shared">Partagés</string>
+    <string name="button_file">Fichier</string>
+    <string name="button_all">Tous</string>
+    <string name="button_favorites">Favoris</string>
+    <string name="button_recents">Récents</string>
+
+    <string name="appbar_selected_count">%1$d sélectionné(s)</string>
+    <string name="appbar_action_clear_selection">Effacer la sélection</string>
+    <string name="appbar_action_select_all">Tout sélectionner</string>
+    <string name="appbar_action_move">Déplacer</string>
+    <string name="appbar_action_delete">Supprimer</string>
+    <string name="appbar_action_back">Naviguer vers le haut</string>
+
+    <string name="description_searchNotes">Rechercher dans vos notes</string>
+    <string name="document_list_label_last_modified">Dernière modification : %1$s</string>
+    <string name="menu_name">Nom</string>
+    <string name="menu_dateCreated">Date de création</string>
+    <string name="menu_lastModified">Dernière modification</string>
+    <string name="menu_lastOpen">Dernière ouverture</string>
+    <string name="menu_sort_invert">Inverser l\'ordre</string>
+    <string name="menu_keepFoldersOnTop">Garder les dossiers en haut</string>
+    <string name="menu_createFolder">Créer un dossier</string>
+    <string name="menu_importPDF">Importer un PDF</string>
+    <string name="menu_importImages">Importer des images</string>
+
+    <string name="menu_rename">Renommer</string>
+    <string name="menu_moveTo">Déplacer vers</string>
+    <string name="menu_delete">Supprimer</string>
+    <string name="menu_export">Exporter</string>
+
+    <string name="request_name">Choisir un nom</string>
+    <string name="dialog_deleteFileDescription">Les éléments supprimés ne sont pas récupérables.</string>
+    <string name="dialog_delete_multiple_description">Voulez-vous supprimer %1$d éléments ?</string>
+    <string name="move_dialog_empty_state">Aucun dossier trouvé</string>
+    <string name="move_dialog_action_move_here">Déplacer ici</string>
+
+    <string name="menu_settings">Paramètres</string>
+    <string name="menu_whatsnew">Nouveautés</string>
+    <string name="menu_help">Aide</string>
+    <string name="settings_general">Général</string>
+    <string name="settings_generalLanguage">Langue</string>
+    <string name="settings_generalTheme">Thème</string>
+    <string name="settings_notes">Notes</string>
+    <string name="settings_notesKeepScreenOn">Garder l\'écran allumé</string>
+    <string name="settings_notesKeepScreenOnDescription">L\'écran restera allumé lorsque les notes sont ouvertes</string>
+    <string name="settings_notesContinueFromLastOpenedPage">Reprendre à la dernière page ouverte</string>
+    <string name="settings_manageStorage">Gérer le stockage</string>
+    <string name="settings_storageNotes">Cela inclut vos notes, images importées et fichiers PDF.</string>
+    <string name="settings_cache">Cache</string>
+    <string name="settings_storageCache">Le cache aide à améliorer les performances de l\'application.</string>
+
+    <string name="error_name_empty">Le nom ne peut pas être vide</string>
+    <string name="error_name_invalid_chars">Le nom ne peut pas contenir de barres obliques</string>
+    <string name="error_name_exists">Ce nom existe déjà</string>
+    <string name="error_create_failed">Erreur lors de la création</string>
+
+    <string name="fab_state_expanded">Développé</string>
+    <string name="fab_state_collapsed">Réduit</string>
+    <string name="fab_action_toggle_menu">Basculer le menu</string>
+    <string name="fab_action_close_menu">Fermer le menu</string>
+
+</resources>

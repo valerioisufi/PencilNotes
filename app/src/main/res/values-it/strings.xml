@@ -1,44 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PencilNotes</string>
-    <string name="menu_lastModified">Ultimi modificati</string>
-    <string name="menu_lastOpen">Ultimi aperti</string>
-    <string name="menu_dateCreated">Data di creazione</string>
-    <string name="menu_name">Nome</string>
-    <string name="menu_keepFoldersOnTop">Mantieni le cartelle in alto</string>
-    <string name="menu_rename">Rinomina</string>
-    <string name="menu_moveTo">Sposta su</string>
-    <string name="menu_delete">Elimina</string>
-    <string name="menu_export">Esporta</string>
-    <string name="menu_cancel">Annulla</string>
-    <string name="menu_createFolder">Crea una cartella</string>
-    <string name="menu_importPDF">Importa PDF</string>
-    <string name="menu_importImages">Importa immagini</string>
-    <string name="button_newNote">Nuova nota</string>
+
     <string name="button_new">Nuovo</string>
+    <string name="button_newNote">Nuova nota</string>
+    <string name="button_folder">Cartella</string>
+    <string name="button_confirm">Conferma</string>
+    <string name="menu_cancel">Annulla</string>
+    <string name="common_action_edit">Modifica</string>
+    <string name="common_label_info">Info</string>
+
     <string name="button_home">Home</string>
     <string name="button_shared">Condivisi</string>
+    <string name="navigation_shared">Condivisi</string>
     <string name="button_file">File</string>
     <string name="button_all">Tutti</string>
     <string name="button_favorites">Preferiti</string>
     <string name="button_recents">Recenti</string>
+
+    <string name="appbar_selected_count">%1$d Selezionati</string>
+    <string name="appbar_action_clear_selection">Annulla selezione</string>
+    <string name="appbar_action_select_all">Seleziona tutto</string>
+    <string name="appbar_action_move">Sposta</string>
+    <string name="appbar_action_delete">Elimina</string>
+    <string name="appbar_action_back">Torna indietro</string>
+
     <string name="description_searchNotes">Cerca nelle tue note</string>
+    <string name="document_list_label_last_modified">Ultima modifica: %1$s</string>
+    <string name="menu_name">Nome</string>
+    <string name="menu_dateCreated">Data di creazione</string>
+    <string name="menu_lastModified">Ultima modifica</string>
+    <string name="menu_lastOpen">Ultima apertura</string>
+    <string name="menu_sort_invert">Inverti ordine</string>
+    <string name="menu_keepFoldersOnTop">Mantieni cartelle in alto</string>
+    <string name="menu_createFolder">Crea cartella</string>
+    <string name="menu_importPDF">Importa PDF</string>
+    <string name="menu_importImages">Importa immagini</string>
+
+    <string name="menu_rename">Rinomina</string>
+    <string name="menu_moveTo">Sposta in</string>
+    <string name="menu_delete">Elimina</string>
+    <string name="menu_export">Esporta</string>
+
+    <string name="request_name">Scegli un nome</string>
+    <string name="dialog_deleteFileDescription">Gli elementi eliminati non sono recuperabili.</string>
+    <string name="dialog_delete_multiple_description">Vuoi eliminare %1$d elementi?</string>
+    <string name="move_dialog_empty_state">Nessuna cartella trovata</string>
+    <string name="move_dialog_action_move_here">Sposta qui</string>
+
     <string name="menu_settings">Impostazioni</string>
-    <string name="menu_whatsnew">Cosa c\'è di nuovo</string>
-    <string name="menu_help">Aiuto</string>
-    <string name="request_name">Scegliere un nome</string>
-    <string name="button_confirm">Conferma</string>
-    <string name="button_folder">Cartella</string>
+    <string name="menu_whatsnew">Novità</string>
+    <string name="menu_help">Guida</string>
     <string name="settings_general">Generali</string>
+    <string name="settings_generalLanguage">Lingua</string>
+    <string name="settings_generalTheme">Tema</string>
     <string name="settings_notes">Note</string>
-    <string name="settings_manageStorage">Gestisci l\'archiviazione</string>
-    <string name="settings_storageNotes">Ciò include le note, le immagini importate e i file pdf</string>
-    <string name="settings_cache">Cache</string>
-    <string name="settings_storageCache">La cache aiuta a migliorare le prestazioni dell\'app</string>
     <string name="settings_notesKeepScreenOn">Mantieni lo schermo acceso</string>
     <string name="settings_notesKeepScreenOnDescription">Lo schermo rimarrà acceso quando le note sono aperte</string>
-    <string name="settings_notesContinueFromLastOpenedPage">Continua dall\'ultima pagina aperta</string>
-    <string name="settings_generalLanguage">Linguaggio</string>
-    <string name="settings_generalTheme">Tema</string>
-    <string name="dialog_deleteFileDescription">Gli elementi eliminati non sono recuperabili.</string>
+    <string name="settings_notesContinueFromLastOpenedPage">Riprendi dall\'ultima pagina aperta</string>
+    <string name="settings_manageStorage">Gestisci archiviazione</string>
+    <string name="settings_storageNotes">Questo include le tue note, le immagini importate e i file PDF.</string>
+    <string name="settings_cache">Cache</string>
+    <string name="settings_storageCache">La cache aiuta a migliorare le prestazioni dell\'app.</string>
+
+    <string name="error_name_empty">Il nome non può essere vuoto</string>
+    <string name="error_name_invalid_chars">Il nome non può contenere barre (slash)</string>
+    <string name="error_name_exists">Questo nome esiste già</string>
+    <string name="error_create_failed">Errore durante la creazione</string>
+
+    <string name="fab_state_expanded">Espanso</string>
+    <string name="fab_state_collapsed">Chiuso</string>
+    <string name="fab_action_toggle_menu">Apri/Chiudi menu</string>
+    <string name="fab_action_close_menu">Chiudi menu</string>
+
 </resources>

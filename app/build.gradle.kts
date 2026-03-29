@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
@@ -47,7 +46,12 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":draw-view"))
+
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui.unit)
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.compose.foundation)
     androidTestImplementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.material3)
@@ -59,13 +63,6 @@ dependencies {
 
     implementation(libs.androidx.graphics.core)
     implementation(libs.androidx.input.motionprediction)
-
-    implementation(libs.androidx.ink.authoring)
-    implementation(libs.androidx.ink.brush)
-    implementation(libs.androidx.ink.geometry)
-    implementation(libs.androidx.ink.nativeloader)
-    implementation(libs.androidx.ink.rendering)
-    implementation(libs.androidx.ink.strokes)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
