@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.studiomath.pencilnotes"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.studiomath.pencilnotes"
         minSdk = 29
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 3
         versionName = "2.1"
 

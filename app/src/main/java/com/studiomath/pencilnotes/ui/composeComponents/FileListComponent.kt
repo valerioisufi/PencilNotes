@@ -1,7 +1,6 @@
 package com.studiomath.pencilnotes.ui.composeComponents
 
 import android.content.Intent
-
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
